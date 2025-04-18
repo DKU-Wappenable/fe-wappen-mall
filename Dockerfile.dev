@@ -1,0 +1,20 @@
+# fe-wappen-mall/Dockerfile.dev
+FROM node:20-bullseye-slim
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 의존성 설치
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+VOLUME ["/app/node_modules"]
+
+# 소스 복사
+COPY . .
+
+# Vite 개발 서버 포트 노출
+EXPOSE 5173
+
+# Vite dev 서버 실행 (외부 접속 허용)
+CMD ["yarn", "dev", "--host", "0.0.0.0"]

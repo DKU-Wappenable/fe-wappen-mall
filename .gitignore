@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 빌드 캐시·출력물 무시
+.gradle
+.gradle-home
+build
+*.jar
+*.war
+*.zip
+*.tar
+*.gz
+*.bz2
+*.rar
