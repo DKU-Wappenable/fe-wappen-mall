@@ -1,0 +1,51 @@
+/* App.css */
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Pretendard', sans-serif;
+}
+
+.app-header {
+  width: 100%;
+  padding: 16px 32px;
+  border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
+  position: fixed;       /* 항상 상단 고정 */
+  top: 0;
+  left: 0;
+  background: white;
+  z-index: 1000;
+}
+
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: #111;
+}
+
+.header-right {
+  display: flex;
+  gap: 20px;
+}
+
+.header-right button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #111;
+}
+
+.header-right button:hover {
+  text-decoration: underline;
+}
