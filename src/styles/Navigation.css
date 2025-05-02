@@ -1,0 +1,91 @@
+.navigation {
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .nav-container {
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .nav-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .nav-link {
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 16px;
+    transition: color 0.2s;
+  }
+  
+  .nav-link:hover {
+    color: #000;
+  }
+  
+  .nav-button {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  
+  .nav-button:hover {
+    background: #000;
+  }
+  
+  .logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  .welcome-text {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* 로그인 상태일 때 링크 스타일 */
+  .nav-links a.active {
+    color: #000;
+    font-weight: bold;
+  } 

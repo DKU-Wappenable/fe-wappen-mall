@@ -1,93 +1,76 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LoginForm from "./components/LoginForm";
-import SignupForm from "./components/SignupForm";
-import FindForm from "./components/FindForm";
-import { UserProvider, useUser } from "./components/UserContext";
-import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
-import "./styles/App.css";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './styles/App.css';
 
-function Header({ onLoginClick, onSignupClick }) {
-  const { user, logout } = useUser();
+import { useUser } from './components/UserContext';
 
-  return (
-    <header className="app-header">
-      <div className="header-inner">
-        <div className="logo">WAPPEN</div>
-        <div className="header-right">
-          {user ? (
-            <>
-              <span>{user.nickname}님 환영합니다!</span>
-              <button onClick={logout}>로그아웃</button>
-            </>
-          ) : (
-            <>
-              <button onClick={onLoginClick}>로그인</button>
-              <button onClick={onSignupClick}>회원가입</button>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
+import Navigation from './components/Navigation';
+import Home from './components/Home';
+import MyPage from './components/MyPage';
+import WappenCustomize from './components/WappenCustomize';
+import MyWappens from './components/MyWappens';
+import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignupForm';
+import FindForm from './components/FindForm';
+import OAuthCallback from './components/OAuthCallback';
 
-function AppContent() {
-  const [modalType, setModalType] = useState(null);
-  const [signupStep, setSignupStep] = useState("kakao");
+function ProtectedRoute({ children }) {
   const { user } = useUser();
-
-  useEffect(() => {
-    const esc = (e) => {
-      if (e.key === "Escape") setModalType(null);
-    };
-    window.addEventListener("keydown", esc);
-    return () => window.removeEventListener("keydown", esc);
-  }, []);
-
-  return (
-    <div>
-      <Header
-        onLoginClick={() => setModalType("login")}
-        onSignupClick={() => {
-          setSignupStep("kakao");
-          setModalType("signup");
-        }}
-      />
-
-      {!user && modalType === "login" && (
-        <LoginForm
-          onClose={() => setModalType(null)}
-          onSwitch={setModalType}
-          setStep={setSignupStep}
-        />
-      )}
-      {!user && modalType === "signup" && (
-        <SignupForm
-          onClose={() => setModalType(null)}
-          step={signupStep}
-          setStep={setSignupStep}
-        />
-      )}
-      {!user && modalType === "find-id" && <FindForm onClose={() => setModalType(null)} mode="id" />}
-      {!user && modalType === "find-pw" && <FindForm onClose={() => setModalType(null)} mode="pw" />}
-    </div>
-  );
+  React.useEffect(() => {
+    if (!user) toast.error('로그인이 필요한 서비스입니다.');
+  }, [user]);
+  return user ? children : null;
 }
 
 function App() {
   return (
-    <UserProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<AppContent />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/signup" element={<SignupForm />} />
-        </Routes>
-        <ToastContainer position="top-center" autoClose={2000} />
-      </Router>
-    </UserProvider>
+    <>
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/signup" element={<SignupForm />} />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
+
+        {/* 아이디 찾기와 비밀번호 찾기 라우트 */}
+        <Route
+          path="/find-id"
+          element={<FindForm mode="id" onClose={() => window.history.back()} />}
+        />
+        <Route
+          path="/find-pw"
+          element={<FindForm mode="pw" onClose={() => window.history.back()} />}
+        />
+
+        <Route
+          path="/wappen-customize"
+          element={
+            <ProtectedRoute>
+              <WappenCustomize />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-page"
+          element={
+            <ProtectedRoute>
+              <MyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-wappens"
+          element={
+            <ProtectedRoute>
+              <MyWappens />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <ToastContainer position="top-center" autoClose={2000} />
+    </>
   );
 }
 

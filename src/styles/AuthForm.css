@@ -1,222 +1,122 @@
-.outline {
-  background: white;
-  color: black;
-  border: 1px solid #ccc;
-  font-weight: bold;
-  border-radius: 20px;
-}
-.outline:hover {
-  background: #eee;
-}
-
-.auth-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
+.auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  height: 100vh;
+  background-color: #f9f9f9; /* 배경색 */
 }
 
 .auth-box {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 380px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  position: relative;
-}
-
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #444;
-  cursor: pointer;
-}
-
-.kakao-btn {
-  background: #fee500;
-  border: none;
   width: 100%;
-  padding: 12px;
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 12px;
-  border-radius: 6px;
+  max-width: 400px; /* 부모 컨테이너의 최대 너비 제한 */
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+form input {
+  width: 100%; /* 입력 필드가 부모 컨테이너 너비에 맞게 조정 */
+  max-width: 100%; /* 입력 필드가 부모 컨테이너를 초과하지 않도록 제한 */
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box; /* 패딩 포함 크기 계산 */
+}
+
+.submit-btn {
+  width: 100%; /* 버튼도 부모 컨테이너 너비에 맞게 조정 */
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
+}
+
+.submit-btn:hover {
+  background-color: #0056b3;
+}
+
+.additional-links {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.additional-links .find-link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.additional-links .find-link:hover {
+  text-decoration: underline;
 }
 
 .divider {
-  position: relative;
-  text-align: center;
-  margin: 16px 0;
-  color: #999;
-  font-size: 12px;
-}
-.divider::before,
-.divider::after {
-  content: "";
-  height: 1px;
-  background: #ddd;
-  position: absolute;
-  top: 50%;
-  width: 40%;
-}
-.divider::before {
-  left: 0;
-}
-.divider::after {
-  right: 0;
-}
-
-input[type="email"],
-input[type="password"],
-input[type="text"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  margin: 20px 0;
   font-size: 14px;
-}
-
-.inline-inputs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.submit-btn.black {
-  background: #222;
-  color: white;
-  font-weight: bold;
-  border-radius: 10px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  cursor: pointer;
-}
-.submit-btn.black:hover {
-  background: #000;
-}
-
-.white-text {
-  color: white !important;
-}
-
-.auth-links {
-  margin-top: 16px;
-  font-size: 13px;
-}
-.auth-links a {
-  color: #333;
-  cursor: pointer;
-}
-
-.info-text {
-  background: #f9f9f9;
-  padding: 12px;
-  font-size: 13px;
-  color: #444;
-  border-left: 3px solid #007bff;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.auth-links.multi {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-top: 16px;
-}
-
-.auth-links.multi a {
-  color: #222;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.auth-links.multi span {
   color: #aaa;
 }
 
-/* AuthForm.css */
-.password-field {
-  position: relative;
-}
-
-.password-field input {
-  width: 100%;
-  padding-right: 40px; /* 오른쪽 여백 확보 */
-}
-
-.password-field .icon-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 4px;
+.social-login-group {
   display: flex;
-  align-items: center;
+  justify-content: center;
+  gap: 15px; /* 버튼 간 간격 */
+  margin-top: 20px;
 }
 
-.input-with-icon {
-  position: relative;
-}
-
-.input-with-icon input {
-  width: 100%;
-  padding-right: 40px; /* 아이콘 공간 확보 */
-}
-
-.icon-eye {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
-.input-wrap {
-  position: relative;
-  width: 100%;
-}
-
-.input-wrap input {
-  width: 100%;
-  padding-right: 40px; /* 오른쪽 아이콘 공간 확보 */
-  height: 48px;
-  font-size: 16px;
-  box-sizing: border-box;
-  padding-left: 12px;
-}
-
-.eye-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
+.social-btn {
+  width: 60px; /* 버튼 크기 고정 */
+  height: 60px; /* 버튼 크기 고정 */
   border: none;
   cursor: pointer;
-  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%; /* 원형 버튼 */
 }
 
+.social-btn.kakao {
+  background-color: #fee500; /* 카카오 노란색 */
+}
+
+.social-btn.naver {
+  background-color: #03c75a; /* 네이버 초록색 */
+}
+
+.social-btn.google {
+  background-color: white;
+  border: 1px solid #ddd;
+}
+
+.social-btn.google img {
+  width: 60px; /* 구글 버튼 이미지 너비 */
+  height: 60px; /* 구글 버튼 이미지 높이 */
+  object-fit: contain; /* 이미지가 잘리지 않도록 설정 */
+}
+.social-btn img {
+  width: 70%; /* 이미지 크기 조정 */
+  height: 70%;
+  object-fit: contain; /* 이미지가 잘리지 않도록 설정 */
+}
+
+.sub-head {
+  font-size: 14px; /* 텍스트 크기 */
+  color: #555; /* 짙은 회색 */
+  margin-top: 10px; /* 제목과 간격 */
+  margin-bottom: 20px; /* 입력 필드와 간격 */
+  text-align: center; /* 가운데 정렬 */
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
