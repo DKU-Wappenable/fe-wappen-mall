@@ -16,9 +16,7 @@ export default function SignupForm() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
-  const [showTerms, setShowTerms] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(false);
-
+  // 이메일 중복 확인
   const checkDuplicateEmail = async () => {
     try {
       const res = await axiosInstance.get(`/check-email?email=${email}`);
@@ -30,6 +28,7 @@ export default function SignupForm() {
     }
   };
 
+  // 회원가입 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -50,13 +49,6 @@ export default function SignupForm() {
 
     try {
       await signup({ email, password, name, phone });
-      const agreed = localStorage.getItem("agreed_terms") === "true";
-      if (!agreed) {
-        setPendingNavigation(true);
-        setShowTerms(true);
-        return;
-      }
-
       toast.success("회원가입이 완료되었습니다. 로그인해주세요.");
       navigate("/login");
     } catch (err) {
@@ -64,6 +56,7 @@ export default function SignupForm() {
     }
   };
 
+  // 소셜 로그인 처리
   const handleSocialLogin = (provider) => {
     const providers = {
       카카오: "/oauth2/authorization/kakao",
@@ -71,15 +64,6 @@ export default function SignupForm() {
       구글: "/oauth2/authorization/google",
     };
     if (providers[provider]) window.location.href = providers[provider];
-  };
-
-  const handleAgree = () => {
-    localStorage.setItem("agreed_terms", "true");
-    setShowTerms(false);
-    if (pendingNavigation) {
-      toast.success("약관에 동의하셨습니다. 로그인해주세요.");
-      navigate("/login");
-    }
   };
 
   return (
@@ -151,27 +135,6 @@ export default function SignupForm() {
           </p>
         </div>
       </div>
-
-      {showTerms && (
-        <div className="terms-modal">
-          <div className="terms-box">
-            <h2>이용약관</h2>
-            <div className="terms-content">
-              <p><strong>제1조 (목적)</strong></p>
-              <p>본 약관은 형이 만든 Wappen 서비스의 이용조건, 절차, 권리, 의무를 규정합니다.</p>
-              <p><strong>제2조 (약관의 명시와 개정)</strong></p>
-              <ol>
-                <li>서비스는 이 약관을 화면에 게시합니다.</li>
-                <li>법령에 따라 개정 가능하며 사전 고지합니다.</li>
-                <li>회원은 동의하지 않을 경우 탈퇴할 수 있습니다.</li>
-              </ol>
-            </div>
-            <button onClick={handleAgree} className="submit-btn black" style={{ marginTop: "16px" }}>
-              동의하고 계속하기
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

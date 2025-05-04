@@ -1,40 +1,42 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
+import TermsModal from "./TermsModal";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
-  /*// 자동 로그인 (토큰 있으면 임시 사용자 로딩)
+  // 로그인 상태 복원
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      // 서버 없이 임시 mock 유저 (실제 앱이면 토큰 검증 요청 필요)
-      const mockUser = { email: "test@example.com", name: "테스트" };
-      setUser(mockUser);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setUser(parsed);
+      if (!parsed.termsAccepted) {
+        setShowTermsModal(true);
+      }
     }
     setLoading(false);
   }, []);
-  */
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      axiosInstance
-        .get("/users/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((response) => {
-          setUser(response.data); // 서버에서 반환된 사용자 데이터 설정
-        })
-        .catch(() => {
-          localStorage.removeItem("access_token");
-          setUser(null);
-        });
+
+  // 약관 동의 처리 (서버 반영 포함)
+  const acceptTerms = async () => {
+    try {
+      // 서버에 동의 처리 요청
+      await axiosInstance.put("/users/agree-terms");
+      const updatedUser = { ...user, termsAccepted: true };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setShowTermsModal(false);
+    } catch (err) {
+      console.error("약관 동의 처리 실패:", err);
     }
-    setLoading(false);
-  }, []);
+  };
+
+  // 회원가입
   const signup = async ({ email, password, name, phone }) => {
     try {
       const response = await axiosInstance.post("/users/signup", {
@@ -43,44 +45,90 @@ export const UserProvider = ({ children }) => {
         name,
         phone,
       });
-      return response.data; // 서버 응답 데이터 반환
+      return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "회원가입 실패");
     }
   };
 
+  // 로그인
   const login = async ({ email, password }) => {
+    // 테스트 계정 로그인
+    if (email === "test@example.com" && password === "test1234") {
+      const userData = {
+        email,
+        name: "테스트 유저",
+        termsAccepted: false,
+      };
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("access_token", "test-token");
+      setShowTermsModal(true);
+      return;
+    }
+
+    // 실제 서버 연동 로그인
     try {
       const response = await axiosInstance.post("/users/login", {
         email,
         password,
       });
+
       const { accessToken, user } = response.data;
-  
-      // 토큰 저장 및 사용자 설정
+
       localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
+
+      if (!user.termsAccepted) {
+        setShowTermsModal(true);
+      }
     } catch (error) {
       throw new Error(error.response?.data?.message || "로그인 실패");
     }
   };
-  /*
-  const login = (userData) => {
-    setUser(userData);
+
+  // 소셜 로그인 (토큰으로 사용자 정보 요청)
+  const socialLogin = async (accessToken) => {
+    try {
+      const res = await axiosInstance.get("/users/me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const userData = res.data;
+
+      setUser(userData);
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      if (!userData.termsAccepted) {
+        setShowTermsModal(true);
+      }
+    } catch (err) {
+      throw new Error("사용자 정보를 불러올 수 없습니다.");
+    }
   };
-  */
+
+  // 로그아웃
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("user");
     localStorage.removeItem("access_token");
   };
 
   if (loading) return <div>Loading...</div>;
 
   return (
-    <UserContext.Provider value={{ user, signup, login, logout }}>
+    <UserContext.Provider
+      value={{ user, signup, login, logout, acceptTerms, socialLogin }}
+    >
       {children}
+      {showTermsModal && <TermsModal onAgree={acceptTerms} />}
     </UserContext.Provider>
   );
 };
 
 export const useUser = () => useContext(UserContext);
+export default UserProvider;
