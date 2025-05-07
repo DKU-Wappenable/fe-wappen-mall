@@ -14,7 +14,6 @@ export default function MyWappens() {
       return;
     }
 
-    // 로컬 스토리지에서 저장된 와펜들을 불러옴
     const wappens = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
     setSavedWappens(wappens);
   }, [user, navigate]);
@@ -42,6 +41,7 @@ export default function MyWappens() {
   return (
     <div className="my-wappens-container">
       <h2>나의 와펜</h2>
+
       {savedWappens.length === 0 ? (
         <div className="no-wappens">
           <p>저장된 와펜이 없습니다.</p>
@@ -87,7 +87,7 @@ export default function MyWappens() {
               </div>
               <div className="wappen-info">
                 <span className="created-at">{formatDate(savedWappen.createdAt)}</span>
-                <button 
+                <button
                   onClick={() => handleDelete(savedWappen.id)}
                   className="delete-btn"
                 >
@@ -98,6 +98,27 @@ export default function MyWappens() {
           ))}
         </div>
       )}
+
+      {/* ✅ 관리자 상품 등록 페이지 이동 버튼 */}
+      {user?.email === 'test@example.com' && (
+        <button
+          onClick={() => navigate('/admin/upload')}
+          className="admin-btn"
+          style={{
+            marginTop: '2rem',
+            display: 'block',
+            padding: '12px 24px',
+            fontSize: '1rem',
+            borderRadius: '8px',
+            backgroundColor: '#222',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          🛒 관리자 상품 등록 페이지
+        </button>
+      )}
     </div>
   );
-} 
+}

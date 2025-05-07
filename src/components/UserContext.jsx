@@ -22,6 +22,7 @@ export const UserProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  /*
   // 약관 동의 처리 (서버 반영 포함)
   const acceptTerms = async () => {
     try {
@@ -35,6 +36,19 @@ export const UserProvider = ({ children }) => {
       console.error("약관 동의 처리 실패:", err);
     }
   };
+*/
+  const acceptTerms = async () => {
+    try {
+      // ✅ 백엔드 없이 로컬에서만 동의 처리
+      const updatedUser = { ...user, termsAccepted: true };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setShowTermsModal(false);
+    } catch (err) {
+      console.error("약관 동의 처리 실패:", err);
+    }
+  };
+  
 
   // 회원가입
   const signup = async ({ email, password, name, phone }) => {

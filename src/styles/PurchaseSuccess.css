@@ -1,0 +1,26 @@
+.purchase-success-container {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .purchase-success-container h2 {
+    font-size: 2rem;
+    color: #2e7d32;
+    margin-bottom: 1rem;
+  }
+  
+  .purchase-success-container p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .go-home-btn {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  
