@@ -1,0 +1,124 @@
+.category-page {
+  display: flex;
+  padding: 3rem 4rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.category-sidebar {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-sidebar button {
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  font-size: 16px;
+  color: #333;
+  border-radius: 10px;
+  text-align: left;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.category-sidebar button:hover,
+.category-sidebar button.active {
+  background-color: #e6f0ff;
+  color: #1e3a8a;
+  transform: translateX(4px);
+}
+
+.product-area {
+  flex: 1;
+  padding-left: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.reset-btn {
+  background-color: #ffffff;
+  color: #111;                /* ✅ 글자 검정색 */
+  border: 1px solid #ccc;     /* ✅ 테두리 검정색 */
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.reset-btn:hover {
+  background-color: #f3f3f3;  /* ✅ 호버 시 살짝 회색 */
+}
+
+
+select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s;
+  text-align: center;
+  cursor: pointer;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.8rem;
+}
+.product-card h3 {
+  font-size: 1rem;
+  margin: 0.4rem 0;
+}
+.product-card p {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.load-more-btn {
+  margin: 2rem auto 0;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: #f0f4ff;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.load-more-btn:hover {
+  background-color: #f5f5f5;
+}

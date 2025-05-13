@@ -1,0 +1,62 @@
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f9f9f9; /* 배경색 */
+  }
+  
+  .auth-box {
+    width: 100%;
+    max-width: 400px; /* 부모 컨테이너의 최대 너비 제한 */
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    position: relative; /* 닫기 버튼 위치를 위해 추가 */
+  }
+  
+  h2 {
+    margin-bottom: 20px;
+  }
+  
+  form input {
+    width: 100%; /* 입력 필드가 부모 컨테이너 너비에 맞게 조정 */
+    max-width: 100%; /* 입력 필드가 부모 컨테이너를 초과하지 않도록 제한 */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box; /* 패딩 포함 크기 계산 */
+  }
+  
+  .submit-btn {
+    width: 100%; /* 버튼도 부모 컨테이너 너비에 맞게 조정 */
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .submit-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .result-message {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #007bff;
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }

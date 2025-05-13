@@ -1,0 +1,103 @@
+.footer {
+  background-color: #1c1c1e; /* 어두운 회색 */
+  color: #ccc;
+  padding: 32px 60px;
+  font-family: 'Inter', sans-serif;
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1000px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 40px;
+  height: 200px;
+}
+
+/* 왼쪽 - 로고 + 약관 */
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer-logo {
+  width: 120px;
+  margin-bottom: 12px;
+  background-color: transparent; /* ✅ 로고 배경 제거 */
+}
+
+.footer-left ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-top: 8px;
+}
+
+.footer-left li {
+  margin-bottom: 6px;
+}
+
+.footer-left a {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 15px;
+}
+.footer-left a:hover {
+  color: white;
+}
+
+/* 오른쪽 전체 Learn / Company / Connect */
+.footer-right {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 60px;
+  margin-left: auto;
+  margin-top: auto;
+  flex: 1;
+}
+
+.footer-section h4 {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #999;
+  font-size: 14px;
+}
+
+.footer-section a {
+  display: block;
+  color: #ccc;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.footer-section a:hover {
+  color: white;
+}
+
+/* 전체 페이지 레이아웃 wrapper */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  background-color: #1c1c1e;
+  color: #ccc;
+  padding: 32px 60px;
+}

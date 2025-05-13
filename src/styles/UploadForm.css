@@ -1,0 +1,61 @@
+/* src/styles/ProductUpload.css */
+.upload-container {
+    margin: 2rem auto;
+    width: 90%;
+    max-width: 700px;
+  }
+  
+  .dropzone {
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    font-size: 1rem;
+  }
+  
+  .preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+  
+  .image-preview {
+    position: relative;
+  }
+  
+  .image-preview img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+  }
+  
+  .image-preview button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .upload-container textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    font-size: 15px;
+    line-height: 1.6;
+    font-family: 'Noto Sans KR', sans-serif;
+    box-sizing: border-box;
+  }
+  

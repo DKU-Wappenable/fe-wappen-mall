@@ -1,0 +1,61 @@
+.mypage-container {
+  padding: 2rem;
+}
+
+.mypage-tabs-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.mypage-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mypage-tabs button {
+  padding: 0.6rem 1.2rem;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.mypage-tabs button:hover {
+  background-color: #ddd;
+}
+
+.mypage-tabs button.active {
+  background-color: #003366;
+  color: white;
+}
+
+/* ✅ 회원 탈퇴 버튼 - 포인트 옆에 정렬 */
+.withdraw-btn {
+  background-color: white;
+  color: #003366;
+  border: 1px solid #003366;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.withdraw-btn:hover {
+  background-color: #003366;
+  color: white;
+}
+
+.mypage-content {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
