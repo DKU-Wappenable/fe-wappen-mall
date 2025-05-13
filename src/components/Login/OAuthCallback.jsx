@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useUser } from "../components/UserContext";
+import { useUser } from "../UserContext";
 
 export default function OAuthCallback() {
   const navigate = useNavigate();

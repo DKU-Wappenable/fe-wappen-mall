@@ -1,57 +1,194 @@
-.home-container {
-  padding: 2rem;
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
+
+html {
+  font-size: 14px; /* 📏 전체 rem 기준 축소 */
 }
 
-.section-title {
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  padding: 0;
+}
+
+.home-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem 2rem;
+}
+
+.home-container {
+  display: flex;
+  gap: 2rem;
+}
+
+.sidebar {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar button {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #333;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.sidebar button:hover {
+  background-color: #e6f0ff;
+  color: #1e3a8a;
+  transform: translateX(4px);
+}
+.sidebar .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #1e3a8a;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.home-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🎨 배너 */
+.banner-slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  scroll-snap-type: x mandatory;
+  margin-bottom: 2.5rem;
+}
+.banner-slide {
+  flex: 0 0 auto;
+  width: 700px;
+  height: 280px;
+  border-radius: 16px;
+  scroll-snap-align: start;
+  overflow: hidden;
+  background-color: #eee;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.banner-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 기존 cta-banner (크기 키움) */
+.cta-banner {
+  background: linear-gradient(135deg, #4e54c8, #8f94fb);
+  color: white;
+  padding: 2.5rem 3rem;
+  border-radius: 20px;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  max-width: 960px;
+  align-self: center;
+}
+.cta-banner h3 {
   font-size: 1.8rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
-
-.empty-message {
+.cta-banner p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+.cta-banner button {
+  margin-top: 1.2rem;
+  background: white;
+  color: #1e3a8a;
+  border: none;
+  padding: 10px 24px;
+  font-weight: 600;
   font-size: 1rem;
-  color: #666;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.cta-banner button:hover {
+  background-color: #f0f4ff;
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+/* 🧱 섹션 타이틀 */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin: 2rem 0 1rem;
+  padding-left: 0.2rem;
+}
+
+/* 🛍 상품 리스트 - 가로 스크롤 */
+.product-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 1.5rem;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1rem;
+}
+.product-scroll .product-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 220px;
 }
 
 .product-card {
+  position: relative;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s;
+  text-align: center;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  min-height: 260px;
 }
-
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
-
 .product-card img {
   width: 100%;
-  height: 180px;
+  height: 160px;
   object-fit: cover;
   border-radius: 12px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 .product-info h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.3rem;
-  color: #333;
+  font-size: 0.95rem;
+  margin: 0.3rem 0;
+  color: #222;
 }
-
 .product-info .price {
   font-weight: bold;
+  font-size: 0.9rem;
   color: #e74c3c;
+}
+
+/* ❤️ 좋아요 버튼 */
+.like-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.like-button:hover {
+  transform: scale(1.15);
 }

@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useUser } from "../components/UserContext";
+import { useUser } from "../UserContext";
 import { toast } from "react-toastify";
-import axiosInstance from "../api/axiosInstance";
-import "../styles/AuthForm.css";
+import axiosInstance from "../../api/axiosInstance";
+import "../../styles/AuthForm.css";
 
 export default function SignupForm() {
   const navigate = useNavigate();
-  const { signup } = useUser();
+  const { signup, setUser } = useUser(); // ✅ setUser 필요 시 포함
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +16,7 @@ export default function SignupForm() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
-  // 이메일 중복 확인
+  // 이메일 중복 확인 (local 테스트용 비워둬도 OK)
   const checkDuplicateEmail = async () => {
     try {
       const res = await axiosInstance.get(`/check-email?email=${email}`);
@@ -48,9 +48,26 @@ export default function SignupForm() {
     }
 
     try {
+      // ✅ 서버 연동 시
+      /*
       await signup({ email, password, name, phone });
-      toast.success("회원가입이 완료되었습니다. 로그인해주세요.");
-      navigate("/login");
+      */
+
+      // ✅ localStorage 테스트용 저장
+      const userData = {
+        email,
+        name,
+        phone,
+        role: "user",
+        termsAccepted: false,
+        linkedSocials: [],
+      };
+
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("access_token", "dummy-token");
+      setUser(userData); // 상태도 반영 (옵션)
+
+      navigate("/signup/complete"); // ✅ 이동!
     } catch (err) {
       setError(err.message || "회원가입 중 오류가 발생했습니다.");
     }

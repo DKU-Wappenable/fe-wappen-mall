@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import '../styles/PurchaseModal.css';
+import '../../styles/PurchaseModal.css';
 
 export default function PurchaseModal({ onClose, onSubmit }) {
   const [step, setStep] = useState(1);

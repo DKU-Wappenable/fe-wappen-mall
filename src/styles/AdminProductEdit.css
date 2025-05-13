@@ -1,0 +1,18 @@
+.edit-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.edit-page-container {
+  max-width: 600px;     /* ✅ 등록 페이지와 같은 폭으로 제한 */
+  margin: 2rem auto;    /* 가운데 정렬 */
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ccc;
+}

@@ -1,8 +1,8 @@
 // React 및 필요한 훅/모듈 import
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // 라우팅 및 링크 이동
-import { useUser } from '../components/UserContext'; // 사용자 컨텍스트
-import '../styles/AuthForm.css'; // 로그인 폼에 대한 스타일시트
+import { useUser } from '../UserContext'; // 사용자 컨텍스트
+import '../../styles/AuthForm.css'; // 로그인 폼에 대한 스타일시트
 
 // LoginForm 컴포넌트 정의
 export default function LoginForm() {

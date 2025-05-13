@@ -1,32 +1,66 @@
-import React from 'react';
-import { useUser } from '../components/UserContext';
+import React, { useState } from 'react';
+import OrderHistory from './mypage/OrderHistory';
+import PendingReviews from './mypage/PendingReviews';
+import AccountSettings from './mypage/AccountSettings';
+import MyReviews from './mypage/MyReviews';
+import PointHistory from './mypage/PointHistory';
+import { Link } from 'react-router-dom';
 import '../styles/MyPage.css';
 
 export default function MyPage() {
-  const { user } = useUser();
+  const [activeTab, setActiveTab] = useState('orders');
 
   return (
-    <div className="my-page-container">
-      <div className="mypage-header">
-        <h1>마이페이지</h1>
-        <p>나의 정보를 확인할 수 있습니다.</p>
+    <div className="mypage-container">
+      <h2>마이페이지</h2>
+
+      <div className="mypage-tabs-wrapper">
+        <div className="mypage-tabs">
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={activeTab === 'orders' ? 'active' : ''}
+          >
+            주문 내역
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={activeTab === 'reviews' ? 'active' : ''}
+          >
+            작성 가능한 리뷰
+          </button>
+          <button
+            onClick={() => setActiveTab('myreviews')}
+            className={activeTab === 'myreviews' ? 'active' : ''}
+          >
+            내 리뷰
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={activeTab === 'settings' ? 'active' : ''}
+          >
+            계정 설정
+          </button>
+          <button
+            onClick={() => setActiveTab('points')}
+            className={activeTab === 'points' ? 'active' : ''}
+          >
+            포인트 내역
+          </button>
+
+          {/* ✅ 포인트 옆에 정렬된 회원 탈퇴 버튼 */}
+          <Link to="/withdraw">
+            <button className="withdraw-btn">회원 탈퇴</button>
+          </Link>
+        </div>
       </div>
 
-      <div className="user-info-section">
-        <h2>내 정보</h2>
-        <div className="info-item">
-          <label>이메일:</label>
-          <span>{user?.email}</span>
-        </div>
-        <div className="info-item">
-          <label>이름:</label>
-          <span>{user?.name}</span>
-        </div>
-        <div className="action-buttons">
-          <button className="action-btn">프로필 수정</button>
-          <button className="action-btn">비밀번호 변경</button>
-        </div>
+      <div className="mypage-content">
+        {activeTab === 'orders' && <OrderHistory />}
+        {activeTab === 'reviews' && <PendingReviews />}
+        {activeTab === 'myreviews' && <MyReviews />}
+        {activeTab === 'settings' && <AccountSettings />}
+        {activeTab === 'points' && <PointHistory />}
       </div>
     </div>
   );
-} 
+}

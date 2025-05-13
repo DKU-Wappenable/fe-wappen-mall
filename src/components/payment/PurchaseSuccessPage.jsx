@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/PurchaseSuccess.css'; // 스타일 따로 분리해도 돼
+import '../../styles/PurchaseSuccess.css'; // 스타일 따로 분리해도 돼
 
 export default function PurchaseSuccessPage() {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import React from "react";
 import ProductUploadForm from "./ProductUploadForm";
-import "../styles/UploadForm.css";
+import "../../styles/UploadForm.css";
 
 export default function ProductUploadPage() {
   return (

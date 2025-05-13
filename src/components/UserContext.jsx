@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
-import TermsModal from "./TermsModal";
+import TermsModal from "./agree/TermsModal.jsx";
 
 export const UserContext = createContext();
 
@@ -9,7 +9,7 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // 로그인 상태 복원
+  // ✅ 초기 로그인 상태 복원
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -22,35 +22,24 @@ export const UserProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  /*
-  // 약관 동의 처리 (서버 반영 포함)
+  // ✅ 약관 동의 처리 (로컬 전용)
   const acceptTerms = async () => {
     try {
-      // 서버에 동의 처리 요청
-      await axiosInstance.put("/users/agree-terms");
       const updatedUser = { ...user, termsAccepted: true };
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setShowTermsModal(false);
-    } catch (err) {
-      console.error("약관 동의 처리 실패:", err);
-    }
-  };
-*/
-  const acceptTerms = async () => {
-    try {
-      // ✅ 백엔드 없이 로컬에서만 동의 처리
-      const updatedUser = { ...user, termsAccepted: true };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setShowTermsModal(false);
-    } catch (err) {
-      console.error("약관 동의 처리 실패:", err);
-    }
-  };
-  
 
-  // 회원가입
+      // ✅ 서버 연동 시
+      /*
+      await axiosInstance.put("/users/agree-terms");
+      */
+    } catch (err) {
+      console.error("약관 동의 처리 실패:", err);
+    }
+  };
+
+  // ✅ 회원가입
   const signup = async ({ email, password, name, phone }) => {
     try {
       const response = await axiosInstance.post("/users/signup", {
@@ -65,14 +54,16 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // 로그인
+  // ✅ 일반 로그인
   const login = async ({ email, password }) => {
-    // 테스트 계정 로그인
+    // ✅ 테스트 계정 로그인
     if (email === "test@example.com" && password === "test1234") {
       const userData = {
         email,
         name: "테스트 유저",
+        role: "admin",
         termsAccepted: false,
+        linkedSocials: ["kakao", "google"] // ✅ 소셜 로그인 해제 버튼 테스트
       };
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
@@ -81,7 +72,7 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
-    // 실제 서버 연동 로그인
+    // ✅ 실제 로그인
     try {
       const response = await axiosInstance.post("/users/login", {
         email,
@@ -90,9 +81,14 @@ export const UserProvider = ({ children }) => {
 
       const { accessToken, user } = response.data;
 
+      const userWithLinked = {
+        ...user,
+        linkedSocials: user.linkedSocials || [], // ✅ 없으면 빈 배열
+      };
+
       localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
+      localStorage.setItem("user", JSON.stringify(userWithLinked));
+      setUser(userWithLinked);
 
       if (!user.termsAccepted) {
         setShowTermsModal(true);
@@ -102,8 +98,8 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // 소셜 로그인 (토큰으로 사용자 정보 요청)
-  const socialLogin = async (accessToken) => {
+  // ✅ 소셜 로그인 (provider까지 받음)
+  const socialLogin = async (accessToken, provider) => {
     try {
       const res = await axiosInstance.get("/users/me", {
         headers: {
@@ -111,7 +107,10 @@ export const UserProvider = ({ children }) => {
         },
       });
 
-      const userData = res.data;
+      const userData = {
+        ...res.data,
+        linkedSocials: res.data.linkedSocials || [provider], // ✅ 없으면 현재 provider라도 넣기
+      };
 
       setUser(userData);
       localStorage.setItem("access_token", accessToken);
@@ -125,7 +124,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // 로그아웃
+  // ✅ 로그아웃
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
@@ -136,7 +135,16 @@ export const UserProvider = ({ children }) => {
 
   return (
     <UserContext.Provider
-      value={{ user, signup, login, logout, acceptTerms, socialLogin }}
+      value={{
+        user,
+        setUser, // ✅ 저장 반영 가능하게 추가됨
+        signup,
+        login,
+        logout,
+        acceptTerms,
+        socialLogin,
+        isLoggedIn: !!user,
+      }}
     >
       {children}
       {showTermsModal && <TermsModal onAgree={acceptTerms} />}

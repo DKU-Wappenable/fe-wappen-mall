@@ -98,27 +98,6 @@ export default function MyWappens() {
           ))}
         </div>
       )}
-
-      {/* ✅ 관리자 상품 등록 페이지 이동 버튼 */}
-      {user?.email === 'test@example.com' && (
-        <button
-          onClick={() => navigate('/admin/upload')}
-          className="admin-btn"
-          style={{
-            marginTop: '2rem',
-            display: 'block',
-            padding: '12px 24px',
-            fontSize: '1rem',
-            borderRadius: '8px',
-            backgroundColor: '#222',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          🛒 관리자 상품 등록 페이지
-        </button>
-      )}
     </div>
   );
 }

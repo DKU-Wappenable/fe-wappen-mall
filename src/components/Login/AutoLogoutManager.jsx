@@ -1,6 +1,6 @@
 // 필요한 라이브러리 import
 import { useEffect } from "react";
-import { useUser } from "./UserContext";  // 사용자 상태 관리를 위한 커스텀 훅
+import { useUser } from "../UserContext";  // 사용자 상태 관리를 위한 커스텀 훅
 import { toast } from "react-toastify";   // 알림 메시지 표시 라이브러리
 import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 훅
 

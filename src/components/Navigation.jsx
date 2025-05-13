@@ -1,45 +1,120 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useUser } from '../components/UserContext';
+// import axiosInstance from '../api/axiosInstance'; // ← 서버 연동 시 사용
+import '../styles/Navigation.css';
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // 라우팅 처리를 위한 훅과 컴포넌트 import
-import { useUser } from '../components/UserContext'; // 사용자 정보 및 로그아웃 함수 사용
-import '../styles/Navigation.css'; // 네비게이션 스타일 import
-
-// Navigation 컴포넌트: 상단 네비게이션 바 UI 및 로직 정의
 export default function Navigation() {
-  const { user, logout } = useUser(); // 현재 로그인된 사용자 정보 및 로그아웃 함수 가져오기
-  const navigate = useNavigate(); // 페이지 이동을 위한 navigate 함수
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // 로그아웃 버튼 클릭 시 실행되는 함수
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const [searchText, setSearchText] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const keyword = params.get('keyword') || '';
+    setSearchText(keyword); // ✅ 검색어 유지
+  }, [location.search]);
+
   const handleLogout = () => {
-    logout(); // 로그아웃 처리
-    navigate('/'); // 홈으로 이동
+    logout();
+    navigate('/');
+  };
+
+  const handleUnlink = (provider) => {
+    alert(`${provider} 연동 해제됨 (local only)`);
+    // await axiosInstance.delete(`/api/users/link/${provider}`);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!searchText.trim()) return;
+    navigate(`/products?keyword=${encodeURIComponent(searchText.trim())}`);
+  };
+
+  const clearSearch = () => {
+    setSearchText('');
+    navigate('/products'); // ✅ 검색 초기화
   };
 
   return (
-    <nav className="nav-container">
-      {/* 좌측 로고 영역 */}
-      <div className="nav-left">
-        <Link to="/" className="nav-logo">WAPPENABLE</Link>
-      </div>
+    <header className="nav-wrapper">
+      <div className="nav-container">
+        <Link to="/" className="nav-logo">Wappenable</Link>
 
-      {/* 우측 네비게이션 링크 영역 */}
-      <div className="nav-right">
-        {user ? (
-          // 로그인된 경우 보이는 메뉴들
-          <>
-            <Link to="/wappen-customize" className="nav-link">와펜 만들기</Link>
-            <Link to="/my-wappens" className="nav-link">내 와펜</Link>
-            <Link to="/my-page" className="nav-link">마이페이지</Link>
-            <button onClick={handleLogout} className="nav-link logout-btn">로그아웃</button>
-          </>
-        ) : (
-          // 비로그인 상태일 때 보이는 메뉴들
-          <>
-            <Link to="/login" className="nav-link">로그인</Link>
-            <Link to="/signup" className="nav-link">회원가입</Link>
-          </>
-        )}
+        <div className="nav-search">
+  <form onSubmit={handleSearch} className="nav-search-form">
+    <span className="material-icons search-icon">search</span>
+    <input
+      type="text"
+      value={searchText}
+      onChange={(e) => setSearchText(e.target.value)}
+      placeholder="검색어 입력"
+      className="nav-search-input"
+    />
+    {searchText && (
+      <button
+        type="button"
+        className="clear-btn"
+        onClick={() => setSearchText('')}
+        aria-label="검색어 초기화"
+      >
+        <span className="material-icons">close</span>
+      </button>
+    )}
+
+  </form>
+</div>
+
+
+        <div className="nav-right">
+          
+
+          <Link to="/like" className="nav-icon heart-icon">
+            <img src="/assets/icons/heart.png" alt="좋아요" className="nav-img-icon" />
+          </Link>
+
+          <Link to="/cart" className="nav-icon cart-icon">
+            <img src="/assets/icons/cart.png" alt="장바구니" className="nav-img-icon" />
+          </Link>
+
+          <div className="nav-user" ref={dropdownRef}>
+            <img
+              src="/assets/icons/user.png"
+              alt="User"
+              className="nav-img-icon user-avatar"
+              onClick={() => setShowDropdown(prev => !prev)}
+            />
+
+            {showDropdown && (
+              <div className="dropdown-menu">
+                {user ? (
+                  <>
+                    <Link to="/my-page" onClick={() => setShowDropdown(false)}>마이페이지</Link>
+                    <Link to="/wappen-customize" onClick={() => setShowDropdown(false)}>와펜 만들기</Link>
+                    <Link to="/my-wappens" onClick={() => setShowDropdown(false)}>내 와펜</Link>
+                    {user.linkedSocials?.map(provider => (
+                      <button key={provider} onClick={() => handleUnlink(provider)}>{provider} 연동 해제</button>
+                    ))}
+                    {user.role === 'admin' && (
+                      <Link to="/admin" onClick={() => setShowDropdown(false)}>관리자 대시보드</Link>
+                    )}
+                    <button onClick={handleLogout}>로그아웃</button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setShowDropdown(false)}>로그인</Link>
+                    <Link to="/signup" onClick={() => setShowDropdown(false)}>회원가입</Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }

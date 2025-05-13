@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import "../styles/TermsModal.css";
+import "../../styles/TermsModal.css";
 
 export default function TermsModal({ onAgree }) {
   const [checked, setChecked] = useState({
