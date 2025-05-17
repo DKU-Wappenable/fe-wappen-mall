@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/AdminProductList.css';
+import deleteProductEverywhere from '../../api/deleteProductEverywhere';
 
 export default function AdminProductList() {
   const [products, setProducts] = useState([]);
@@ -13,8 +14,9 @@ export default function AdminProductList() {
   const handleDelete = (id) => {
     if (!window.confirm('이 상품을 삭제하시겠습니까?')) return;
     const updated = products.filter(p => p.id !== id);
-    localStorage.setItem('products', JSON.stringify(updated));
     setProducts(updated);
+    localStorage.setItem('products', JSON.stringify(updated));
+    deleteProductEverywhere(id);
   };
 
   return (

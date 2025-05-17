@@ -7,10 +7,11 @@ export default function PendingReviews() {
   const [ratings, setRatings] = useState({});
 
   useEffect(() => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const pending = orders.filter(order => !order.reviewed);
-    setReviews(pending);
-  }, []);
+  const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+  const pending = orders.filter(order => !order.reviewed);
+  setReviews(pending);
+}, []);
+
 
   const handleChangeText = (id, value) => {
     setInputs(prev => ({ ...prev, [id]: value }));
@@ -96,6 +97,6 @@ export default function PendingReviews() {
           </li>
         ))}
       </ul>
-    </div>
-  );
+      </div>
+    );
 }

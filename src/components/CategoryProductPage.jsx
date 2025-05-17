@@ -1,7 +1,8 @@
+// ✅ CategoryProductPage.jsx - 중복 허용 및 uniqueKey 사용 + 서버 연동 주석 포함 버전
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-// import axiosInstance from '../api/axiosInstance';
 import '../styles/CategoryProductPage.css';
+// import axiosInstance from '../api/axiosInstance'; // ✅ 서버 연동 시
 
 export default function CategoryProductPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,8 +14,8 @@ export default function CategoryProductPage() {
   const navigate = useNavigate();
 
   const categoryList = [
-    '전체', '의류', '굿즈', '패션잡화', '쿠션/패브릭', '문구/오피스',
-    '폰액세서리', '스티커/지류', '리빙', '스포츠', '키즈', '애견', '역자', '디지털/테크'
+    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'
   ];
 
   useEffect(() => {
@@ -24,40 +25,57 @@ export default function CategoryProductPage() {
     setCategory(cat);
     setSortBy(sort);
 
-    const all = JSON.parse(localStorage.getItem('products') || '[]');
+    let all = [];
+
+    if (cat === '유저디자인') {
+      all = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+        ...d,
+        name: d.title || '',
+        price: 500 + 500 * (d.wappens?.length || 0),
+        images: [d.image || '/assets/default.png'],
+        category: '유저디자인',
+        description: d.description || '',
+        createdAt: d.createdAt || new Date().toISOString(),
+        uniqueKey: `${d.id}-${index}`
+      }));
+    } else {
+      all = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
+        ...p,
+        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+        category: p.category || '',
+        uniqueKey: `${p.id}-${index}`
+      }));
+    }
+
     setAllProducts(all);
 
     const filtered = all.filter(p => {
       const matchCat = cat === '전체' || p.category === cat;
-      const matchKeyword = p.name.toLowerCase().includes(keyword.toLowerCase());
+      const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
       return matchCat && matchKeyword;
     });
 
     const sorted = [...filtered].sort((a, b) => {
-      return sort === '가격순'
-        ? a.price - b.price
-        : new Date(b.createdAt) - new Date(a.createdAt);
+      if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
     setProducts(sorted);
+
+    // ✅ 서버 연동 시
+    /*
+    axiosInstance.get('/products', { params: { category: cat, keyword, sort } })
+      .then(res => setProducts(res.data))
+      .catch(err => console.error('상품 불러오기 실패:', err));
+    */
   }, [searchParams]);
 
   const handleCategoryClick = (cat) => {
-    setSearchParams(prev => {
-      return {
-        ...Object.fromEntries(prev.entries()),
-        category: cat,
-      };
-    });
+    setSearchParams({ ...Object.fromEntries(searchParams.entries()), category: cat });
   };
 
   const handleSortChange = (e) => {
-    setSearchParams(prev => {
-      return {
-        ...Object.fromEntries(prev.entries()),
-        sort: e.target.value,
-      };
-    });
+    setSearchParams({ ...Object.fromEntries(searchParams.entries()), sort: e.target.value });
   };
 
   const handleResetSearch = () => {
@@ -103,13 +121,17 @@ export default function CategoryProductPage() {
             <div className="product-grid">
               {products.slice(0, visibleCount).map((p) => (
                 <div
-                  key={p.id}
+                  key={p.uniqueKey}
                   className="product-card"
-                  onClick={() => navigate(`/product/${p.id}`)}
+                  onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
                 >
-                  <img src={p.images?.[0]} alt={p.name} />
+                  <img
+                    src={p.images?.[0] || '/assets/default.png'}
+                    alt={p.name}
+                    onError={(e) => (e.target.src = '/assets/default.png')}
+                  />
                   <h3>{p.name}</h3>
-                  <p>₩{p.price.toLocaleString()}</p>
+                  <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}
             </div>

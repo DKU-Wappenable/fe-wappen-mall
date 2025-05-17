@@ -63,7 +63,7 @@ export const UserProvider = ({ children }) => {
         name: "테스트 유저",
         role: "admin",
         termsAccepted: false,
-        linkedSocials: ["kakao", "google"] // ✅ 소셜 로그인 해제 버튼 테스트
+        linkedSocials: ["kakao", "google","naver"] // ✅ 소셜 로그인 해제 버튼 테스트
       };
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));

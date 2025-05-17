@@ -1,8 +1,7 @@
-// Home.jsx
+// ✅ Home.jsx 수정 완료 버전
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
-// import axiosInstance from '../api/axiosInstance';
 import '../styles/Home.css';
 
 export default function Home() {
@@ -14,45 +13,60 @@ export default function Home() {
   const { user } = useUser();
 
   const categories = [
-    '전체', '의류', '굿즈', '패션잡화', '쿠션/패브릭', '문구/오피스',
-    '폰액세서리', '스티커/지류', '리빙', '스포츠', '키즈', '애견', '역자', '디지털/테크'
+    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'
   ];
 
+  const loadProducts = () => {
+    const official = JSON.parse(localStorage.getItem('products') || '[]');
+    const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
+      ...d,
+      name: d.title,
+      images: [d.image],
+      category: '유저디자인',
+      createdAt: d.createdAt || new Date().toISOString(),
+      __source: 'shared',
+      uniqueKey: `${d.id}-${d.author}` // ✅ 중복 허용 구분용
+    }));
+
+    const merged = [...official, ...shared];
+
+    const sanitized = merged.map(p => ({
+      ...p,
+      images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+      uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
+    }));
+
+    setProducts(sanitized);
+    setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
+    setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+  };
+
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('products') || '[]');
-    const likedStored = JSON.parse(localStorage.getItem('liked') || '[]');
-    setProducts(stored);
-    setLiked(likedStored);
+    loadProducts();
+    setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
 
-    const sortedByLike = [...stored].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-    const sortedByDate = [...stored].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    setPopular(sortedByLike.slice(0, 4));
-    setNewItems(sortedByDate.slice(0, 4));
-
-    // 서버 연동 예시
-    /*
-    const fetchData = async () => {
-      const resAll = await axiosInstance.get('/api/products');
-      setProducts(resAll.data.content);
-      const resLike = await axiosInstance.get('/api/products?sortBy=likes&size=4');
-      const resNew = await axiosInstance.get('/api/products?sortBy=createdAt&size=4');
-      setPopular(resLike.data.content);
-      setNewItems(resNew.data.content);
-      const resLiked = await axiosInstance.get('/api/likes');
-      setLiked(resLiked.data);
+    const handleStorageChange = (e) => {
+      if (["products", "sharedWappens", "liked"].includes(e.key)) {
+        loadProducts();
+        setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
+      }
     };
-    fetchData();
-    */
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const toggleLike = (product) => {
-    const exists = liked.some(p => p.id === product.id);
-    const updated = exists ? liked.filter(p => p.id !== product.id) : [product, ...liked];
-    setLiked(updated);
+    const current = JSON.parse(localStorage.getItem('liked') || '[]');
+    const exists = current.some(p => p.uniqueKey === product.uniqueKey);
+    const updated = exists
+      ? current.filter(p => p.uniqueKey !== product.uniqueKey)
+      : [{ ...product }, ...current];
     localStorage.setItem('liked', JSON.stringify(updated));
+    setLiked(updated);
   };
 
-  const isLiked = (id) => liked.some(p => p.id === id);
+  const isLiked = (uniqueKey) => liked.some(p => p.uniqueKey === uniqueKey);
   const handleCategoryClick = (cat) => navigate(`/products?category=${cat}`);
 
   const handleStartClick = () => {
@@ -65,14 +79,15 @@ export default function Home() {
   };
 
   const renderProductCard = (p) => (
-    <div key={p.id} className="product-card" onClick={() => navigate(`/product/${p.id}`)}>
-      <img src={p.images?.[0]} alt={p.name} />
+    <div key={p.uniqueKey} className="product-card" onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}>
+      <img src={p.images?.[0] || '/assets/default.png'} alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
       <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(p); }}>
-        {isLiked(p.id) ? '💖' : '🤍'}
+        {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>
       <div className="product-info">
         <h3>{p.name}</h3>
-        <p className="price">₩{p.price.toLocaleString()}</p>
+        {p.nickname && <p className="creator">by {p.nickname}</p>}
+        <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
       </div>
     </div>
   );
@@ -83,7 +98,7 @@ export default function Home() {
         <aside className="sidebar">
           {categories.map(cat => (
             <button key={cat} onClick={() => handleCategoryClick(cat)}>
-              <span className="dot" /> {cat}
+              <span>• {cat}</span>
             </button>
           ))}
         </aside>

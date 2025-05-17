@@ -44,7 +44,7 @@ import TermsOfService from './components/Footer/TermsOfService';
 import PrivacyPolicy from './components/Footer/PrivacyPolicy';
 import LikedProductsPage from './components/LikedProductsPage.jsx';
 import CategoryProductPage from './components/CategoryProductPage';
-
+import AccountSettings from './components/mypage/AccountSettings.jsx';
 
 function ProtectedRoute({ children }) {
   const { user } = useUser();
@@ -97,6 +97,7 @@ function App() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path ="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
           <Route path="/products" element={<CategoryProductPage />} />
+          <Route path ="/account-settings" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         </Routes>
       </main>
 

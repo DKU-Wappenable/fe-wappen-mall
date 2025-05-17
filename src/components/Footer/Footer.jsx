@@ -25,7 +25,7 @@ export default function Footer() {
 
           <div className="footer-section">
             <h4>Company</h4>
-            <a href="/careers">Careers</a>
+            <a href="/careers">Team</a>
             <a href="/help">Help Center</a>
             <a href="/subscribe">Subscribe</a>
           </div>

@@ -91,25 +91,24 @@ export default function Navigation() {
 
             {showDropdown && (
               <div className="dropdown-menu">
-                {user ? (
-                  <>
-                    <Link to="/my-page" onClick={() => setShowDropdown(false)}>마이페이지</Link>
-                    <Link to="/wappen-customize" onClick={() => setShowDropdown(false)}>와펜 만들기</Link>
-                    <Link to="/my-wappens" onClick={() => setShowDropdown(false)}>내 와펜</Link>
-                    {user.linkedSocials?.map(provider => (
-                      <button key={provider} onClick={() => handleUnlink(provider)}>{provider} 연동 해제</button>
-                    ))}
-                    {user.role === 'admin' && (
-                      <Link to="/admin" onClick={() => setShowDropdown(false)}>관리자 대시보드</Link>
-                    )}
-                    <button onClick={handleLogout}>로그아웃</button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setShowDropdown(false)}>로그인</Link>
-                    <Link to="/signup" onClick={() => setShowDropdown(false)}>회원가입</Link>
-                  </>
-                )}
+               {user ? (
+            <>
+              <Link to="/my-page" onClick={() => setShowDropdown(false)}>마이페이지</Link>
+              <Link to="/wappen-customize" onClick={() => setShowDropdown(false)}>와펜 만들기</Link>
+              <Link to="/my-wappens" onClick={() => setShowDropdown(false)}>내 와펜</Link>
+              <Link to="/account-settings" onClick={() => setShowDropdown(false)}>계정 설정</Link> {/* ✅ 추가 */}
+              {user.role === 'admin' && (
+                <Link to="/admin" onClick={() => setShowDropdown(false)}>관리자 대시보드</Link>
+              )}
+              <button onClick={handleLogout}>로그아웃</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={() => setShowDropdown(false)}>로그인</Link>
+              <Link to="/signup" onClick={() => setShowDropdown(false)}>회원가입</Link>
+            </>
+          )}
+
               </div>
             )}
           </div>

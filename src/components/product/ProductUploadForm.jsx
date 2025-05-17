@@ -8,8 +8,8 @@ export default function ProductUploadForm() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [imageFiles, setImageFiles] = useState([]); // ✅ 서버 전송용 파일
 
-  const categoryOptions = ['전체', '의류', '굿즈', '패션잡화', '쿠션/패브릭', '문구/오피스',
-    '폰액세서리', '스티커/지류', '리빙', '스포츠', '키즈', '애견', '역자', '디지털/테크'];
+  const categoryOptions = ['전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'];
 
   const formik = useFormik({
     initialValues: {

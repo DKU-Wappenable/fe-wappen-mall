@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import axios from '../api/axiosInstance'; // ✅ 서버 연동용
+// import axiosInstance from '../api/axiosInstance'; // 📝 서버 연동 시 사용
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -8,23 +8,16 @@ export default function CartPage() {
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('cart') || '[]');
-
-    // ✅ 최신 상품 가격 동기화
     const products = JSON.parse(localStorage.getItem('products') || '[]');
     const synced = saved.map(item => {
       const updated = products.find(p => p.id === item.product.id);
       return updated ? { ...item, product: updated } : item;
     });
-
     setCartItems(synced);
     localStorage.setItem('cart', JSON.stringify(synced));
 
-    // ✅ 서버 연동 시
-    /*
-    axios.get('/cart')
-      .then(res => setCartItems(res.data))
-      .catch(err => console.error('장바구니 불러오기 실패', err));
-    */
+    // 📝 서버 연동 시:
+    // axiosInstance.get('/cart').then(res => setCartItems(res.data));
   }, []);
 
   const updateQuantity = (id, amount) => {
@@ -34,12 +27,8 @@ export default function CartPage() {
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));
 
-    // ✅ 서버 연동 시
-    /*
-    axios.put(`/cart/${id}`, { quantity: newQty })
-      .then(() => ...)
-      .catch(err => console.error('수량 수정 실패', err));
-    */
+    // 📝 서버 연동 시:
+    // axiosInstance.put(`/cart/${id}`, { quantity: newQty });
   };
 
   const removeItem = (id) => {
@@ -47,12 +36,8 @@ export default function CartPage() {
     setCartItems(filtered);
     localStorage.setItem('cart', JSON.stringify(filtered));
 
-    // ✅ 서버 연동 시
-    /*
-    axios.delete(`/cart/${id}`)
-      .then(() => ...)
-      .catch(err => console.error('삭제 실패', err));
-    */
+    // 📝 서버 연동 시:
+    // axiosInstance.delete(`/cart/${id}`);
   };
 
   const handleCheckout = () => {
@@ -67,22 +52,18 @@ export default function CartPage() {
       createdAt: new Date().toISOString(),
     }));
 
-    // ✅ localStorage에 주문 저장
     const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
     localStorage.setItem('orders', JSON.stringify([...orders, ...prevOrders]));
     localStorage.removeItem('cart');
-
-    // ✅ 서버 연동 시
-    /*
-    axios.post('/orders/bulk', orders)
-      .then(() => {
-        axios.delete('/cart/clear');
-        navigate('/order/complete');
-      })
-      .catch(err => console.error('결제 실패', err));
-    */
-
     navigate('/order/form', { state: { fromCart: true, items: cartItems } });
+
+    // 📝 서버 연동 시:
+    /*
+    axiosInstance.post('/orders/bulk', orders).then(() => {
+      axiosInstance.delete('/cart/clear');
+      navigate('/order/complete');
+    }).catch(err => console.error(err));
+    */
   };
 
   const totalPrice = cartItems.reduce(

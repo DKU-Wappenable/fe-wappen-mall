@@ -192,3 +192,13 @@ body {
 .like-button:hover {
   transform: scale(1.15);
 }
+button {
+  white-space: nowrap;     /* 줄바꿈 방지 */
+  overflow: hidden;
+  text-overflow: ellipsis; /* 필요시 말줄임 */
+}
+.product-info .author {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}

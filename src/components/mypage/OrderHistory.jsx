@@ -39,8 +39,9 @@ export default function OrderHistory() {
   };
 
   const filteredOrders = activeTab === 'active'
-    ? orders.filter(order => order.status !== '취소됨')
-    : orders.filter(order => order.status === '취소됨');
+  ? orders.filter(order => order.status !== '취소됨')
+  : orders.filter(order => order.status === '취소됨');
+
 
   return (
     <div>

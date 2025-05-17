@@ -1,74 +1,55 @@
-import React, { useEffect, useState, useContext } from 'react';
+// ✅ ProductDetailPage.jsx - 수량 조절 + 장바구니 중복 방지 + 결제 버튼 추가 + 서버 연동 주석 포함
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from '../../api/axiosInstance';
-import { UserContext } from '../UserContext';
+// import axiosInstance from '../../api/axiosInstance'; // 📝 서버 연동 시 사용
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isLoggedIn } = useContext(UserContext);
-
   const [product, setProduct] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [myReviews, setMyReviews] = useState([]);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    // ✅ 서버 연동 (주석 처리)
-    // axios.get(`/products/${id}`).then(res => setProduct(res.data));
-
     const products = JSON.parse(localStorage.getItem('products') || '[]');
-    const found = products.find(p => p.id === id);
-    setProduct(found);
+    const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+    const merged = [...products, ...shared];
+    const found = merged.find(p => String(p.id) === String(id));
+    if (found) {
+      setProduct({
+        ...found,
+        images: found.images?.length ? found.images : [found.image || '/assets/default.png']
+      });
+    }
   }, [id]);
 
-  useEffect(() => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const allReviews = orders
-      .filter(order => order.product?.id?.toString() === id.toString() && order.reviewed && order.review)
-      .map(order => ({
-        id: order.id,
-        rating: order.review.rating,
-        content: order.review.content,
-        createdAt: order.createdAt,
-        email: order.email || order.userId || '', // local 기준
-      }));
-
-    setReviews(allReviews);
-
-    if (isLoggedIn) {
-      const mine = allReviews.filter(r => r.email === user?.email);
-      setMyReviews(mine);
-    }
-  }, [id, isLoggedIn, user]);
-
-  const goToOrder = () => {
-    if (!isLoggedIn) {
-      alert('로그인 후 이용 가능합니다.');
-      navigate('/login');
-      return;
-    }
-    navigate('/order/form', { state: { product } });
+  const handleQuantityChange = (delta) => {
+    setQuantity(prev => Math.max(1, prev + delta));
   };
 
-  const addToCart = () => {
-    if (!isLoggedIn) {
-      alert('로그인 후 이용 가능합니다.');
-      navigate('/login');
-      return;
+  const handleAddToCart = () => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existing = cart.find(item => item.product.id === product.id);
+    let updated;
+
+    if (existing) {
+      updated = cart.map(item =>
+        item.product.id === product.id
+          ? { ...item, quantity: item.quantity + quantity }
+          : item
+      );
+    } else {
+      updated = [{ id: Date.now(), product, quantity }, ...cart];
     }
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const item = { id: Date.now(), product, quantity: 1 };
-    localStorage.setItem('cart', JSON.stringify([item, ...cart]));
-
-    // ✅ 서버 연동
-    /*
-    axios.post('/cart', item)
-      .then(() => alert('장바구니에 담았습니다!'))
-      .catch(err => console.error('장바구니 추가 실패', err));
-    */
-
+    localStorage.setItem('cart', JSON.stringify(updated));
     alert('장바구니에 담았습니다!');
+
+    // 📝 서버 연동 시:
+    // axiosInstance.post('/cart', { productId: product.id, quantity });
+  };
+
+  const handleBuyNow = () => {
+    navigate('/order/form', { state: { product, quantity } });
   };
 
   if (!product) return <div style={{ padding: '2rem' }}>상품 정보를 찾을 수 없습니다.</div>;
@@ -76,77 +57,45 @@ export default function ProductDetailPage() {
   return (
     <div style={{ padding: '2rem' }}>
       <h2>{product.name}</h2>
-      <p>{product.description}</p>
-      <p>가격: {product.price.toLocaleString()}원</p>
-      <p>재고: {product.stock}개</p>
+      <img
+        src={product.images[0]}
+        alt={product.name}
+        style={{ width: '300px', height: '300px', objectFit: 'contain', borderRadius: '8px' }}
+        onError={(e) => (e.target.src = '/assets/default.png')}
+      />
+      <p>{product.description || '설명 없음'}</p>
+      {product.nickname && <p>by {product.nickname}</p>}
+      <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        {product.images?.map((img, i) => (
-          <img key={i} src={img} alt={`product-${i}`} style={{ width: '150px' }} />
-        ))}
+      {/* 수량 조절 */}
+      <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button onClick={() => handleQuantityChange(-1)}>➖</button>
+        <span>{quantity}</span>
+        <button onClick={() => handleQuantityChange(1)}>➕</button>
       </div>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <button
-          onClick={goToOrder}
-          style={{
-            padding: '0.8rem 2rem',
-            backgroundColor: '#003366',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            marginRight: '1rem'
-          }}
-        >
-          결제하기
-        </button>
-        <button
-          onClick={addToCart}
-          style={{
-            padding: '0.8rem 2rem',
-            backgroundColor: '#003366',
-            border: '1px solid #aaa',
-            color: '#fff',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
+      {/* 장바구니 / 결제 버튼 */}
+      <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+        <button onClick={handleAddToCart} style={{ padding: '0.6rem 1.5rem',
+        backgroundColor: '#fff',
+        color: '#111',
+        cursor: 'pointer',
+        borderRadius: '6px',
+        border: '1px solid #aaa',
+         }}>
           🛒 장바구니 담기
         </button>
+        <button onClick={handleBuyNow} style={{ 
+        padding: '0.6rem 1.5rem', 
+        backgroundColor: '#e8fff1', 
+        border: '1px solid #28a745',
+        color: '#111',
+        cursor: 'pointer',
+
+         }}>
+          💳 결제하기
+        </button>
       </div>
-
-      <hr />
-
-      <h3>리뷰</h3>
-      {reviews.length === 0 ? (
-        <p>아직 작성된 리뷰가 없습니다.</p>
-      ) : (
-        <ul>
-          {reviews.map((r) => (
-            <li key={r.id} style={{ marginBottom: '1rem' }}>
-              <p>{'⭐'.repeat(r.rating)} ({r.rating}점)</p>
-              <p>{r.content}</p>
-              <small style={{ color: '#777' }}>{new Date(r.createdAt).toLocaleDateString()}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {isLoggedIn && myReviews.length > 0 && (
-        <>
-          <h4>🧍‍♀️ 내가 작성한 리뷰</h4>
-          <ul>
-            {myReviews.map((r) => (
-              <li key={r.id} style={{ marginBottom: '1rem' }}>
-                <p>{'⭐'.repeat(r.rating)} ({r.rating}점)</p>
-                <p>{r.content}</p>
-                <small style={{ color: '#777' }}>{new Date(r.createdAt).toLocaleDateString()}</small>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
     </div>
   );
 }

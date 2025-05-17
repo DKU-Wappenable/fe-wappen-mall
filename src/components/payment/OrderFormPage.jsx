@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useUser } from '../../components/UserContext';
 import '../../styles/OrderFormPage.css';
 
 export default function OrderFormPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
 
-  const isCartOrder = state?.items && Array.isArray(state.items); // 🛒 장바구니 결제 여부
+  const isCartOrder = state?.items && Array.isArray(state.items);
   const [items, setItems] = useState([]);
 
   const [form, setForm] = useState({
@@ -38,7 +40,6 @@ export default function OrderFormPage() {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // 단일 상품일 경우 수량 변경 시 반영
     if (!isCartOrder && name === 'quantity') {
       setItems([{ product: state.product, quantity: Number(value) }]);
     }
@@ -72,6 +73,7 @@ export default function OrderFormPage() {
         buyer,
         formData: form,
         discount,
+        userEmail: user?.email || form.email // 🧠 사용자 이메일 전달
       },
     });
   };
@@ -115,7 +117,6 @@ export default function OrderFormPage() {
               <option value="카카오페이">카카오페이</option>
               <option value="토스">토스</option>
               <option value="무통장입금">무통장 입금</option>
-              <option value="네이버페이">네이버페이</option>
             </select>
 
             {!isCartOrder && (
@@ -206,3 +207,4 @@ export default function OrderFormPage() {
     </div>
   );
 }
+      

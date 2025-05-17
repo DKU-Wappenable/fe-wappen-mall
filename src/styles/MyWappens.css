@@ -1,94 +1,135 @@
-.my-wappens-container {
-  max-width: 1200px;
-  margin: 80px auto 0;
-  padding: 20px;
+/* MyWappens.css */
+
+.my-wappens-wrapper {
+  padding: 40px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
-.my-wappens-container h2 {
-  margin-bottom: 24px;
+.my-wappens-title {
   font-size: 24px;
-  color: #333;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #222;
 }
 
 .no-wappens {
   text-align: center;
   padding: 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.no-wappens p {
   color: #666;
-  margin-bottom: 20px;
 }
 
 .create-btn {
+  margin-top: 16px;
+  padding: 10px 20px;
+  font-size: 14px;
   background: #265383;
   color: white;
   border: none;
-  padding: 12px 24px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
 }
-
 .create-btn:hover {
-  background: #265383;
+  background: #1c3e5d;
 }
 
-.wappens-grid {
+.my-wappens-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
 }
 
-.wappen-card {
+.my-wappen-card {
   background: white;
-  border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.wappen-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.wappen-preview {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  gap: 12px;
+}
+
+.my-wappen-card h5 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.my-wappen-preview {
+  width: 100%;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 핵심: 저장된 와펜 이미지 비율과 동일하게 맞춤 */
+  aspect-ratio: 1 / 2;
+  max-height: 600px;  /* or 제거 가능 */
+}
+.my-wappen-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.fallback-wappen {
+  transform: scale(0.7);
+  transform-origin: top center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+
+.fallback-strap {
+  position: absolute;
+  left: 90px;
+  top: 100px;
+  width: 120px;
+  height: 300px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.fallback-wappen-img {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wappen-label {
+  font-size: 14px;
+  color: #555;
 }
 
 .wappen-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .created-at {
   font-size: 12px;
-  color: #666;
+  color: #999;
 }
 
 .delete-btn {
-  background: #ff4444;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #f44336;
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
-  transition: background 0.2s;
 }
-
 .delete-btn:hover {
-  background: #cc0000;
-} 
+  background: #d32f2f;
+}

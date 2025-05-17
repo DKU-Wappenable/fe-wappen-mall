@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from '../../api/axiosInstance';
 import { useUser } from '../UserContext';
 import '../../styles/AccountSettings.css';
+// import axios from '../../api/axiosInstance'; // ✅ 서버 연동 시
 
 export default function AccountSettings() {
   const { user, setUser } = useUser();
@@ -52,14 +52,13 @@ export default function AccountSettings() {
       ...(form.password ? { password: form.password } : {}),
     };
 
-    // ✅ 로컬 저장 및 상태 업데이트
     localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
     setSaved(true);
 
     // ✅ 서버 연동 시
     /*
-    axios.put('/users/me', updatedUser)
+    axios.put('/api/users/me', updatedUser)
       .then(res => {
         setUser(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
@@ -72,7 +71,6 @@ export default function AccountSettings() {
     */
   };
 
-  // ✅ 소셜 연동 해제
   const socialNames = {
     kakao: '카카오',
     naver: '네이버',
@@ -85,7 +83,7 @@ export default function AccountSettings() {
 
     const updatedUser = {
       ...user,
-      linkedSocials: user.linkedSocials?.filter((p) => p !== provider),
+      linkedSocials: user.linkedSocials?.filter(p => p !== provider),
     };
 
     localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -132,24 +130,28 @@ export default function AccountSettings() {
       <button onClick={handleSave}>정보 저장</button>
       {saved && <p className="success-msg">정보가 저장되었습니다!</p>}
 
-      {/* ✅ 소셜 로그인 연동 해제 */}
+      {/* ✅ 연결된 소셜 계정 표시 */}
       {user.linkedSocials && user.linkedSocials.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h4>🔗 연결된 소셜 계정</h4>
-          <ul>
+        <div className="social-unlink-section">
+          <h4>연결된 소셜 계정</h4>
+          <ul className="social-unlink-list">
             {user.linkedSocials.map((provider) => (
-              <li key={provider} style={{ marginBottom: '0.5rem' }}>
-                {socialNames[provider]} 계정
+              <li key={provider} className="social-item">
+                <div className="social-info">
+                  <img
+                    src={`/assets/${provider}_icon.png`}
+                    alt={`${provider} 아이콘`}
+                    className="social-icon"
+                  />
+                  <span>
+                    {provider === 'kakao' && '카카오 계정 연동됨'}
+                    {provider === 'google' && '구글 계정 연동됨'}
+                    {provider === 'naver' && '네이버 계정 연동됨'}
+                  </span>
+                </div>
                 <button
+                  className="unlink-btn"
                   onClick={() => handleUnlink(provider)}
-                  style={{
-                    marginLeft: '1rem',
-                    padding: '0.3rem 0.8rem',
-                    backgroundColor: '#dc3545',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                  }}
                 >
                   연동 해제
                 </button>
@@ -159,18 +161,8 @@ export default function AccountSettings() {
         </div>
       )}
 
-      {/* ✅ 회원 탈퇴 버튼 */}
       <Link to="/withdraw">
-        <button
-          style={{
-            marginTop: '2rem',
-            color: 'white',
-            backgroundColor: '#dc3545',
-            padding: '0.5rem 1.5rem',
-            border: 'none',
-            borderRadius: '6px',
-          }}
-        >
+        <button className="withdraw-btn">
           회원 탈퇴
         </button>
       </Link>
