@@ -114,12 +114,12 @@ export default function IamportPayment() {
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
-      <h2>💳 아임포트 결제 테스트</h2>
+      <h2> 아임포트 결제 테스트</h2>
       <h3>총 결제 금액: {amount.toLocaleString()}원</h3>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((item, i) => (
           <li key={i} style={{ marginBottom: '1rem' }}>
-            ✅ {item.product.name} - {item.quantity}개 - {(item.product.price * item.quantity).toLocaleString()}원
+             {item.product.name} - {item.quantity}개 - {(item.product.price * item.quantity).toLocaleString()}원
           </li>
         ))}
       </ul>

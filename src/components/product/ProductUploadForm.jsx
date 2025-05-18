@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
-import '../../styles/UploadForm.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../components/UserContext';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-// import axiosInstance from '../../api/axiosInstance'; // ✅ 서버 연동 시 주석 해제
+import axiosInstance from '../../api/axiosInstance';
+import '../../styles/UploadForm.css';
 
 export default function ProductUploadForm() {
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [imageFiles, setImageFiles] = useState([]); // ✅ 서버 전송용 파일
+  const [imageFiles, setImageFiles] = useState([]);
+  const { user } = useUser();
+  const navigate = useNavigate();
 
-  const categoryOptions = ['전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
-    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'];
+  useEffect(() => {
+    if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
+      alert('상품 등록 권한이 없습니다.');
+      navigate('/');
+    }
+  }, [user]);
+
+  const categoryOptions = [
+    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스',
+    '스트랩', '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
+  ];
 
   const formik = useFormik({
     initialValues: {
@@ -33,40 +46,23 @@ export default function ProductUploadForm() {
         stock: parseInt(values.stock),
         description: values.description,
         category: values.category,
-        images: imagePreviews, // ✅ 이미지 미리보기 (localStorage 저장용)
+        images: imagePreviews,
       };
 
-      // ✅ localStorage 저장 (테스트용)
-      const prev = JSON.parse(localStorage.getItem('products') || '[]');
-      const withId = { ...newProduct, id: Date.now().toString() };
-      localStorage.setItem('products', JSON.stringify([withId, ...prev]));
-
-      // ✅ 서버 연동 (추후 사용)
-      /*
       try {
-        const formData = new FormData();
-        formData.append('name', values.name);
-        formData.append('price', values.price);
-        formData.append('stock', values.stock);
-        formData.append('description', values.description);
-        formData.append('category', values.category);
-        imageFiles.forEach((file) => formData.append('images', file));
-
-        await axiosInstance.post('/api/products', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
+        await axiosInstance.post('/products', newProduct);
         alert('상품이 서버에 등록되었습니다!');
-      } catch (error) {
-        console.error('서버 업로드 실패:', error);
-        alert('서버 업로드 실패');
+      } catch (err) {
+        console.warn('서버 실패, 로컬 저장 처리:', err);
+        const prev = JSON.parse(localStorage.getItem('products') || '[]');
+        const withId = { ...newProduct, id: Date.now().toString() };
+        localStorage.setItem('products', JSON.stringify([withId, ...prev]));
+        alert('상품이 로컬에 등록되었습니다!');
       }
-      */
 
       resetForm();
       setImagePreviews([]);
       setImageFiles([]);
-      alert('상품이 등록되었습니다!');
     },
   });
 
@@ -74,12 +70,12 @@ export default function ProductUploadForm() {
     const files = Array.from(e.target.files);
     const newPreviews = files.map(file => URL.createObjectURL(file));
     setImagePreviews(prev => [...prev, ...newPreviews].slice(0, 5));
-    setImageFiles(prev => [...prev, ...files].slice(0, 5)); // ✅ 서버 전송용 파일 저장
+    setImageFiles(prev => [...prev, ...files].slice(0, 5));
   };
 
   const removeImage = (index) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
-    setImageFiles(prev => prev.filter((_, i) => i !== index)); // ✅ 동기화 삭제
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -105,38 +101,16 @@ export default function ProductUploadForm() {
         ))}
       </div>
 
-      <input
-        type="text"
-        name="name"
-        placeholder="상품명"
-        value={formik.values.name}
-        onChange={formik.handleChange}
-      />
+      <input type="text" name="name" placeholder="상품명" {...formik.getFieldProps('name')} />
       {formik.touched.name && formik.errors.name && <div>{formik.errors.name}</div>}
 
-      <input
-        type="number"
-        name="price"
-        placeholder="가격"
-        value={formik.values.price}
-        onChange={formik.handleChange}
-      />
+      <input type="number" name="price" placeholder="가격" {...formik.getFieldProps('price')} />
       {formik.touched.price && formik.errors.price && <div>{formik.errors.price}</div>}
 
-      <input
-        type="number"
-        name="stock"
-        placeholder="재고 수량"
-        value={formik.values.stock}
-        onChange={formik.handleChange}
-      />
+      <input type="number" name="stock" placeholder="재고 수량" {...formik.getFieldProps('stock')} />
       {formik.touched.stock && formik.errors.stock && <div>{formik.errors.stock}</div>}
 
-      <select
-        name="category"
-        value={formik.values.category}
-        onChange={formik.handleChange}
-      >
+      <select name="category" {...formik.getFieldProps('category')}>
         <option value="">카테고리 선택</option>
         {categoryOptions.map(cat => (
           <option key={cat} value={cat}>{cat}</option>
@@ -144,13 +118,7 @@ export default function ProductUploadForm() {
       </select>
       {formik.touched.category && formik.errors.category && <div>{formik.errors.category}</div>}
 
-      <textarea
-        name="description"
-        placeholder="상품 설명"
-        rows="4"
-        value={formik.values.description}
-        onChange={formik.handleChange}
-      />
+      <textarea name="description" placeholder="상품 설명" rows="4" {...formik.getFieldProps('description')} />
       {formik.touched.description && formik.errors.description && <div>{formik.errors.description}</div>}
 
       <button type="submit">상품 등록</button>

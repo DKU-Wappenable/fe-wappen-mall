@@ -1,39 +1,57 @@
+// src/components/Login/WithdrawPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../UserContext';
-// import axios from '../../api/axiosInstance'; // ✅ 서버 연동 시
+import { toast } from 'react-toastify';
+import axiosInstance from '../../api/axiosInstance'; //  서버 연동용
 
 export default function WithdrawPage() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
+
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState(false);
 
   const handleWithdraw = async () => {
+    setError('');
+
     if (!confirm) {
       setConfirm(true);
       return;
     }
 
-    // ✅ 서버 연동 예시
-    /*
     try {
-      await axios.post('/users/withdraw', {
+      //  서버 연동
+      await axiosInstance.post('/users/withdraw', {
         email: user.email,
         password,
       });
-    } catch (err) {
-      console.error('탈퇴 실패:', err);
-      setError('비밀번호가 틀렸거나 오류가 발생했습니다.');
-      return;
-    }
-    */
 
-    // ✅ localStorage 기반 테스트
-    logout(); // UserContext 내의 logout 호출
-    alert('회원 탈퇴가 완료되었습니다.');
-    navigate('/');
+      logout();
+      toast.success('회원 탈퇴가 완료되었습니다.');
+      navigate('/');
+    } catch (err) {
+      console.warn(' 서버 오류 발생. 로컬 fallback 수행 중...');
+
+      //  로컬 fallback
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const found = users.find(
+        (u) => u.email === user.email && u.password === password
+      );
+
+      if (!found) {
+        setError('비밀번호가 틀렸습니다.');
+        return;
+      }
+
+      const updatedUsers = users.filter((u) => u.email !== user.email);
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+
+      logout();
+      toast.success('회원 탈퇴가 완료되었습니다. (로컬 테스트)');
+      navigate('/');
+    }
   };
 
   return (
@@ -75,7 +93,7 @@ export default function WithdrawPage() {
           cursor: 'pointer',
         }}
       >
-        {confirm ? '🔥 탈퇴 확정' : '회원 탈퇴'}
+        {confirm ? '탈퇴 확정' : '회원 탈퇴'}
       </button>
     </div>
   );

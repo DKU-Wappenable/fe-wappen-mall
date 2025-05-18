@@ -1,47 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-// import axios from '../../api/axiosInstance'; // ✅ 서버 연동용
+import axiosInstance from '../../api/axiosInstance';
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'canceled'
 
   useEffect(() => {
-    // ✅ 로컬 스토리지에서 불러오기
-    const saved = JSON.parse(localStorage.getItem('orders') || '[]');
-    const sorted = [...saved].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    setOrders(sorted);
-
-    // ✅ 서버 연동 시
-    /*
-    axios.get('/orders')
-      .then(res => {
-        const sorted = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const fetchOrders = async () => {
+      try {
+        const res = await axiosInstance.get('/orders');
+        const sorted = [...res.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setOrders(sorted);
-      })
-      .catch(err => console.error('주문 목록 불러오기 실패', err));
-    */
+      } catch (err) {
+        console.warn('서버 실패 → localStorage 대체');
+        const saved = JSON.parse(localStorage.getItem('orders') || '[]');
+        const sorted = [...saved].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setOrders(sorted);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
-  const cancelOrder = (id) => {
-    const updated = orders.map(order =>
-      order.id === id ? { ...order, status: '취소됨' } : order
-    );
-    setOrders(updated);
-    localStorage.setItem('orders', JSON.stringify(updated));
-
-    // ✅ 서버 연동 시
-    /*
-    axios.put(`/orders/${id}/cancel`)
-      .then(() => setOrders(updated))
-      .catch(err => console.error('주문 취소 실패', err));
-    */
+  const cancelOrder = async (id) => {
+    try {
+      await axiosInstance.put(`/orders/${id}/cancel`);
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: '취소됨' } : order
+      );
+      setOrders(updated);
+    } catch (err) {
+      console.warn('서버 실패 → localStorage 대체');
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: '취소됨' } : order
+      );
+      setOrders(updated);
+      localStorage.setItem('orders', JSON.stringify(updated));
+    }
   };
 
-  const filteredOrders = activeTab === 'active'
-  ? orders.filter(order => order.status !== '취소됨')
-  : orders.filter(order => order.status === '취소됨');
-
+  const filteredOrders =
+    activeTab === 'active'
+      ? orders.filter(order => order.status !== '취소됨')
+      : orders.filter(order => order.status === '취소됨');
 
   return (
     <div>
@@ -73,7 +75,7 @@ export default function OrderHistory() {
                 <strong>• 주문 ID:</strong>{' '}
                 <Link to={`/my-orders/${order.id}`}>{order.id}</Link>
               </p>
-              <p>상품: {order.product.name}</p>
+              <p>상품: {order.product?.name || '알 수 없음'}</p>
               <p>수량: {order.quantity} 개</p>
               <p>총액: {order.totalPrice.toLocaleString()} 원</p>
               <p>주문 날짜: {new Date(order.createdAt).toLocaleDateString()}</p>

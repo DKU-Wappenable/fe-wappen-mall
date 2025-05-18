@@ -22,7 +22,7 @@ export default function TermsModal({ onAgree }) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  // ✅ 상태 업데이트 (확실하게)
+  //  상태 업데이트 (확실하게)
   const handleCheck = (key) => {
     if (key === "all") {
       const newState = {
@@ -47,7 +47,7 @@ export default function TermsModal({ onAgree }) {
     }
   };
 
-  // ✅ 최신 checked 값 기반으로 버튼 활성화 판단
+  //  최신 checked 값 기반으로 버튼 활성화 판단
   const isRequiredAllChecked = useMemo(() => {
     return checked.terms && checked.privacy && checked.financial;
   }, [checked]);
@@ -63,10 +63,10 @@ export default function TermsModal({ onAgree }) {
           <p>
             {
               {
-                terms: "📄 이용 약관에 대한 상세 내용입니다.",
-                privacy: "🔒 개인정보 수집 및 이용 관련 설명입니다.",
-                financial: "💳 전자 금융 거래 약관 관련 설명입니다.",
-                marketing: "📢 마케팅 수신 동의 안내입니다.",
+                terms: " 이용 약관에 대한 상세 내용입니다.",
+                privacy: " 개인정보 수집 및 이용 관련 설명입니다.",
+                financial: " 전자 금융 거래 약관 관련 설명입니다.",
+                marketing: " 마케팅 수신 동의 안내입니다.",
               }[activeDetail]
             }
           </p>

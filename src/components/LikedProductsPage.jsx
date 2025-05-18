@@ -1,6 +1,7 @@
+//  LikedProductsPage.jsx - 서버 연동 + 로컬 fallback 구조 반영
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import axiosInstance from '../api/axiosInstance'; // 📝 서버 연동 시 사용
+import axiosInstance from '../api/axiosInstance';
 
 export default function LikedProductsPage() {
   const [liked, setLiked] = useState([]);
@@ -8,33 +9,51 @@ export default function LikedProductsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('liked') || '[]');
-    const sanitized = stored.map(p => ({
-      ...p,
-      images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-      category: p.category || '유저디자인'
-    }));
-    setLiked(sanitized);
-
-    const qtyMap = {};
-    sanitized.forEach(p => qtyMap[p.id] = 1);
-    setQuantities(qtyMap);
+    const fetchLiked = async () => {
+      try {
+        const res = await axiosInstance.get('/likes');
+        const sanitized = res.data.map(p => ({
+          ...p,
+          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          category: p.category || '유저디자인'
+        }));
+        setLiked(sanitized);
+        const qtyMap = {};
+        sanitized.forEach(p => qtyMap[p.id] = 1);
+        setQuantities(qtyMap);
+      } catch (err) {
+        console.warn('서버 실패, 로컬 liked 대체');
+        const stored = JSON.parse(localStorage.getItem('liked') || '[]');
+        const sanitized = stored.map(p => ({
+          ...p,
+          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          category: p.category || '유저디자인'
+        }));
+        setLiked(sanitized);
+        const qtyMap = {};
+        sanitized.forEach(p => qtyMap[p.id] = 1);
+        setQuantities(qtyMap);
+      }
+    };
+    fetchLiked();
   }, []);
 
-  const handleToggleLike = (product) => {
-    const current = JSON.parse(localStorage.getItem('liked') || '[]');
-    const exists = current.some(p => p.id === product.id);
-    const updated = exists
-      ? current.filter(p => p.id !== product.id)
-      : [product, ...current];
-
-    localStorage.setItem('liked', JSON.stringify(updated));
-    setLiked(updated);
-
-    // 📝 서버 연동 예시:
-    // exists
-    //   ? axiosInstance.delete(`/likes/${product.id}`)
-    //   : axiosInstance.post('/likes', product);
+  const handleToggleLike = async (product) => {
+    const exists = liked.some(p => p.id === product.id);
+    try {
+      if (exists) await axiosInstance.delete(`/likes/${product.id}`);
+      else await axiosInstance.post('/likes', product);
+    } catch {
+      console.warn('서버 실패, 로컬 liked 변경');
+      const current = JSON.parse(localStorage.getItem('liked') || '[]');
+      const updated = exists
+        ? current.filter(p => p.id !== product.id)
+        : [product, ...current];
+      localStorage.setItem('liked', JSON.stringify(updated));
+    }
+    setLiked(prev =>
+      exists ? prev.filter(p => p.id !== product.id) : [product, ...prev]
+    );
   };
 
   const handleQuantity = (id, delta) => {
@@ -44,27 +63,25 @@ export default function LikedProductsPage() {
     }));
   };
 
-  const handleAddToCart = (product) => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existing = cart.find(item => item.product.id === product.id);
+  const handleAddToCart = async (product) => {
     const quantity = quantities[product.id] || 1;
-    let updated;
-
-    if (existing) {
-      updated = cart.map(item =>
-        item.product.id === product.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      );
-    } else {
-      updated = [{ id: Date.now(), product, quantity }, ...cart];
+    try {
+      await axiosInstance.post('/cart', { productId: product.id, quantity });
+      alert('장바구니에 담았습니다!');
+    } catch {
+      console.warn('서버 실패, 로컬 장바구니 저장');
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existing = cart.find(item => item.product.id === product.id);
+      const updated = existing
+        ? cart.map(item =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          )
+        : [{ id: Date.now(), product, quantity }, ...cart];
+      localStorage.setItem('cart', JSON.stringify(updated));
+      alert('장바구니에 담았습니다!');
     }
-
-    localStorage.setItem('cart', JSON.stringify(updated));
-    alert('장바구니에 담았습니다!');
-
-    // 📝 서버 연동 예시:
-    // axiosInstance.post('/cart', { productId: product.id, quantity });
   };
 
   const handleBuy = (product) => {
@@ -127,19 +144,12 @@ export default function LikedProductsPage() {
             )}
             <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 
-            {/* 수량 조절 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginTop: '0.5rem'
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
               <button onClick={() => handleQuantity(product.id, -1)}>➖</button>
               <span>{quantities[product.id] || 1}</span>
               <button onClick={() => handleQuantity(product.id, 1)}>➕</button>
             </div>
 
-            {/* 장바구니 / 결제 버튼 */}
             <button onClick={() => handleAddToCart(product)} style={{
               marginTop: '8px',
               padding: '8px 12px',
@@ -151,7 +161,7 @@ export default function LikedProductsPage() {
               cursor: 'pointer',
               width: '100%'
             }}>
-              🛒 장바구니 담기
+               장바구니 담기
             </button>
 
             <button onClick={() => handleBuy(product)} style={{
@@ -165,7 +175,7 @@ export default function LikedProductsPage() {
               cursor: 'pointer',
               width: '100%'
             }}>
-              💳 결제하기
+               결제하기
             </button>
           </div>
         ))}

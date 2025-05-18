@@ -7,10 +7,10 @@ export default function PointHistory() {
   const [totalPoints, setTotalPoints] = useState(0);
 
   useEffect(() => {
-    // ✅ 우선 localStorage에서 불러옴 (테스트용)
+    //  우선 localStorage에서 불러옴 (테스트용)
     const saved = JSON.parse(localStorage.getItem('pointHistory') || '[]');
 
-    // ✅ 테스트용 샘플 포인트 더미
+    //  테스트용 샘플 포인트 더미
     if (saved.length === 0) {
       const dummy = [
         {
@@ -36,7 +36,7 @@ export default function PointHistory() {
       setTotalPoints(total);
     }
 
-    // ✅ 서버 연동 예시 (주석 처리)
+    // 서버 연동 예시 (주석 처리)
     /*
     axios.get('/points/me')
       .then(res => {

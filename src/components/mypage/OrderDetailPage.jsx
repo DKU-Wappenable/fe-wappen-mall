@@ -1,5 +1,7 @@
+// src/pages/OrderDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axiosInstance from '../../api/axiosInstance';
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -7,9 +9,19 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const found = orders.find(o => o.id.toString() === id.toString());
-    setOrder(found);
+    const fetchOrder = async () => {
+      try {
+        const res = await axiosInstance.get(`/orders/${id}`);
+        setOrder(res.data);
+      } catch (err) {
+        console.warn('서버 오류, 로컬로 대체');
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const found = orders.find(o => o.id.toString() === id.toString());
+        setOrder(found);
+      }
+    };
+
+    fetchOrder();
   }, [id]);
 
   if (!order) return <div style={{ padding: '2rem' }}>주문 정보를 찾을 수 없습니다.</div>;

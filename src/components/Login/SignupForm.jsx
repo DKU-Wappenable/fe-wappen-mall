@@ -1,79 +1,80 @@
+// src/components/Login/SignupForm.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useUser } from "../UserContext";
 import { toast } from "react-toastify";
 import axiosInstance from "../../api/axiosInstance";
 import "../../styles/AuthForm.css";
 
 export default function SignupForm() {
   const navigate = useNavigate();
-  const { signup, setUser } = useUser(); // ✅ setUser 필요 시 포함
 
   const [email, setEmail] = useState("");
+  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
-  // 이메일 중복 확인 (local 테스트용 비워둬도 OK)
-  const checkDuplicateEmail = async () => {
-    try {
-      const res = await axiosInstance.get(`/check-email?email=${email}`);
-      if (res.data.exists) {
-        toast.error("이미 사용 중인 이메일입니다.");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+  const validate = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "유효한 이메일을 입력해주세요.";
+    if (password.length < 8) return "비밀번호는 8자 이상이어야 합니다.";
+    if (password !== confirmPassword) return "비밀번호가 일치하지 않습니다.";
+    return null;
   };
 
-  // 회원가입 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("유효한 이메일을 입력해주세요.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("비밀번호는 8자 이상이어야 합니다.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+    const validationMsg = validate();
+    if (validationMsg) {
+      setError(validationMsg);
       return;
     }
 
     try {
-      // ✅ 서버 연동 시
-      /*
-      await signup({ email, password, name, phone });
-      */
-
-      // ✅ localStorage 테스트용 저장
-      const userData = {
+      //  서버 연동 우선
+      await axiosInstance.post("/users/signup", {
         email,
-        name,
-        phone,
-        role: "user",
-        termsAccepted: false,
-        linkedSocials: [],
-      };
+        nickname,
+        password,
+      });
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      localStorage.setItem("access_token", "dummy-token");
-      setUser(userData); // 상태도 반영 (옵션)
-
-      navigate("/signup/complete"); // ✅ 이동!
+      toast.success("회원가입 성공! 로그인 페이지로 이동합니다.");
+      navigate("/login");
     } catch (err) {
-      setError(err.message || "회원가입 중 오류가 발생했습니다.");
+      console.warn("서버 회원가입 실패, 로컬 fallback 시도:", err);
+
+      try {
+        const savedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        const exists = savedUsers.some((u) => u.email === email);
+        if (exists) {
+          setError("이미 사용 중인 이메일입니다.");
+          return;
+        }
+
+        const newUser = {
+          email,
+          password,
+          nickname,
+          phone: "",
+          role: "user",
+          termsAccepted: false,
+          linkedSocials: [],
+        };
+
+        const updatedUsers = [newUser, ...savedUsers];
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        toast.success("로컬 회원가입 완료! 로그인 페이지로 이동합니다.");
+        navigate("/login");
+      } catch (fallbackErr) {
+        console.error("로컬 회원가입 실패:", fallbackErr);
+        setError("회원가입 중 오류가 발생했습니다.");
+      }
     }
   };
 
-  // 소셜 로그인 처리
   const handleSocialLogin = (provider) => {
     const providers = {
       카카오: "/oauth2/authorization/kakao",
@@ -97,7 +98,13 @@ export default function SignupForm() {
             placeholder="이메일"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onBlur={checkDuplicateEmail}
+            required
+          />
+          <input
+            type="text"
+            placeholder="닉네임"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
             required
           />
           <input
@@ -114,19 +121,6 @@ export default function SignupForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
-          <input
-            type="text"
-            placeholder="이름"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="연락처"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
           <button type="submit" className="submit-btn black">
             가입하기
           </button>
@@ -135,13 +129,13 @@ export default function SignupForm() {
         <div className="divider">또는 다른 서비스 계정으로 로그인</div>
 
         <div className="social-login-group">
-          <button className="social-btn kakao" onClick={() => handleSocialLogin('카카오')}>
+          <button className="social-btn kakao" onClick={() => handleSocialLogin("카카오")}>
             <img src="/assets/kakao_icon.png" alt="카카오 로그인" />
           </button>
-          <button className="social-btn naver" onClick={() => handleSocialLogin('네이버')}>
+          <button className="social-btn naver" onClick={() => handleSocialLogin("네이버")}>
             <img src="/assets/naver_icon.png" alt="네이버 로그인" />
           </button>
-          <button className="social-btn google" onClick={() => handleSocialLogin('구글')}>
+          <button className="social-btn google" onClick={() => handleSocialLogin("구글")}>
             <img src="/assets/google_icon.png" alt="구글 로그인" />
           </button>
         </div>

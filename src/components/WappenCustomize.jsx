@@ -1,8 +1,9 @@
+//  WappenCustomize.jsx - 서버 연동 + 로컬 fallback 구조 반영
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext';
-// import axiosInstance from '../api/axiosInstance'; // ✅ 서버 연동용
+import axiosInstance from '../api/axiosInstance';
 import '../styles/WappenCustomize.css';
 
 export default function WappenCustomize() {
@@ -69,14 +70,17 @@ export default function WappenCustomize() {
         createdAt: new Date().toISOString()
       };
 
-      // ✅ 서버 연동 예시
-      // await axiosInstance.post('/api/wappens', savedDesign);
+      try {
+        await axiosInstance.post('/api/wappens', savedDesign);
+        alert('디자인이 서버에 저장되었습니다!');
+      } catch (err) {
+        console.warn('서버 실패, 로컬 저장 처리');
+        const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
+        saved.push(savedDesign);
+        localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(saved));
+        alert('디자인이 로컬에 저장되었습니다!');
+      }
 
-      const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
-      saved.push(savedDesign);
-      localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(saved));
-
-      alert('디자인 저장 완료!');
       navigate('/my-wappens');
     } catch (err) {
       console.error('저장 실패:', err);

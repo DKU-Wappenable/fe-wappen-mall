@@ -1,17 +1,19 @@
+// src/components/mypage/AccountSettings.jsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
+import axiosInstance from '../../api/axiosInstance';
 import '../../styles/AccountSettings.css';
-// import axios from '../../api/axiosInstance'; // ✅ 서버 연동 시
 
 export default function AccountSettings() {
-  const { user, setUser } = useUser();
+  const { user, setUser, logout } = useUser();
   const [form, setForm] = useState({
     name: '',
     phone: '',
     password: '',
   });
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -29,7 +31,9 @@ export default function AccountSettings() {
     setSaved(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setError("");
+
     if (!form.name || !form.phone) {
       alert('이름과 전화번호를 입력해주세요.');
       return;
@@ -52,23 +56,23 @@ export default function AccountSettings() {
       ...(form.password ? { password: form.password } : {}),
     };
 
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    setSaved(true);
-
-    // ✅ 서버 연동 시
-    /*
-    axios.put('/api/users/me', updatedUser)
-      .then(res => {
-        setUser(res.data);
-        localStorage.setItem('user', JSON.stringify(res.data));
+    try {
+      //  서버 연동 우선
+      const res = await axiosInstance.put("/users/me", updatedUser);
+      setUser(res.data);
+      localStorage.setItem("user", JSON.stringify(res.data));
+      setSaved(true);
+    } catch (err) {
+      console.warn("서버 실패, 로컬 fallback 시도:", err);
+      try {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
         setSaved(true);
-      })
-      .catch(err => {
-        console.error('수정 실패:', err);
-        alert('수정 중 오류 발생');
-      });
-    */
+      } catch (fallbackErr) {
+        console.error("정보 저장 실패:", fallbackErr);
+        setError("정보 저장 중 오류가 발생했습니다.");
+      }
+    }
   };
 
   const socialNames = {
@@ -77,7 +81,7 @@ export default function AccountSettings() {
     google: '구글',
   };
 
-  const handleUnlink = (provider) => {
+  const handleUnlink = async (provider) => {
     const confirmed = window.confirm(`${socialNames[provider]} 연동을 해제하시겠습니까?`);
     if (!confirmed) return;
 
@@ -86,21 +90,29 @@ export default function AccountSettings() {
       linkedSocials: user.linkedSocials?.filter(p => p !== provider),
     };
 
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    try {
+      await axiosInstance.delete(`/users/link/${provider}`);
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (err) {
+      console.warn("서버 실패, 로컬 fallback:", err);
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
 
-    // ✅ 서버 연동 시
-    /*
-    axios.delete(`/api/users/link/${provider}`)
-      .then(() => {
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      })
-      .catch(err => {
-        console.error('소셜 연동 해제 실패:', err);
-        alert('연동 해제 중 오류가 발생했습니다.');
-      });
-    */
+  const handleWithdraw = async () => {
+    const confirmed = window.confirm("정말로 탈퇴하시겠습니까?");
+    if (!confirmed) return;
+
+    try {
+      await axiosInstance.delete("/users/withdraw");
+      alert("회원 탈퇴가 완료되었습니다.");
+    } catch (err) {
+      console.warn("서버 탈퇴 실패, 로컬 fallback");
+    }
+
+    logout();
   };
 
   return (
@@ -129,8 +141,9 @@ export default function AccountSettings() {
 
       <button onClick={handleSave}>정보 저장</button>
       {saved && <p className="success-msg">정보가 저장되었습니다!</p>}
+      {error && <p className="error-message">{error}</p>}
 
-      {/* ✅ 연결된 소셜 계정 표시 */}
+      {/*  연결된 소셜 계정 표시 */}
       {user.linkedSocials && user.linkedSocials.length > 0 && (
         <div className="social-unlink-section">
           <h4>연결된 소셜 계정</h4>
@@ -143,16 +156,9 @@ export default function AccountSettings() {
                     alt={`${provider} 아이콘`}
                     className="social-icon"
                   />
-                  <span>
-                    {provider === 'kakao' && '카카오 계정 연동됨'}
-                    {provider === 'google' && '구글 계정 연동됨'}
-                    {provider === 'naver' && '네이버 계정 연동됨'}
-                  </span>
+                  <span>{socialNames[provider]} 계정 연동됨</span>
                 </div>
-                <button
-                  className="unlink-btn"
-                  onClick={() => handleUnlink(provider)}
-                >
+                <button className="unlink-btn" onClick={() => handleUnlink(provider)}>
                   연동 해제
                 </button>
               </li>
@@ -161,11 +167,9 @@ export default function AccountSettings() {
         </div>
       )}
 
-      <Link to="/withdraw">
-        <button className="withdraw-btn">
-          회원 탈퇴
-        </button>
-      </Link>
+      <button className="withdraw-btn" onClick={handleWithdraw}>
+        회원 탈퇴
+      </button>
     </div>
   );
 }

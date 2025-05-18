@@ -1,133 +1,78 @@
-// /components/auth/FindForm.jsx
-import React, { useState } from "react";
-import axiosInstance from "../../api/axiosInstance";
-import ResetPasswordModal from "./ResetPasswordModal"; // ✅ 모달 import
-import "../../styles/FindForm.css";
+//  FindForm.jsx - 서버 연동 + 로컬 fallback 구조 반영
+import React, { useState } from 'react';
+import axiosInstance from '../../api/axiosInstance';
+import '../../styles/FindForm.css';
 
-const FindForm = ({ mode, onClose }) => {
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [userId, setUserId] = useState("");
-  const [showResetModal, setShowResetModal] = useState(false); // ✅ 모달 표시 상태
+export default function FindForm() {
+  const [mode, setMode] = useState('findId'); // 'findId' | 'findPw'
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setResult("");
-    setLoading(true);
-
-    try {
-      let response;
-
-      if (mode === "id") {
-        // ✅ 서버 연동
-        // response = await axiosInstance.post("/find-id", { name, phone });
-
-        // ✅ 로컬 테스트
-        response = { data: { message: `${name}님의 아이디는 test1234입니다.` } };
-        setResult(response.data.message);
+  const handleFind = async () => {
+    setMessage('');
+    if (mode === 'findId') {
+      try {
+        const res = await axiosInstance.post('/api/users/find-id', { name, phone });
+        setMessage(`아이디는 ${res.data.email} 입니다.`);
+      } catch (err) {
+        console.warn('서버 실패, 로컬에서 대체');
+        const users = ['admin', 'owner', 'user']
+          .map(key => JSON.parse(localStorage.getItem(key) || 'null'))
+          .filter(Boolean);
+        const found = users.find(u => u.name === name && u.phone === phone);
+        setMessage(found ? `아이디는 ${found.email} 입니다.` : '일치하는 계정을 찾을 수 없습니다.');
       }
-
-      if (mode === "pw") {
-        // ✅ 서버 연동
-        // response = await axiosInstance.post("/find-pw", { userId, email, phone });
-
-        // ✅ 로컬 테스트 조건
-        if (userId === "test1234" && email.includes("@") && phone.length > 8) {
-          setResult("사용자 인증 완료! 새 비밀번호를 입력하세요.");
-          setShowResetModal(true); // ✅ 모달 표시
-        } else {
-          setResult("입력 정보를 다시 확인해주세요.");
-        }
+    } else {
+      try {
+        await axiosInstance.post('/api/users/reset-password-request', { email });
+        setMessage('비밀번호 재설정 메일을 전송했습니다.');
+      } catch (err) {
+        console.warn('서버 실패, 로컬 처리');
+        const user = ['admin', 'owner', 'user']
+          .map(key => JSON.parse(localStorage.getItem(key) || 'null'))
+          .find(u => u.email === email);
+        setMessage(user ? '임시 비밀번호: temp1234' : '존재하지 않는 이메일입니다.');
       }
-    } catch (error) {
-      setResult(error.response?.data?.error || "요청 처리 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ 비밀번호 모달에서 제출 시
-  const handlePasswordReset = async (newPassword) => {
-    try {
-      // ✅ 서버 연동
-      // await axiosInstance.post("/reset-password", { userId, newPassword });
-
-      // ✅ 로컬 테스트
-      console.log("비밀번호 재설정됨:", newPassword);
-    } catch (err) {
-      console.error("재설정 실패:", err);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <button className="close-btn" onClick={onClose}>
-          &times;
-        </button>
-        <h2>{mode === "id" ? "아이디 찾기" : "비밀번호 찾기"}</h2>
-
-        <form onSubmit={handleSubmit}>
-          {mode === "id" && (
-            <>
-              <input
-                type="text"
-                placeholder="이름"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="전화번호"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </>
-          )}
-
-          {mode === "pw" && (
-            <>
-              <input
-                type="text"
-                placeholder="아이디"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-              />
-              <input
-                type="email"
-                placeholder="이메일"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="전화번호"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </>
-          )}
-
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? "처리 중..." : "제출"}
-          </button>
-
-          {result && <p className="result-message">{result}</p>}
-        </form>
-
-        {/* ✅ 비밀번호 재설정 모달 */}
-        {showResetModal && (
-          <ResetPasswordModal
-            onClose={() => setShowResetModal(false)}
-            onSubmit={handlePasswordReset}
-          />
-        )}
+    <div className="find-form-container">
+      <h2>{mode === 'findId' ? '아이디 찾기' : '비밀번호 찾기'}</h2>
+      <div className="find-mode-toggle">
+        <button onClick={() => setMode('findId')} className={mode === 'findId' ? 'active' : ''}>아이디 찾기</button>
+        <button onClick={() => setMode('findPw')} className={mode === 'findPw' ? 'active' : ''}>비밀번호 찾기</button>
       </div>
+      {mode === 'findId' ? (
+        <>
+          <input
+            type="text"
+            placeholder="이름 입력"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="전화번호 입력"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </>
+      ) : (
+        <>
+          <input
+            type="email"
+            placeholder="이메일 입력"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </>
+      )}
+
+      <button onClick={handleFind}>찾기</button>
+      {message && <p className="result-message">{message}</p>}
     </div>
   );
-};
-
-export default FindForm;
+}

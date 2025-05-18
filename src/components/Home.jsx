@@ -1,7 +1,8 @@
-// ✅ Home.jsx 수정 완료 버전
+// src/components/Home.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
+import axiosInstance from '../api/axiosInstance';
 import '../styles/Home.css';
 
 export default function Home() {
@@ -17,29 +18,50 @@ export default function Home() {
     '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'
   ];
 
-  const loadProducts = () => {
-    const official = JSON.parse(localStorage.getItem('products') || '[]');
-    const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
-      ...d,
-      name: d.title,
-      images: [d.image],
-      category: '유저디자인',
-      createdAt: d.createdAt || new Date().toISOString(),
-      __source: 'shared',
-      uniqueKey: `${d.id}-${d.author}` // ✅ 중복 허용 구분용
-    }));
-
-    const merged = [...official, ...shared];
-
-    const sanitized = merged.map(p => ({
-      ...p,
-      images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-      uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
-    }));
-
-    setProducts(sanitized);
-    setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
-    setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+  const loadProducts = async () => {
+    try {
+      const res = await axiosInstance.get('/products');
+      const official = res.data;
+      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
+        ...d,
+        name: d.title,
+        images: [d.image],
+        category: '유저디자인',
+        createdAt: d.createdAt || new Date().toISOString(),
+        __source: 'shared',
+        uniqueKey: `${d.id}-${d.author}`
+      }));
+      const merged = [...official, ...shared];
+      const sanitized = merged.map(p => ({
+        ...p,
+        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+        uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
+      }));
+      setProducts(sanitized);
+      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
+      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+    } catch (err) {
+      console.warn('서버 실패, 로컬에서 대체');
+      const official = JSON.parse(localStorage.getItem('products') || '[]');
+      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
+        ...d,
+        name: d.title,
+        images: [d.image],
+        category: '유저디자인',
+        createdAt: d.createdAt || new Date().toISOString(),
+        __source: 'shared',
+        uniqueKey: `${d.id}-${d.author}`
+      }));
+      const merged = [...official, ...shared];
+      const sanitized = merged.map(p => ({
+        ...p,
+        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+        uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
+      }));
+      setProducts(sanitized);
+      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
+      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+    }
   };
 
   useEffect(() => {

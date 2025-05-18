@@ -1,8 +1,8 @@
-// ✅ CategoryProductPage.jsx - 중복 허용 및 uniqueKey 사용 + 서버 연동 주석 포함 버전
+// src/components/CategoryProductPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosInstance';
 import '../styles/CategoryProductPage.css';
-// import axiosInstance from '../api/axiosInstance'; // ✅ 서버 연동 시
 
 export default function CategoryProductPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,49 +25,79 @@ export default function CategoryProductPage() {
     setCategory(cat);
     setSortBy(sort);
 
-    let all = [];
+    const fetchData = async () => {
+      try {
+        const res = await axiosInstance.get('/products');
+        const serverProducts = res.data;
 
-    if (cat === '유저디자인') {
-      all = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
-        ...d,
-        name: d.title || '',
-        price: 500 + 500 * (d.wappens?.length || 0),
-        images: [d.image || '/assets/default.png'],
-        category: '유저디자인',
-        description: d.description || '',
-        createdAt: d.createdAt || new Date().toISOString(),
-        uniqueKey: `${d.id}-${index}`
-      }));
-    } else {
-      all = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
-        ...p,
-        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-        category: p.category || '',
-        uniqueKey: `${p.id}-${index}`
-      }));
-    }
+        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+          ...d,
+          name: d.title || '',
+          price: 500 + 500 * (d.wappens?.length || 0),
+          images: [d.image || '/assets/default.png'],
+          category: '유저디자인',
+          description: d.description || '',
+          createdAt: d.createdAt || new Date().toISOString(),
+          uniqueKey: `${d.id}-${index}`
+        }));
 
-    setAllProducts(all);
+        const all = [...serverProducts, ...shared];
+        setAllProducts(all);
 
-    const filtered = all.filter(p => {
-      const matchCat = cat === '전체' || p.category === cat;
-      const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
-      return matchCat && matchKeyword;
-    });
+        const filtered = all.filter(p => {
+          const matchCat = cat === '전체' || p.category === cat;
+          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
+          return matchCat && matchKeyword;
+        });
 
-    const sorted = [...filtered].sort((a, b) => {
-      if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-    });
+        const sorted = [...filtered].sort((a, b) => {
+          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
 
-    setProducts(sorted);
+        setProducts(sorted);
+      } catch (err) {
+        console.warn('서버 실패, 로컬로 대체');
+        let all = [];
 
-    // ✅ 서버 연동 시
-    /*
-    axiosInstance.get('/products', { params: { category: cat, keyword, sort } })
-      .then(res => setProducts(res.data))
-      .catch(err => console.error('상품 불러오기 실패:', err));
-    */
+        if (cat === '유저디자인') {
+          all = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+            ...d,
+            name: d.title || '',
+            price: 500 + 500 * (d.wappens?.length || 0),
+            images: [d.image || '/assets/default.png'],
+            category: '유저디자인',
+            description: d.description || '',
+            createdAt: d.createdAt || new Date().toISOString(),
+            uniqueKey: `${d.id}-${index}`
+          }));
+        } else {
+          all = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
+            ...p,
+            images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+            category: p.category || '',
+            uniqueKey: `${p.id}-${index}`
+          }));
+        }
+
+        setAllProducts(all);
+
+        const filtered = all.filter(p => {
+          const matchCat = cat === '전체' || p.category === cat;
+          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
+          return matchCat && matchKeyword;
+        });
+
+        const sorted = [...filtered].sort((a, b) => {
+          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+
+        setProducts(sorted);
+      }
+    };
+
+    fetchData();
   }, [searchParams]);
 
   const handleCategoryClick = (cat) => {
