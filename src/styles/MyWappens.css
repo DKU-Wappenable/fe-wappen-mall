@@ -41,7 +41,7 @@
 
 .my-wappen-card {
   background: white;
-  padding: 16px;
+  padding: 11px;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -66,15 +66,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 320px; 
 
   /* 핵심: 저장된 와펜 이미지 비율과 동일하게 맞춤 */
   aspect-ratio: 1 / 2;
-  max-height: 600px;  /* or 제거 가능 */
+  max-height: 320px; 
 }
 .my-wappen-img {
   width: 100%;
   height: auto;
   object-fit: contain;
+  max-height: 100%;
 }
 
 .fallback-wappen {
@@ -91,7 +93,7 @@
   left: 90px;
   top: 100px;
   width: 120px;
-  height: 300px;
+  height: 220px;
   z-index: 1;
   pointer-events: none;
 }

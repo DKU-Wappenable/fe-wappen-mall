@@ -51,9 +51,9 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ email, password }) => {
+  const login = async ({ id, password }) => {
     try {
-      const res = await axiosInstance.post("/users/login", { email, password });
+      const res = await axiosInstance.post("/users/login", { id, password });
       const { accessToken } = res.data;
 
       localStorage.setItem("access_token", accessToken);
@@ -72,41 +72,9 @@ export const UserProvider = ({ children }) => {
     } catch (err) {
       console.error("로그인 실패, localStorage fallback 시도:", err);
       try {
-        const staticUsers = [
-          {
-            email: "admin@example.com",
-            password: "admin1234",
-            nickname: "관리자",
-            role: "admin",
-            phone: "010-0000-0000",
-            termsAccepted: true,
-            linkedSocials: [],
-          },
-          {
-            email: "owner@example.com",
-            password: "owner1234",
-            nickname: "오너",
-            role: "owner",
-            phone: "010-1111-1111",
-            termsAccepted: false,
-            linkedSocials: [],
-          },
-          {
-            email: "user@example.com",
-            password: "user1234",
-            nickname: "사용자",
-            role: "user",
-            phone: "010-2222-2222",
-            termsAccepted: false,
-            linkedSocials: [],
-          },
-        ];
-
         const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const allUsers = [...staticUsers, ...localUsers];
-
-        const found = allUsers.find(
-          (u) => u.email === email && u.password === password
+        const found = localUsers.find(
+          (u) => u.id === id && u.password === password
         );
 
         if (found) {
@@ -118,7 +86,7 @@ export const UserProvider = ({ children }) => {
           else if (found.role === "owner") navigate("/admin/upload");
           else navigate("/");
         } else {
-          throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+          throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
       } catch (fallbackErr) {
         throw new Error("로그인 실패");

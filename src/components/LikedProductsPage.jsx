@@ -1,14 +1,23 @@
-//  LikedProductsPage.jsx - 서버 연동 + 로컬 fallback 구조 반영
+// src/components/LikedProductsPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
+import { useUser } from '../components/UserContext';
+import LoginRequiredModal from '../components/Login/LoginRequiredModal';
 
 export default function LikedProductsPage() {
+  const { user } = useUser();
+  const navigate = useNavigate();
   const [liked, setLiked] = useState([]);
   const [quantities, setQuantities] = useState({});
-  const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      setShowLoginModal(true); // 모달 표시
+      return;
+    }
+
     const fetchLiked = async () => {
       try {
         const res = await axiosInstance.get('/likes');
@@ -35,10 +44,21 @@ export default function LikedProductsPage() {
         setQuantities(qtyMap);
       }
     };
+
     fetchLiked();
-  }, []);
+  }, [user]);
+
+  // ✅ 로그인 안 된 경우: 모달만 렌더
+  if (!user && showLoginModal) {
+    return <LoginRequiredModal onClose={() => navigate('/login')} />;
+  }
 
   const handleToggleLike = async (product) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     const exists = liked.some(p => p.id === product.id);
     try {
       if (exists) await axiosInstance.delete(`/likes/${product.id}`);
@@ -51,6 +71,7 @@ export default function LikedProductsPage() {
         : [product, ...current];
       localStorage.setItem('liked', JSON.stringify(updated));
     }
+
     setLiked(prev =>
       exists ? prev.filter(p => p.id !== product.id) : [product, ...prev]
     );
@@ -64,6 +85,11 @@ export default function LikedProductsPage() {
   };
 
   const handleAddToCart = async (product) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     const quantity = quantities[product.id] || 1;
     try {
       await axiosInstance.post('/cart', { productId: product.id, quantity });
@@ -161,7 +187,7 @@ export default function LikedProductsPage() {
               cursor: 'pointer',
               width: '100%'
             }}>
-               장바구니 담기
+              장바구니 담기
             </button>
 
             <button onClick={() => handleBuy(product)} style={{
@@ -175,7 +201,7 @@ export default function LikedProductsPage() {
               cursor: 'pointer',
               width: '100%'
             }}>
-               결제하기
+              결제하기
             </button>
           </div>
         ))}

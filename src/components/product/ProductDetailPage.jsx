@@ -1,13 +1,15 @@
-// src/components/ProductDetailPage.jsx
+// ✅ 리뷰 보기까지 포함한 ProductDetailPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const { state } = useLocation();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -29,12 +31,31 @@ export default function ProductDetailPage() {
             ...found,
             images: found.images?.length ? found.images : [found.image || '/assets/default.png']
           });
+        } else if (state) {
+          setProduct({
+            ...state,
+            images: state.images?.length ? state.images : [state.image || '/assets/default.png']
+          });
         }
       }
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, state]);
+
+  useEffect(() => {
+    const fetchReviews = () => {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const matched = orders
+        .filter(order => order.product?.id === product?.id && order.review)
+        .map(order => order.review);
+      setReviews(matched);
+    };
+
+    if (product) {
+      fetchReviews();
+    }
+  }, [product]);
 
   const handleQuantityChange = (delta) => {
     setQuantity(prev => Math.max(1, prev + delta));
@@ -99,7 +120,7 @@ export default function ProductDetailPage() {
           borderRadius: '6px',
           border: '1px solid #aaa',
         }}>
-           장바구니 담기
+          장바구니 담기
         </button>
         <button onClick={handleBuyNow} style={{
           padding: '0.6rem 1.5rem',
@@ -108,9 +129,23 @@ export default function ProductDetailPage() {
           color: '#111',
           cursor: 'pointer',
         }}>
-           결제하기
+          결제하기
         </button>
       </div>
+
+      {reviews.length > 0 && (
+        <div style={{ marginTop: '2rem' }}>
+          <h3>리뷰</h3>
+          <ul>
+            {reviews.map((r, i) => (
+              <li key={i} style={{ marginBottom: '1rem' }}>
+                <div>⭐ {r.rating}점</div>
+                <p>{r.content}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

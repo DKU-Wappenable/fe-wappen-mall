@@ -1,4 +1,4 @@
-//  완성된 OrderFormPage.jsx - 이미지와 100% 동일하게 구현됨
+// src/pages/OrderFormPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -67,16 +67,22 @@ export default function OrderFormPage() {
       address: `${form.address1} ${form.address2}`,
     };
 
-    navigate('/payment/mock', {
-      state: {
-        items,
-        amount: totalPrice,
-        buyer,
-        formData: form,
-        discount,
-        userEmail: user?.email || form.email
-      },
-    });
+    const orderList = items.map(item => ({
+      id: Date.now() + Math.random(),
+      product: item.product,
+      quantity: item.quantity,
+      totalPrice: item.product.price * item.quantity,
+      reviewed: false,
+      createdAt: new Date().toISOString(),
+      status: '주문완료'
+    }));
+
+    const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    localStorage.setItem('orders', JSON.stringify([...orderList, ...prevOrders]));
+
+    if (isCartOrder) localStorage.removeItem('cart');
+
+    navigate('/order/complete');
   };
 
   if (items.length === 0) return <div className="order-form-container">상품 정보가 없습니다.</div>;
@@ -88,72 +94,69 @@ export default function OrderFormPage() {
   return (
     <div className="order-form-container">
       <div className="order-form-layout">
+        <div className="order-form">
+          <h2> 주문서 작성</h2>
+          <section>
+            <h3>1. 주문자 정보</h3>
+            <input name="name" placeholder="이름" value={form.name} onChange={handleChange} />
+            <input name="phone" placeholder="연락처" value={form.phone} onChange={handleChange} />
+            <input name="email" placeholder="이메일" value={form.email} onChange={handleChange} />
+          </section>
 
-<div className="order-form">
-  <h2> 주문서 작성</h2>
+          <section>
+            <h3>2. 배송지 정보</h3>
+            <input name="receiver" placeholder="수령인" value={form.receiver} onChange={handleChange} />
+            <input name="receiverPhone1" placeholder="연락처 1" value={form.receiverPhone1} onChange={handleChange} />
+            <input name="receiverPhone2" placeholder="연락처 2 (선택)" value={form.receiverPhone2} onChange={handleChange} />
+            <input name="address1" placeholder="주소" value={form.address1} onChange={handleChange} />
+            <input name="address2" placeholder="상세 주소" value={form.address2} onChange={handleChange} />
+            <input name="memo" placeholder="배송 메모" value={form.memo} onChange={handleChange} />
+          </section>
 
-  <section>
-    <h3>1. 주문자 정보</h3>
-    <input name="name" placeholder="이름" value={form.name} onChange={handleChange} />
-    <input name="phone" placeholder="연락처" value={form.phone} onChange={handleChange} />
-    <input name="email" placeholder="이메일" value={form.email} onChange={handleChange} />
-  </section>
+          <section>
+            <h3>3. 결제 수단</h3>
+            <div className="horizontal-group">
+              <select name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
+                <option value="신용카드">신용카드</option>
+                <option value="카카오페이">카카오페이</option>
+                <option value="토스">토스</option>
+                <option value="무통장입금">무통장 입금</option>
+              </select>
+              {!isCartOrder && (
+                <input type="number" name="quantity" value={form.quantity} onChange={handleChange} min={1} className="quantity-input" />
+              )}
+            </div>
+          </section>
 
-  <section>
-    <h3>2. 배송지 정보</h3>
-    <input name="receiver" placeholder="수령인" value={form.receiver} onChange={handleChange} />
-    <input name="receiverPhone1" placeholder="연락처 1" value={form.receiverPhone1} onChange={handleChange} />
-    <input name="receiverPhone2" placeholder="연락처 2 (선택)" value={form.receiverPhone2} onChange={handleChange} />
-    <input name="address1" placeholder="주소" value={form.address1} onChange={handleChange} />
-    <input name="address2" placeholder="상세 주소" value={form.address2} onChange={handleChange} />
-    <input name="memo" placeholder="배송 메모" value={form.memo} onChange={handleChange} />
-  </section>
+          <section>
+            <h3>4. 쿠폰 / 포인트</h3>
+            <div className="coupon-row">
+              <input name="coupon" placeholder="쿠폰 코드 입력" value={form.coupon} onChange={handleChange} />
+              <button type="button" onClick={applyCoupon} className="coupon-btn">쿠폰 사용</button>
+            </div>
+            <div className="checkbox-inline">
+              <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
+              <label htmlFor="usePoints">포인트 사용하기</label>
+            </div>
+          </section>
 
-  <section>
-    <h3>3. 결제 수단</h3>
-    <div className="horizontal-group">
-      <select name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
-        <option value="신용카드">신용카드</option>
-        <option value="카카오페이">카카오페이</option>
-        <option value="토스">토스</option>
-        <option value="무통장입금">무통장 입금</option>
-      </select>
-      {!isCartOrder && (
-        <input type="number" name="quantity" value={form.quantity} onChange={handleChange} min={1} className="quantity-input" />
-      )}
-    </div>
-  </section>
+          <section>
+            <h3>5. 약관 동의</h3>
+            <div className="checkbox-group">
+              <div className="checkbox-inline">
+                <input type="checkbox" id="agreeTerms" name="agreeTerms" checked={form.agreeTerms} onChange={handleChange} />
+                <label htmlFor="agreeTerms">구매 동의 (필수)</label>
+              </div>
+              <div className="checkbox-inline">
+                <input type="checkbox" id="agreePrivacy" name="agreePrivacy" checked={form.agreePrivacy} onChange={handleChange} />
+                <label htmlFor="agreePrivacy">개인정보 수집 동의 (필수)</label>
+              </div>
+            </div>
+          </section>
 
-  <section>
-    <h3>4. 쿠폰 / 포인트</h3>
-    <div className="coupon-row">
-      <input name="coupon" placeholder="쿠폰 코드 입력" value={form.coupon} onChange={handleChange} />
-      <button type="button" onClick={applyCoupon} className="coupon-btn">쿠폰 사용</button>
-    </div>
-    <div className="checkbox-inline">
-      <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
-      <label htmlFor="usePoints">포인트 사용하기</label>
-    </div>
-  </section>
+          <button className="submit-btn" onClick={handlePayment}>결제하기</button>
+        </div>
 
-  <section>
-  <h3>5. 약관 동의</h3>
-  <div className="checkbox-group">
-    <div className="checkbox-inline">
-      <input type="checkbox" id="agreeTerms" name="agreeTerms" checked={form.agreeTerms} onChange={handleChange} />
-      <label htmlFor="agreeTerms">구매 동의 (필수)</label>
-    </div>
-    <div className="checkbox-inline">
-      <input type="checkbox" id="agreePrivacy" name="agreePrivacy" checked={form.agreePrivacy} onChange={handleChange} />
-      <label htmlFor="agreePrivacy">개인정보 수집 동의 (필수)</label>
-    </div>
-  </div>
-</section>
-
-
-
-  <button className="submit-btn" onClick={handlePayment}>결제하기</button>
-</div>
         <div className="order-summary">
           <h3>주문 상품 정보</h3>
           {items.map((item, i) => (

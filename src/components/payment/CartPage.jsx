@@ -2,12 +2,22 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
+import { useUser } from '../UserContext'; //  로그인 유저
+import LoginRequiredModal from '../Login/LoginRequiredModal'; //  로그인 필요 모달
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [cartItems, setCartItems] = useState([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
+  //  진입 시 로그인 확인
   useEffect(() => {
+    if (!user) {
+      setShowLoginModal(true); // 로그인 안 되어 있으면 모달 띄움
+      return;
+    }
+
     const fetchCart = async () => {
       try {
         const res = await axiosInstance.get('/cart');
@@ -26,7 +36,7 @@ export default function CartPage() {
     };
 
     fetchCart();
-  }, []);
+  }, [user]);
 
   const updateQuantity = async (id, amount) => {
     try {
@@ -84,6 +94,17 @@ export default function CartPage() {
     (sum, item) => sum + item.product.price * item.quantity, 0
   );
 
+  //  로그인 안 된 경우: 전체 화면 차단
+  if (!user) {
+    return (
+      <>
+        {showLoginModal && (
+          <LoginRequiredModal onClose={() => navigate('/login')} />
+        )}
+      </>
+    );
+  }
+
   return (
     <div style={{ padding: '2rem' }}>
       <h2>장바구니</h2>
@@ -99,7 +120,7 @@ export default function CartPage() {
                 style={{ width: '80px', height: '80px', objectFit: 'cover', marginRight: '1rem', borderRadius: '8px' }}
               />
               <div>
-                <strong>{item.product.name}</strong> / {item.product.price.toLocaleString()}원
+              <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
                 <br />
                 <button onClick={() => updateQuantity(item.id, -1)}>-</button>
                 <span style={{ margin: '0 1rem' }}>{item.quantity}</span>

@@ -1,4 +1,4 @@
-//  MyWappens.jsx - 서버 연동 + 로컬 fallback 구조 반영
+//  MyWappens.jsx - 상세 보기 정상 동작 + 공유/삭제 동기화 완성
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../components/UserContext';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ export default function MyWappens() {
   const handleDelete = async (id) => {
     const confirm = window.confirm('이 디자인을 삭제하시겠습니까?');
     if (!confirm) return;
-
+  
     try {
       await axiosInstance.delete(`/api/wappens/${id}`);
       setDesigns(prev => prev.filter(d => d.id !== id));
@@ -41,40 +41,92 @@ export default function MyWappens() {
       localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(updated));
       setDesigns(updated);
     }
+  
+    //  sharedWappens에서도 제거
+    const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+    const updatedShared = shared.filter(d => d.id !== id);
+    localStorage.setItem('sharedWappens', JSON.stringify(updatedShared));
+  
+    // cart에서 제거
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const newCart = cart.filter(item => item.product.id !== id);
+    localStorage.setItem('cart', JSON.stringify(newCart));
+  
+    //  liked에서 제거
+    const liked = JSON.parse(localStorage.getItem('liked') || '[]');
+    const newLiked = liked.filter(item => item.id !== id);
+    localStorage.setItem('liked', JSON.stringify(newLiked));
   };
+  
 
   const handleShare = async (design) => {
-    const shared = { ...design, id: Date.now(), nickname: user.nickname || user.name || 'user' };
+    const shared = {
+      ...design,
+      nickname: user.nickname || user.name || 'user',
+      category: '유저디자인',
+      images: [design.image || '/assets/default.png'],
+      price: 500 + (design.wappens?.length || 0) * 500
+    };
+
     try {
       await axiosInstance.post('/api/products', shared);
       alert('공유 완료! 관리자 승인 후 반영됩니다.');
     } catch (err) {
       console.warn('서버 실패, 로컬 공유 저장');
       const prev = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
-      localStorage.setItem('sharedWappens', JSON.stringify([shared, ...prev]));
+      const updated = [shared, ...prev.filter(d => d.id !== shared.id)];
+      localStorage.setItem('sharedWappens', JSON.stringify(updated));
       alert('공유 완료! (로컬 반영)');
     }
   };
 
   return (
-    <div className="mywappens-container">
-      <h2>나의 와펜 디자인</h2>
+    <div className="my-wappens-wrapper">
+      <h2 className="my-wappens-title">나의 와펜 디자인</h2>
       {designs.length === 0 ? (
-        <p>저장된 디자인이 없습니다.</p>
+        <p className="no-wappens">저장된 디자인이 없습니다.</p>
       ) : (
-        <div className="mywappens-grid">
+        <div className="my-wappens-grid">
           {designs.map((design) => (
-            <div key={design.id} className="wappen-card">
-              <img
-                src={design.image}
-                alt="saved design"
-                className="wappen-preview"
-                onError={(e) => (e.target.src = '/assets/default.png')}
-              />
+            <div key={design.id} className="my-wappen-card">
+              {design.image ? (
+                <div className="my-wappen-preview">
+                  <img
+                    src={design.image}
+                    alt="saved design"
+                    className="my-wappen-img"
+                    onError={(e) => (e.target.src = '/assets/default.png')}
+                  />
+                </div>
+              ) : (
+                <div className="my-wappen-preview fallback-wappen">
+                  <img src={`/assets/${design.strap}.png`} className="fallback-strap" />
+                  {design.wappens.map((w, i) => (
+                    <img
+                      key={i}
+                      src={`/assets/${w.type}.png`}
+                      className="fallback-wappen-img"
+                      style={{ top: `${w.y}px`, left: `${w.x}px` }}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="wappen-info">
+                <span className="created-at">{new Date(design.createdAt).toLocaleDateString()}</span>
+                <span className="wappen-label">
+                  총 가격: {(500 + (design.wappens?.length || 0) * 500).toLocaleString()}원
+                </span>
+              </div>
               <div className="wappen-buttons">
-                <button onClick={() => navigate(`/wappen/${design.id}`, { state: design })}>상세 보기</button>
-                <button onClick={() => handleDelete(design.id)}>삭제</button>
-                <button onClick={() => handleShare(design)}>디자인 개시하기</button>
+                <button onClick={() => navigate(`/product/${design.id}`, { state: design })}>
+                  상세 보기
+                </button>
+                <button onClick={() => handleDelete(design.id)} className="delete-btn">
+                  삭제
+                </button>
+                <button onClick={() => handleShare(design)} className="create-btn">
+                  디자인 개시하기
+                </button>
               </div>
             </div>
           ))}

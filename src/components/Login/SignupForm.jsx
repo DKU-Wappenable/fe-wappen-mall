@@ -8,14 +8,15 @@ import "../../styles/AuthForm.css";
 export default function SignupForm() {
   const navigate = useNavigate();
 
+  const [id, setId] = useState("");
   const [email, setEmail] = useState("");
-  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
   const validate = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!id.trim()) return "아이디를 입력해주세요.";
     if (!emailRegex.test(email)) return "유효한 이메일을 입력해주세요.";
     if (password.length < 8) return "비밀번호는 8자 이상이어야 합니다.";
     if (password !== confirmPassword) return "비밀번호가 일치하지 않습니다.";
@@ -32,14 +33,10 @@ export default function SignupForm() {
       return;
     }
 
-    try {
-      //  서버 연동 우선
-      await axiosInstance.post("/users/signup", {
-        email,
-        nickname,
-        password,
-      });
+    const signupData = { id, email, password };
 
+    try {
+      await axiosInstance.post("/users/signup", signupData);
       toast.success("회원가입 성공! 로그인 페이지로 이동합니다.");
       navigate("/login");
     } catch (err) {
@@ -47,17 +44,19 @@ export default function SignupForm() {
 
       try {
         const savedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const exists = savedUsers.some((u) => u.email === email);
-        if (exists) {
+        if (savedUsers.some((u) => u.id === id)) {
+          setError("이미 사용 중인 아이디입니다.");
+          return;
+        }
+        if (savedUsers.some((u) => u.email === email)) {
           setError("이미 사용 중인 이메일입니다.");
           return;
         }
 
         const newUser = {
+          id,
           email,
           password,
-          nickname,
-          phone: "",
           role: "user",
           termsAccepted: false,
           linkedSocials: [],
@@ -94,17 +93,17 @@ export default function SignupForm() {
 
         <form onSubmit={handleSubmit}>
           <input
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="아이디"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
             required
           />
           <input
-            type="text"
-            placeholder="닉네임"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            type="email"
+            placeholder="이메일 (아이디 찾기에 사용)"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <input

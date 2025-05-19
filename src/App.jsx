@@ -1,4 +1,4 @@
-  // ✅ App.jsx
+  //  App.jsx
   import React, { useEffect } from 'react';
   import { Routes, Route, Navigate } from 'react-router-dom';
   import { ToastContainer } from 'react-toastify';
@@ -84,7 +84,7 @@
 
     if (!localStorage.getItem('users')) {
       localStorage.setItem('users', JSON.stringify(defaultUsers));
-      // ✅ 개별 유저도 따로 저장
+      //  개별 유저도 따로 저장
       defaultUsers.forEach(user => {
         const key = user.email.split('@')[0]; // admin, owner, user, test
         localStorage.setItem(key, JSON.stringify(user));
@@ -113,7 +113,7 @@
             <Route path="/Point" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} />
             <Route path="/account-settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
             <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
-            <Route path="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
+            <Route path="/Like" element={<LikedProductsPage />} />
 
             <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
             <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />

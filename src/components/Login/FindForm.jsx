@@ -1,78 +1,92 @@
-//  FindForm.jsx - 서버 연동 + 로컬 fallback 구조 반영
 import React, { useState } from 'react';
-import axiosInstance from '../../api/axiosInstance';
-import '../../styles/FindForm.css';
+import ResetPasswordModal from './ResetPasswordModal';
 
-export default function FindForm() {
-  const [mode, setMode] = useState('findId'); // 'findId' | 'findPw'
+export default function FindForm({ mode = 'id', onClose }) {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
+  const [id, setId] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [verifiedUser, setVerifiedUser] = useState(null);
+  const [foundId, setFoundId] = useState('');
 
   const handleFind = async () => {
-    setMessage('');
-    if (mode === 'findId') {
+    if (mode === 'id') {
+      if (!email) return alert('이메일을 입력하세요.');
       try {
-        const res = await axiosInstance.post('/api/users/find-id', { name, phone });
-        setMessage(`아이디는 ${res.data.email} 입니다.`);
+        const res = await axiosInstance.post('/users/find-id', { email });
+        setFoundId(res.data);
       } catch (err) {
-        console.warn('서버 실패, 로컬에서 대체');
-        const users = ['admin', 'owner', 'user']
-          .map(key => JSON.parse(localStorage.getItem(key) || 'null'))
-          .filter(Boolean);
-        const found = users.find(u => u.name === name && u.phone === phone);
-        setMessage(found ? `아이디는 ${found.email} 입니다.` : '일치하는 계정을 찾을 수 없습니다.');
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const found = users.find(u => u.email === email);
+        if (found) setFoundId(found.id);
+        else alert('일치하는 사용자를 찾을 수 없습니다.');
       }
     } else {
+      if (!id || !email) return alert('아이디와 이메일을 모두 입력하세요.');
       try {
-        await axiosInstance.post('/api/users/reset-password-request', { email });
-        setMessage('비밀번호 재설정 메일을 전송했습니다.');
+        await axiosInstance.post('/users/find-pw', { id, email });
+        setVerifiedUser({ id, email });
+        setShowResetModal(true);
       } catch (err) {
-        console.warn('서버 실패, 로컬 처리');
-        const user = ['admin', 'owner', 'user']
-          .map(key => JSON.parse(localStorage.getItem(key) || 'null'))
-          .find(u => u.email === email);
-        setMessage(user ? '임시 비밀번호: temp1234' : '존재하지 않는 이메일입니다.');
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const found = users.find(u => u.id === id && u.email === email);
+        if (found) {
+          setVerifiedUser(found);
+          setShowResetModal(true);
+        } else {
+          alert('일치하는 사용자를 찾을 수 없습니다.');
+        }
       }
     }
   };
 
   return (
-    <div className="find-form-container">
-      <h2>{mode === 'findId' ? '아이디 찾기' : '비밀번호 찾기'}</h2>
-      <div className="find-mode-toggle">
-        <button onClick={() => setMode('findId')} className={mode === 'findId' ? 'active' : ''}>아이디 찾기</button>
-        <button onClick={() => setMode('findPw')} className={mode === 'findPw' ? 'active' : ''}>비밀번호 찾기</button>
-      </div>
-      {mode === 'findId' ? (
-        <>
-          <input
-            type="text"
-            placeholder="이름 입력"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="전화번호 입력"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </>
-      ) : (
-        <>
-          <input
-            type="email"
-            placeholder="이메일 입력"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </>
-      )}
+    <div className="auth-container">
+      <div className="auth-box">
+        <button className="close-btn" onClick={onClose}>×</button>
+        <h2 className="auth-title">{mode === 'id' ? '아이디 찾기' : '비밀번호 찾기'}</h2>
 
-      <button onClick={handleFind}>찾기</button>
-      {message && <p className="result-message">{message}</p>}
+        {mode === 'id' ? (
+          <>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일"
+            />
+            <button onClick={handleFind} className="submit-btn blue">아이디 찾기</button>
+            {foundId && (
+              <div className="result-box">
+                <p>가입된 아이디: <strong>{foundId}</strong></p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+              placeholder="아이디"
+            />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일"
+            />
+            <button onClick={handleFind} className="submit-btn blue">비밀번호 찾기</button>
+          </>
+        )}
+
+        <button onClick={onClose} className="cancel-btn">닫기</button>
+
+        {showResetModal && verifiedUser && (
+          <ResetPasswordModal
+            email={verifiedUser.email}
+            onClose={() => setShowResetModal(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

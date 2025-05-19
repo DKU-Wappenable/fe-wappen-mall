@@ -10,11 +10,10 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
 
-  const [email, setEmail] = useState("");
+  const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  //  이미 로그인된 유저가 /login 들어오면 리다이렉트
   useEffect(() => {
     if (user) {
       if (user.role === "admin") navigate("/admin");
@@ -28,8 +27,7 @@ export default function LoginForm() {
     setError("");
 
     try {
-      //  서버 로그인 시도
-      const res = await axiosInstance.post("/users/login", { email, password });
+      const res = await axiosInstance.post("/users/login", { id, password });
       const { accessToken } = res.data;
 
       localStorage.setItem("access_token", accessToken);
@@ -43,7 +41,7 @@ export default function LoginForm() {
       toast.success("로그인 성공!");
 
       if (userData.role === "admin") navigate("/admin");
-      else if (!userData.termsAccepted) return; // 약관동의 모달로 대기
+      else if (!userData.termsAccepted) return;
       else if (userData.role === "owner") navigate("/admin/upload");
       else navigate("/");
     } catch (err) {
@@ -52,40 +50,47 @@ export default function LoginForm() {
       try {
         const staticUsers = [
           {
-            email: "admin@example.com",
+            id: "admin",
             password: "admin1234",
+            email: "admin@example.com",
             nickname: "관리자",
             role: "admin",
-            phone: "010-0000-0000",
             termsAccepted: true,
             linkedSocials: [],
           },
           {
-            email: "owner@example.com",
+            id: "owner",
             password: "owner1234",
+            email: "owner@example.com",
             nickname: "오너",
             role: "owner",
-            phone: "010-1111-1111",
             termsAccepted: false,
             linkedSocials: [],
           },
           {
-            email: "user@example.com",
+            id: "user",
             password: "user1234",
+            email: "user@example.com",
             nickname: "사용자",
             role: "user",
-            phone: "010-2222-2222",
             termsAccepted: false,
             linkedSocials: [],
           },
+          {
+            id: "test",
+            password: "test1234",
+            email: "test@example.com",
+            nickname: "테스트",
+            role: "admin",
+            termsAccepted: true,
+            linkedSocials: ["kakao"],
+          }
         ];
 
         const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
         const allUsers = [...staticUsers, ...localUsers];
 
-        const found = allUsers.find(
-          (u) => u.email === email && u.password === password
-        );
+        const found = allUsers.find((u) => u.id === id && u.password === password);
 
         if (found) {
           localStorage.setItem("user", JSON.stringify(found));
@@ -97,7 +102,7 @@ export default function LoginForm() {
           else if (found.role === "owner") navigate("/admin/upload");
           else navigate("/");
         } else {
-          setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+          setError("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
       } catch (fallbackErr) {
         console.error("로컬 fallback 실패:", fallbackErr);
@@ -116,10 +121,10 @@ export default function LoginForm() {
 
         <form onSubmit={handleSubmit}>
           <input
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="아이디"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
             required
           />
           <input
@@ -137,6 +142,10 @@ export default function LoginForm() {
         <div className="auth-links">
           <p>
             아직 계정이 없으신가요? <Link to="/signup">회원가입</Link>
+          </p>
+          <p style={{ marginTop: '8px' }}>
+            <Link to="/find-id" style={{ marginRight: '12px' }}>아이디 찾기</Link>
+            <Link to="/find-pw">비밀번호 찾기</Link>
           </p>
         </div>
       </div>
