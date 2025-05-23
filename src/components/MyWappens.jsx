@@ -64,6 +64,7 @@ export default function MyWappens() {
       ...design,
       nickname: user.nickname || user.name || 'user',
       category: '유저디자인',
+      name: design.title || `유저 디자인`,
       images: [design.image || '/assets/default.png'],
       price: 500 + (design.wappens?.length || 0) * 500
     };
@@ -76,7 +77,7 @@ export default function MyWappens() {
       const prev = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
       const updated = [shared, ...prev.filter(d => d.id !== shared.id)];
       localStorage.setItem('sharedWappens', JSON.stringify(updated));
-      alert('공유 완료! (로컬 반영)');
+      alert('공유 완료!');
     }
   };
 

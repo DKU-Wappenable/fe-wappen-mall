@@ -65,10 +65,10 @@ export default function SignupForm() {
         const updatedUsers = [newUser, ...savedUsers];
         localStorage.setItem("users", JSON.stringify(updatedUsers));
 
-        toast.success("로컬 회원가입 완료! 로그인 페이지로 이동합니다.");
+        toast.success(" 회원가입 완료! 로그인 페이지로 이동합니다.");
         navigate("/login");
       } catch (fallbackErr) {
-        console.error("로컬 회원가입 실패:", fallbackErr);
+        console.error(" 회원가입 실패:", fallbackErr);
         setError("회원가입 중 오류가 발생했습니다.");
       }
     }

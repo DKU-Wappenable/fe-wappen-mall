@@ -57,7 +57,7 @@ export default function ProductUploadForm() {
         const prev = JSON.parse(localStorage.getItem('products') || '[]');
         const withId = { ...newProduct, id: Date.now().toString() };
         localStorage.setItem('products', JSON.stringify([withId, ...prev]));
-        alert('상품이 로컬에 등록되었습니다!');
+        alert('상품이 등록되었습니다!');
       }
 
       resetForm();

@@ -1,4 +1,4 @@
-// ✅ 리뷰 보기까지 포함한 ProductDetailPage.jsx
+//  리뷰 보기까지 포함한 ProductDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';

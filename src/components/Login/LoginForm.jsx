@@ -95,7 +95,7 @@ export default function LoginForm() {
         if (found) {
           localStorage.setItem("user", JSON.stringify(found));
           setUser(found);
-          toast.success("로컬 계정으로 로그인!");
+          toast.success("로그인 성공!");
 
           if (found.role === "admin") navigate("/admin");
           else if (!found.termsAccepted) return;

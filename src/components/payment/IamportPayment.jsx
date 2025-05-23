@@ -35,10 +35,6 @@ export default function IamportPayment() {
         pg = 'tosspay.tosstest';
         pay_method = 'tosspay';
         break;
-      case '네이버페이':
-        pg = 'naverpay.NaverPay';
-        pay_method = 'naverpay';
-        break;
       case '무통장입금':
         alert('무통장입금은 별도 안내가 진행됩니다.');
         navigate('/order/complete');
@@ -49,8 +45,9 @@ export default function IamportPayment() {
     }
 
     const orderName = items.length === 1
-      ? items[0].product.name
-      : `${items[0].product.name} 외 ${items.length - 1}개`;
+  ? items[0].product.name || '유저디자인'
+  : `${items[0].product.name || '유저디자인'} 외 ${items.length - 1}개`;
+
 
     IMP.request_pay({
       pg,
@@ -63,6 +60,7 @@ export default function IamportPayment() {
       buyer_tel: buyer?.phone || '01012345678',
       buyer_addr: buyer?.address || '서울시 테스트구',
       buyer_postcode: '123-456',
+      product_desc: orderName,
     }, function (rsp) {
       if (rsp.success) {
         const now = new Date().toISOString();

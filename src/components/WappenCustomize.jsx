@@ -82,7 +82,7 @@ export default function WappenCustomize() {
         const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
         saved.push(savedDesign);
         localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(saved));
-        alert('디자인이 로컬에 저장되었습니다!');
+        alert('디자인이 저장되었습니다!');
       }
 
       navigate('/my-wappens');
@@ -119,7 +119,7 @@ export default function WappenCustomize() {
   return (
     <div className="customize-wrapper">
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
-        ✔ 기본 스트랩 1개 1000원 / 와펜 1개당 1000원으로 가격이 계산됩니다.
+        ✔ 기본 스트랩 1개 500원 / 와펜 1개당 500원으로 가격이 계산됩니다.
       </p>
       <div className="selector-bar">
         <div className="strap-select">

@@ -52,7 +52,7 @@ export default function PendingReviews() {
       );
       localStorage.setItem('orders', JSON.stringify(updated));
       setReviews(prev => prev.filter(o => o.id !== id));
-      alert('리뷰가 로컬에 저장되었습니다.');
+      alert('리뷰가 저장되었습니다.');
     }
   };
 

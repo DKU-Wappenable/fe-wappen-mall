@@ -40,7 +40,7 @@ export default function ResetPasswordModal({ email, onClose }) {
       );
       localStorage.setItem('users', JSON.stringify(updatedUsers));
 
-      alert('비밀번호가 로컬에서 변경되었습니다.');
+      alert('비밀번호가 변경되었습니다.');
       onClose();
       navigate('/login');
     }

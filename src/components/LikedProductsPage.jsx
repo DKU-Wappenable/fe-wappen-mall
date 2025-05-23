@@ -48,7 +48,7 @@ export default function LikedProductsPage() {
     fetchLiked();
   }, [user]);
 
-  // ✅ 로그인 안 된 경우: 모달만 렌더
+  //  로그인 안 된 경우: 모달만 렌더
   if (!user && showLoginModal) {
     return <LoginRequiredModal onClose={() => navigate('/login')} />;
   }

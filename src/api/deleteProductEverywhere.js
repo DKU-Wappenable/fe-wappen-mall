@@ -25,7 +25,7 @@ export default function deleteProductEverywhere(productId, userEmail = '') {
     } else if (key === 'products' || key === 'liked' || key === 'sharedWappens') {
       parsed = parsed.filter(p => {
         const allowDuplicate = p.__allowDuplicate || false;
-        // ✅ 고유 키와 함께 여러 개 저장된 와펜은 모두 제거 (id가 완전히 일치하지 않아도 고유키 포함된 경우도 제거)
+        //  고유 키와 함께 여러 개 저장된 와펜은 모두 제거 (id가 완전히 일치하지 않아도 고유키 포함된 경우도 제거)
         return allowDuplicate || !(String(p.id) === idStr || String(p.uniqueKey)?.includes(idStr));
       });
     }

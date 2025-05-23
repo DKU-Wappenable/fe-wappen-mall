@@ -49,7 +49,7 @@ export default function WithdrawPage() {
       localStorage.setItem('users', JSON.stringify(updatedUsers));
 
       logout();
-      toast.success('회원 탈퇴가 완료되었습니다. (로컬 테스트)');
+      toast.success('회원 탈퇴가 완료되었습니다.');
       navigate('/');
     }
   };
