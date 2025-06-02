@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'; //  ResetPasswordModal.jsx - 서버 연동 + 실패 시 로컬 fallback 구조 추가
+//  ResetPasswordModal.jsx - 서버 연동 + 실패 시 로컬 fallback 구조 추가
 import React, { useState } from 'react';
 import '../../styles/ResetPasswordModal.css';
 import axiosInstance from '../../api/axiosInstance';
@@ -7,7 +7,6 @@ export default function ResetPasswordModal({ email, onClose }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +21,7 @@ export default function ResetPasswordModal({ email, onClose }) {
       setMessage('비밀번호가 일치하지 않습니다.');
       return;
     }
-
+  
     try {
       await axiosInstance.put('/users/reset-password', {
         email,
@@ -30,7 +29,6 @@ export default function ResetPasswordModal({ email, onClose }) {
       });
       alert('비밀번호가 성공적으로 변경되었습니다.');
       onClose();
-      navigate('/login');
     } catch (err) {
       console.warn('서버 실패, 로컬 fallback 시도');
 
@@ -40,9 +38,8 @@ export default function ResetPasswordModal({ email, onClose }) {
       );
       localStorage.setItem('users', JSON.stringify(updatedUsers));
 
-      alert('비밀번호가 변경되었습니다.');
+      alert('비밀번호가 로컬에서 변경되었습니다.');
       onClose();
-      navigate('/login');
     }
   };
 

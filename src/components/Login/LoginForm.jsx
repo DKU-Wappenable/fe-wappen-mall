@@ -48,7 +48,7 @@ export default function LoginForm() {
         else navigate("/");
 
       } catch (meError) {
-        // users/me API가 없는 경우: 임시 사용자 처리
+        // /users/me API가 없는 경우 → 임시 로그인 처리
         console.warn("/users/me 없음, 임시 로그인 처리:", meError);
 
         const fallbackUser = {
@@ -66,7 +66,7 @@ export default function LoginForm() {
       }
 
     } catch (err) {
-      // 서버 로그인 실패 → 로컬 fallback 시도
+      // 서버 로그인 실패 → 로컬 fallback
       console.warn("서버 로그인 실패, 로컬 fallback 시도:", err);
 
       try {
@@ -133,6 +133,16 @@ export default function LoginForm() {
     }
   };
 
+  // ✅ 소셜 로그인 이동 함수
+  const handleSocialLogin = (provider) => {
+    const providers = {
+      카카오: "/oauth2/authorization/kakao",
+      네이버: "/oauth2/authorization/naver",
+      구글: "/oauth2/authorization/google",
+    };
+    if (providers[provider]) window.location.href = providers[provider];
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-box">
@@ -169,6 +179,20 @@ export default function LoginForm() {
             <Link to="/find-id" style={{ marginRight: '12px' }}>아이디 찾기</Link>
             <Link to="/find-pw">비밀번호 찾기</Link>
           </p>
+        </div>
+
+        {/* ✅ 소셜 로그인 안내 및 버튼 */}
+        <div className="divider">또는 다른 서비스 계정으로 로그인</div>
+        <div className="social-login-group">
+          <button className="social-btn kakao" onClick={() => handleSocialLogin("카카오")}>
+            <img src="/assets/kakao_icon.png" alt="카카오 로그인" />
+          </button>
+          <button className="social-btn naver" onClick={() => handleSocialLogin("네이버")}>
+            <img src="/assets/naver_icon.png" alt="네이버 로그인" />
+          </button>
+          <button className="social-btn google" onClick={() => handleSocialLogin("구글")}>
+            <img src="/assets/google_icon.png" alt="구글 로그인" />
+          </button>
         </div>
       </div>
     </div>

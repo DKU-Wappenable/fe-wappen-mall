@@ -214,7 +214,7 @@ export default function OrderFormPage() {
                 <p>{item.product.name}</p>
                 {item.product.nickname && (
                   <p style={{ fontSize: '13px', color: '#666' }}>
-                    by {item.product.nickname}
+                    by {user.email}
                   </p>
                 )}
                 <p>수량: {item.quantity}개</p>

@@ -2,12 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
-
+import { useUser } from '../../components/UserContext';
 export default function OrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
-
+  const { user } = useUser();
   useEffect(() => {
     const fetchOrder = async () => {
       try {
@@ -36,7 +36,7 @@ export default function OrderDetailPage() {
       <h2>주문 상세</h2>
       <p><strong>주문 ID:</strong> {order.id}</p>
       <p><strong>주문 날짜:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
-      <p><strong>상품명:</strong> {product.nickname ? product.nickname : product.name} </p>
+      <p>상품: by {user?.email || '유저 디자인'}</p>
       <p><strong>수량:</strong> {quantity}개</p>
       <p><strong>총 결제 금액:</strong> {totalPrice.toLocaleString()}원</p>
       <p><strong>결제 수단:</strong> {paymentMethod || '신용카드'}</p>

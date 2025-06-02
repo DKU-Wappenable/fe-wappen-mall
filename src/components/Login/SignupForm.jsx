@@ -1,4 +1,3 @@
-// src/components/Login/SignupForm.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -8,19 +7,23 @@ import "../../styles/AuthForm.css";
 export default function SignupForm() {
   const navigate = useNavigate();
 
-  const [id, setId] = useState(""); // 서버에서는 email(아이디)
+  const [email, setEmail] = useState(""); // 아이디
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-
   const validate = () => {
+    const idRegex = /^[a-z0-9]{4,20}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!id.trim()) return "아이디를 입력해주세요.";
-    if (!emailRegex.test(recoveryEmail)) return "유효한 이메일을 입력해주세요.";
-    if (password.length < 8) return "비밀번호는 8자 이상이어야 합니다.";
+    const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+    const nicknameRegex = /^[A-Za-z0-9]{2,20}$/;
+
+    if (!idRegex.test(email)) return "아이디는 영문 소문자와 숫자 4~20자여야 합니다.";
+    if (!emailRegex.test(recoveryEmail)) return "유효한 복구 이메일을 입력해주세요.";
+    if (!nicknameRegex.test(nickname)) return "닉네임은 영어/숫자 2~20자여야 합니다.";
+    if (!pwRegex.test(password)) return "비밀번호는 영문, 숫자, 특수문자 포함 8~20자여야 합니다.";
     if (password !== confirmPassword) return "비밀번호가 일치하지 않습니다.";
     return null;
   };
@@ -34,15 +37,15 @@ export default function SignupForm() {
       setError(validationMsg);
       return;
     }
+
     const signupData = {
-        email: id, // 서버에서 email이 아이디로 사용됨
-        recoveryEmail,
-        nickname,
-        password,
-        confirmPassword,
-        role: "USER" // 기본값 설정
-      };
-    console.log("전송 데이터:", signupData);
+      email,
+      recoveryEmail,
+      nickname,
+      password,
+      confirmPassword,
+      role: "USER",
+    };
 
     try {
       await axiosInstance.post("/users/signup", signupData);
@@ -53,26 +56,26 @@ export default function SignupForm() {
 
       try {
         const savedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        if (savedUsers.some((u) => u.id === id)) {
-          setError("이미 사용 중인 아이디입니다.");
-          return;
-        }
         if (savedUsers.some((u) => u.email === email)) {
           setError("이미 사용 중인 이메일입니다.");
           return;
         }
 
-    
+        const newUser = {
+          email,
+          recoveryEmail,
+          nickname,
+          password,
+          termsAccepted: false,
+          role: "USER",
+        };
 
-
-        const updatedUsers = [newUser, ...savedUsers];
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-        toast.success(" 회원가입 완료! 로그인 페이지로 이동합니다.");
+        localStorage.setItem("users", JSON.stringify([newUser, ...savedUsers]));
+        toast.success("임시 회원가입 완료. 로그인 해보세요!");
         navigate("/login");
       } catch (fallbackErr) {
-        console.error(" 회원가입 실패:", fallbackErr);
-        setError("회원가입 중 오류가 발생했습니다.");
+        console.error("로컬 fallback 실패:", fallbackErr);
+        setError("회원가입에 실패했습니다. 다시 시도해주세요.");
       }
     }
   };
@@ -95,56 +98,45 @@ export default function SignupForm() {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-        {/* 아이디용 이메일 (email 필드 → 로그인에 사용됨) */}
-        <input
-          type="text"
-          placeholder="아이디 (영소문자+숫자 4~20자)"
-          value={id}
-          onChange={(e) => setId(e.target.value)}
-          required
-        />
-
-        {/* 닉네임 */}
-        <input
-          type="text"
-          placeholder="닉네임 (영문/숫자 2~20자)"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          required
-        />
-
-        {/* 이메일 (본인 확인용 → recoveryEmail) */}
-        <input
-          type="email"
-          placeholder="본인 이메일 (아이디 찾기용)"
-          value={recoveryEmail}
-          onChange={(e) => setRecoveryEmail(e.target.value)}
-          required
-        />
-
-        {/* 비밀번호 */}
-        <input
-          type="password"
-          placeholder="비밀번호 (영문+숫자+특수문자 8~20자)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
-        {/* 비밀번호 확인 */}
-        <input
-          type="password"
-          placeholder="비밀번호 확인"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
-
-        <button type="submit" className="submit-btn black">
-          가입하기
-        </button>
-      </form>
-
+          <input
+            type="text"
+            placeholder="아이디 (영소문자+숫자)"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="복구용 이메일"
+            value={recoveryEmail}
+            onChange={(e) => setRecoveryEmail(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="닉네임 (영어/숫자)"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="비밀번호 (영문+숫자+특수문자)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="비밀번호 확인"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+          <button type="submit" className="submit-btn black">
+            가입하기
+          </button>
+        </form>
 
         <div className="divider">또는 다른 서비스 계정으로 로그인</div>
 

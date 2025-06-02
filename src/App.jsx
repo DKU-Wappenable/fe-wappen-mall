@@ -113,7 +113,7 @@
             <Route path="/Point" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} />
             <Route path="/account-settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
             <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
-            <Route path="/Like" element={<LikedProductsPage />} />
+            <Route path="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
 
             <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
             <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />

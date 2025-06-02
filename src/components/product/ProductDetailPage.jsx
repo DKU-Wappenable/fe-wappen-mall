@@ -10,6 +10,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
+  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "";
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -115,7 +116,7 @@ export default function ProductDetailPage() {
         onError={(e) => (e.target.src = '/assets/default.png')}
       />
       <p>{product.description || '설명 없음'}</p>
-      {product.nickname && <p>by {product.nickname}</p>}
+      {product.nickname && <p>by {currentUserEmail}</p>}
       <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 
       <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
