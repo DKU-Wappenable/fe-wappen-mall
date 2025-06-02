@@ -1,4 +1,4 @@
-//  MyWappens.jsx - 상세 보기 정상 동작 + 공유/삭제 동기화 완성
+// src/components/MyWappens.jsx
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../components/UserContext';
 import { useNavigate } from 'react-router-dom';
@@ -15,11 +15,11 @@ export default function MyWappens() {
 
     const fetchWappens = async () => {
       try {
-        const res = await axiosInstance.get(`/api/wappens?email=${user.email}`);
+        const res = await axiosInstance.get(`/wappens?email=${user.id}`);
         setDesigns(res.data);
       } catch (err) {
         console.warn('서버 실패, 로컬 저장에서 불러옵니다.');
-        const local = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
+        const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
         setDesigns(local);
       }
     };
@@ -30,48 +30,45 @@ export default function MyWappens() {
   const handleDelete = async (id) => {
     const confirm = window.confirm('이 디자인을 삭제하시겠습니까?');
     if (!confirm) return;
-  
+
     try {
-      await axiosInstance.delete(`/api/wappens/${id}`);
+      await axiosInstance.delete(`/wappens/${id}`);
       setDesigns(prev => prev.filter(d => d.id !== id));
     } catch (err) {
       console.warn('서버 실패, 로컬 삭제 진행');
-      const local = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
+      const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
       const updated = local.filter(d => d.id !== id);
-      localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(updated));
+      localStorage.setItem(`savedWappens_${user.id}`, JSON.stringify(updated));
       setDesigns(updated);
     }
-  
-    //  sharedWappens에서도 제거
+
     const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
     const updatedShared = shared.filter(d => d.id !== id);
     localStorage.setItem('sharedWappens', JSON.stringify(updatedShared));
-  
-    // cart에서 제거
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const newCart = cart.filter(item => item.product.id !== id);
     localStorage.setItem('cart', JSON.stringify(newCart));
-  
-    //  liked에서 제거
+
     const liked = JSON.parse(localStorage.getItem('liked') || '[]');
     const newLiked = liked.filter(item => item.id !== id);
     localStorage.setItem('liked', JSON.stringify(newLiked));
   };
-  
 
   const handleShare = async (design) => {
     const shared = {
       ...design,
-      nickname: user.id || user.name || user.email || 'user',
+      nickname: user.id || user.name || 'user',
       category: '유저디자인',
       name: design.title || `유저 디자인`,
       images: [design.image || '/assets/default.png'],
       price: 500 + (design.wappens?.length || 0) * 500,
-      createdAt: design.createdAt || new Date().toISOString()
+      createdAt: design.createdAt || new Date().toISOString(),
+      id: design.id || Date.now(),
     };
 
     try {
-      await axiosInstance.post('/api/products', shared);
+      await axiosInstance.post('/products', shared);
       alert('공유 완료! 관리자 승인 후 반영됩니다.');
     } catch (err) {
       console.warn('서버 실패, 로컬 공유 저장');
@@ -120,27 +117,19 @@ export default function MyWappens() {
                 </span>
               </div>
               <div className="wappen-buttons">
+                <button
+                  className="wappen-btn outline"
+                  onClick={() => navigate(`/product/${design.id}`, { state: design })}
+                >제품 상세</button>
+                <button
+                  className="wappen-btn outline"
+                  onClick={() => handleDelete(design.id)}
+                >삭제</button>
+              </div>
               <button
-                className="wappen-btn outline"
-                onClick={() => navigate(`/product/${design.id}`, { state: design })}
-              >
-                제품 상세
-              </button>
-              <button
-                className="wappen-btn outline"
-                onClick={() => handleDelete(design.id)}
-              >
-                삭제
-              </button>
-            </div>
-
-            <button
-              className="wappen-btn full"
-              onClick={() => handleShare(design)}
-            >
-              디자인 개시하기
-            </button>
-
+                className="wappen-btn full"
+                onClick={() => handleShare(design)}
+              >디자인 개시하기</button>
             </div>
           ))}
         </div>

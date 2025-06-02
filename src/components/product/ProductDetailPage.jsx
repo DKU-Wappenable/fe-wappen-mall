@@ -88,6 +88,18 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     //  장바구니 구조와 동일하게 items 배열로 넘김
+    const order = {
+    id: Date.now(),
+    product,
+    quantity,
+    totalPrice: product.price * quantity,
+    createdAt: new Date().toISOString(),
+  };
+
+  // 결제 데이터를 localStorage에 저장
+  const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+  localStorage.setItem('orders', JSON.stringify([order, ...prevOrders]));
+
     navigate('/order/form', { state: { items: [{ product, quantity }] } });
   };
 

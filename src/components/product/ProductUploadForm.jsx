@@ -1,3 +1,6 @@
+// ✅ 관리자 상품 등록, 수정, 삭제 (서버 실패 시 localStorage와 연동)
+
+// src/components/admin/ProductUploadForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -41,6 +44,7 @@ export default function ProductUploadForm() {
     }),
     onSubmit: async (values, { resetForm }) => {
       const newProduct = {
+        id: Date.now(),
         name: values.name,
         price: parseInt(values.price),
         stock: parseInt(values.stock),
@@ -55,14 +59,14 @@ export default function ProductUploadForm() {
       } catch (err) {
         console.warn('서버 실패, 로컬 저장 처리:', err);
         const prev = JSON.parse(localStorage.getItem('products') || '[]');
-        const withId = { ...newProduct, id: Date.now().toString() };
-        localStorage.setItem('products', JSON.stringify([withId, ...prev]));
-        alert('상품이 등록되었습니다!');
+        localStorage.setItem('products', JSON.stringify([newProduct, ...prev]));
+        alert('상품이 로컬에 등록되었습니다!');
       }
 
       resetForm();
       setImagePreviews([]);
       setImageFiles([]);
+      navigate('/admin/products');
     },
   });
 

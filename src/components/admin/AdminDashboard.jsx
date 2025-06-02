@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     const checkAuth = async () => {
       try {
         //  서버 인증 시도
-        const res = await axiosInstance.get('/api/admin/check-auth');
+        const res = await axiosInstance.get('/admin/check-auth');
         if (res.data?.role === 'admin') {
           setIsAuthorized(true);
         } else {

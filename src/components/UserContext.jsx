@@ -13,15 +13,26 @@ export const UserProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    return;
     const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token");
+
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
+
+      //  서버에 없는 계정(admin 등)용 임시 토큰 처리
+      if (!token) {
+        localStorage.setItem("access_token", "dummy-token");
+        axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
+      } else {
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
       if (parsed.role !== "admin" && !parsed.termsAccepted) {
         setShowTermsModal(true);
       }
     }
+
     setLoading(false);
   }, []);
 
@@ -81,6 +92,10 @@ export const UserProvider = ({ children }) => {
         if (found) {
           localStorage.setItem("user", JSON.stringify(found));
           setUser(found);
+
+          //  dummy access_token 추가
+          localStorage.setItem("access_token", "dummy-token");
+          axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
 
           if (found.role === "admin") navigate("/admin");
           else if (!found.termsAccepted) setShowTermsModal(true);

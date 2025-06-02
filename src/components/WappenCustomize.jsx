@@ -84,17 +84,18 @@ export default function WappenCustomize() {
         wappens,
         image: imageData,
         price: totalPrice,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        owner: user?.id || 'unknown'  //
       };
 
       try {
-        await axiosInstance.post('/api/wappens', savedDesign);
+        await axiosInstance.post('/wappens', savedDesign);
         alert('디자인이 서버에 저장되었습니다!');
       } catch {
-        const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
+        const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
         saved.push(savedDesign);
-        localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(saved));
-        alert('디자인이 저장되었습니다!');
+        localStorage.setItem(`savedWappens_${user.id}`, JSON.stringify(saved));
+        alert('디자인이 로컬에 저장되었습니다!');
       }
 
       navigate('/my-wappens');

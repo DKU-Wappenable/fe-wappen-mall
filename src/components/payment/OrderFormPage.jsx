@@ -1,8 +1,8 @@
-// src/pages/OrderFormPage.jsx
+// ✅ OrderFormPage.jsx - 서버 연동 + 공유 와펜 대응 결제 처리 리팩토링
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
-// import axiosInstance from '../../api/axiosInstance';
 import '../../styles/OrderFormPage.css';
 
 export default function OrderFormPage() {
@@ -25,7 +25,6 @@ export default function OrderFormPage() {
   const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
-    // 유저 정보로 기본 값 세팅
     if (user) {
       setForm(prev => ({
         ...prev,
@@ -37,7 +36,19 @@ export default function OrderFormPage() {
     if (isCartOrder) {
       setItems(state.items);
     } else if (state?.product) {
-      setItems([{ product: state.product, quantity: form.quantity }]);
+      const localShared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+      const found = localShared.find((s) => s.id === state.product.id) || {};
+
+      const enriched = {
+        ...state.product,
+        images: state.product.images?.length ? state.product.images : [state.product.image || '/assets/default.png'],
+        name: state.product.name || state.product.title || '유저 디자인',
+        nickname: state.product.nickname || state.product.owner || state.product.author || state.product.email || 'user',
+        category: state.product.category || (state.product.title ? '유저디자인' : ''),
+        ...found
+      };
+
+      setItems([{ product: enriched, quantity: form.quantity }]);
     } else {
       alert('잘못된 접근입니다.');
       navigate('/');
@@ -99,14 +110,9 @@ export default function OrderFormPage() {
         paymentMethod: form.paymentMethod,
       }));
 
-      try {
-        // await axiosInstance.post('/api/orders', newOrders);
-      } catch (err) {
-        const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        localStorage.setItem('orders', JSON.stringify([...newOrders, ...prevOrders]));
-        if (isCartOrder) localStorage.removeItem('cart');
-      }
-
+      const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      localStorage.setItem('orders', JSON.stringify([...newOrders, ...prevOrders]));
+      if (isCartOrder) localStorage.removeItem('cart');
       navigate('/order/complete');
     } else {
       navigate('/payment/mock', {

@@ -1,3 +1,5 @@
+// ✅ 1번 해결 완료: 관리자 상품 수정 시 localStorage 모든 저장소 반영 + 작성자(owner) 유지
+
 // src/components/admin/AdminProductEdit.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -13,7 +15,8 @@ export default function AdminProductEdit() {
     stock: '',
     description: '',
     category: '',
-    images: []
+    images: [],
+    owner: '',
   });
   const [error, setError] = useState('');
 
@@ -21,28 +24,27 @@ export default function AdminProductEdit() {
     const fetchProduct = async () => {
       try {
         const res = await axiosInstance.get(`/products/${id}`);
-        setForm({ ...res.data, images: res.data.images || [] });
+        setForm({ ...res.data, images: res.data.images || [], owner: res.data.owner || '' });
       } catch (err) {
         console.warn('서버 실패, 로컬 fallback');
         const products = JSON.parse(localStorage.getItem('products') || '[]');
-        const found = products.find(p => String(p.id) === String(id));
-        if (found) setForm({ ...found, images: found.images || [] });
-        else setError('해당 상품을 찾을 수 없습니다.');
+        const customs = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+        const all = [...products, ...customs];
+        const found = all.find(p => String(p.id) === String(id));
+        if (found) {
+          const images = found.images && found.images.length ? found.images : found.image ? [found.image] : [];
+          setForm({ ...found, images, owner: found.owner || '' });
+        } else {
+          setError('해당 상품을 찾을 수 없습니다.');
+        }
       }
     };
-
     fetchProduct();
   }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    const previews = files.map(file => URL.createObjectURL(file));
-    setForm(prev => ({ ...prev, images: previews.slice(0, 5) }));
   };
 
   const handleSubmit = async (e) => {
@@ -59,14 +61,65 @@ export default function AdminProductEdit() {
       navigate('/admin/products');
     } catch (err) {
       console.warn('서버 실패, 로컬 저장');
-      const products = JSON.parse(localStorage.getItem('products') || '[]');
-      const updated = products.map(p =>
-        String(p.id) === String(id) ? { ...updatedProduct, id } : p
-      );
-      localStorage.setItem('products', JSON.stringify(updated));
+
+      const updateList = (key) => {
+        const list = JSON.parse(localStorage.getItem(key) || '[]');
+        const updated = list.map(p => String(p.id) === String(id) ? { ...p, ...updatedProduct } : p);
+        localStorage.setItem(key, JSON.stringify(updated));
+        return updated;
+      };
+
+      updateList('products');
+      updateList('sharedWappens');
+
+      const updateCart = () => {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const updatedCart = cart.map(item =>
+          String(item.product?.id) === String(id)
+            ? { ...item, product: { ...item.product, ...updatedProduct } }
+            : item
+        );
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+      };
+
+      const updateLiked = () => {
+        const liked = JSON.parse(localStorage.getItem('liked') || '[]');
+        const updatedLiked = liked.map(item =>
+          String(item.id) === String(id) ? { ...item, ...updatedProduct } : item
+        );
+        localStorage.setItem('liked', JSON.stringify(updatedLiked));
+      };
+
+      updateCart();
+      updateLiked();
       alert('상품 로컬 수정 완료');
       navigate('/admin/products');
     }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      await axiosInstance.delete(`/products/${id}`);
+      alert('상품 삭제 완료');
+    } catch (err) {
+      console.warn('서버 삭제 실패, 로컬 삭제 진행');
+
+      const removeById = (list) => list.filter(p => String(p.id) !== String(id));
+
+      localStorage.setItem('products', JSON.stringify(removeById(JSON.parse(localStorage.getItem('products') || '[]'))));
+      localStorage.setItem('sharedWappens', JSON.stringify(removeById(JSON.parse(localStorage.getItem('sharedWappens') || '[]'))));
+      localStorage.setItem('liked', JSON.stringify(removeById(JSON.parse(localStorage.getItem('liked') || '[]'))));
+
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const updatedCart = cart.filter(item => String(item.product?.id) !== String(id));
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+      alert('로컬 삭제 완료');
+    }
+
+    navigate('/admin/products');
   };
 
   if (error) return <div style={{ padding: '2rem' }}>{error}</div>;
@@ -82,21 +135,25 @@ export default function AdminProductEdit() {
         <option value="의류">의류</option>
         <option value="굿즈">굿즈</option>
         <option value="유저디자인">유저디자인</option>
-        {/* 필요에 따라 추가 */}
       </select>
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="상품 설명" />
 
-      <div>
-        <label>이미지 변경 (최대 5장)</label>
-        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
-        <div className="preview-container">
-          {form.images.map((img, i) => (
-            <img key={i} src={img} alt={`preview-${i}`} style={{ width: 80, margin: 5 }} />
-          ))}
-        </div>
+      <div className="preview-container">
+        {form.images.map((img, i) => (
+          <img key={i} src={img} alt={`preview-${i}`} style={{ width: 80, margin: 5 }} />
+        ))}
       </div>
 
+      {form.owner && <p style={{ fontSize: '0.85rem', color: '#555' }}>by {form.owner}</p>}
+
       <button type="submit">수정 완료</button>
+      <button
+        type="button"
+        onClick={handleDelete}
+        style={{ marginTop: '1rem', backgroundColor: '#fff', color: '#333', border: '1px solid #ccc' }}
+      >
+        삭제
+      </button>
     </form>
   );
 }
