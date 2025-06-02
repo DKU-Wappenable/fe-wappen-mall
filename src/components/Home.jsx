@@ -15,7 +15,7 @@ export default function Home() {
 
   const categories = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
-    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
   ];
 
   const loadProducts = async () => {
@@ -24,7 +24,7 @@ export default function Home() {
       const official = res.data;
       const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
         ...d,
-        name: d.title,
+        name: d.title || '유저 디자인',
         images: [d.image],
         category: '유저디자인',
         createdAt: d.createdAt || new Date().toISOString(),
@@ -38,14 +38,14 @@ export default function Home() {
         uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
       }));
       setProducts(sanitized);
-      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
-      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
+      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 10));
     } catch (err) {
       console.warn('서버 실패, 로컬에서 대체');
       const official = JSON.parse(localStorage.getItem('products') || '[]');
       const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
         ...d,
-        name: d.title,
+        name: d.title || '유저 디자인',
         images: [d.image],
         category: '유저디자인',
         createdAt: d.createdAt || new Date().toISOString(),
@@ -59,23 +59,14 @@ export default function Home() {
         uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
       }));
       setProducts(sanitized);
-      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4));
-      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4));
+      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
+      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 10));
     }
   };
 
   useEffect(() => {
     loadProducts();
     setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
-
-    const handleStorageChange = (e) => {
-      if (["products", "sharedWappens", "liked"].includes(e.key)) {
-        loadProducts();
-        setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const toggleLike = (product) => {
@@ -90,7 +81,6 @@ export default function Home() {
 
   const isLiked = (uniqueKey) => liked.some(p => p.uniqueKey === uniqueKey);
   const handleCategoryClick = (cat) => navigate(`/products?category=${cat}`);
-
   const handleStartClick = () => {
     if (!user) {
       alert('로그인 후 이용 가능합니다.');
@@ -107,8 +97,8 @@ export default function Home() {
         {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>
       <div className="product-info">
-        <h3>{p.name}</h3>
-        {p.nickname && <p className="creator">by {p.nickname}</p>}
+        <h3>{(p.name || '').replace(/\s+/g, ' ')}</h3>
+        <p className="creator">by {p.nickname || user?.email || 'user'}</p>
         <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
       </div>
     </div>
@@ -134,14 +124,14 @@ export default function Home() {
 
           <section>
             <h2 className="section-title">인기 와펜 상품</h2>
-            <div className="product-scroll">
+            <div className="product-scroll with-scroll">
               {popular.map(renderProductCard)}
             </div>
           </section>
 
           <section>
             <h2 className="section-title">신상품</h2>
-            <div className="product-scroll">
+            <div className="product-scroll with-scroll">
               {newItems.map(renderProductCard)}
             </div>
           </section>

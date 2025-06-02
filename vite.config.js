@@ -6,8 +6,8 @@ import svgr from "vite-plugin-svgr";
 export default defineConfig({
   plugins: [react(), svgr()],
   optimizeDeps: {
-    include: ['html2canvas'], // ✅ 여기에 추가!
-  },
+  include: ['html2canvas', 'swiper', 'swiper/react'],
+},
   server: {
     host: '0.0.0.0',
     watch: {

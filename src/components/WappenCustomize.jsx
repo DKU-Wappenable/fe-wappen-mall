@@ -1,4 +1,4 @@
-//  WappenCustomize.jsx - 서버 연동 + 로컬 fallback 구조 반영
+// src/components/WappenCustomize.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ export default function WappenCustomize() {
   const [selectedStrap, setSelectedStrap] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState('strap');
 
   const strapTypes = [
     'strap_green', 'strap_black', 'strap_blue', 'strap_yellow',
@@ -31,13 +32,7 @@ export default function WappenCustomize() {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    const newWappen = {
-      id: Date.now() + Math.random(),
-      type,
-      x,
-      y
-    };
+    const newWappen = { id: Date.now() + Math.random(), type, x, y };
     setWappens(prev => [...prev, newWappen]);
   };
 
@@ -45,11 +40,31 @@ export default function WappenCustomize() {
     e.dataTransfer.setData('type', type);
   };
 
-  const handleSave = async () => {
-    if (!user) {
-      alert('로그인이 필요합니다.');
-      return;
+  const handleMouseDown = (e, id) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const wappen = wappens.find((w) => w.id === id);
+    if (!wappen) return;
+    setDraggingId(id);
+    setOffset({ x: e.clientX - rect.left - wappen.x, y: e.clientY - rect.top - wappen.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (draggingId !== null) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - offset.x;
+      const y = e.clientY - rect.top - offset.y;
+      setWappens((prev) =>
+        prev.map((w) => (w.id === draggingId ? { ...w, x, y } : w))
+      );
     }
+  };
+
+  const handleMouseUp = () => {
+    setDraggingId(null);
+  };
+
+  const handleSave = async () => {
+    if (!user) return alert('로그인이 필요합니다.');
 
     try {
       const canvasElement = canvasRef.current;
@@ -60,10 +75,8 @@ export default function WappenCustomize() {
         width: canvasElement.scrollWidth,
         height: canvasElement.scrollHeight
       });
-      const baseStrapPrice = 1000;
-      const wappenUnitPrice = 1000;
-      const totalPrice = (selectedStrap ? baseStrapPrice : 0) + wappens.length * wappenUnitPrice;
 
+      const totalPrice = (selectedStrap ? 1000 : 0) + wappens.length * 1000;
       const imageData = canvasImage.toDataURL('image/png');
       const savedDesign = {
         id: Date.now() + Math.random(),
@@ -77,8 +90,7 @@ export default function WappenCustomize() {
       try {
         await axiosInstance.post('/api/wappens', savedDesign);
         alert('디자인이 서버에 저장되었습니다!');
-      } catch (err) {
-        console.warn('서버 실패, 로컬 저장 처리');
+      } catch {
         const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
         saved.push(savedDesign);
         localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(saved));
@@ -92,26 +104,6 @@ export default function WappenCustomize() {
     }
   };
 
-  const handleMouseDown = (e, id) => {
-    e.stopPropagation();
-    const rect = canvasRef.current.getBoundingClientRect();
-    const wappen = wappens.find((w) => w.id === id);
-    if (!wappen) return;
-    setDraggingId(id);
-    setOffset({ x: e.clientX - rect.left - wappen.x, y: e.clientY - rect.top - wappen.y });
-  };
-
-  const handleMouseMove = (e) => {
-    if (draggingId !== null) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - offset.x;
-      const y = e.clientY - rect.top - offset.y;
-      setWappens((prev) => prev.map((w) => (w.id === draggingId ? { ...w, x, y } : w)));
-    }
-  };
-
-  const handleMouseUp = () => setDraggingId(null);
-
   useEffect(() => {
     if (!user) navigate('/login');
   }, [user, navigate]);
@@ -121,37 +113,26 @@ export default function WappenCustomize() {
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
         ✔ 기본 스트랩 1개 500원 / 와펜 1개당 500원으로 가격이 계산됩니다.
       </p>
-      <div className="selector-bar">
-        <div className="strap-select">
-          <h4>스트랩 선택</h4>
-          <div className="strap-options">
-            {strapTypes.map((type) => (
-              <img
-                key={type}
-                src={`/assets/${type}.png`}
-                alt={type}
-                className={`strap-thumb ${selectedStrap === type ? 'selected' : ''}`}
-                onClick={() => setSelectedStrap(type)}
-              />
-            ))}
-          </div>
-        </div>
 
-        <div className="wappen-select">
-          <h4>와펜 선택</h4>
-          <div className="wappen-options">
-            {wappenTypes.map((type) => (
-              <div
-                key={type}
-                className="wappen-thumb"
-                draggable
-                onDragStart={(e) => handleDragStart(e, type)}
-              >
-                <img src={`/assets/${type}.png`} alt={type} />
-                <span>{type}</span>
-              </div>
-            ))}
-          </div>
+      <div className="custom-tabs">
+        <button className={activeTab === 'strap' ? 'active' : ''} onClick={() => setActiveTab('strap')}>스트랩</button>
+        <button className={activeTab === 'wappen' ? 'active' : ''} onClick={() => setActiveTab('wappen')}>와펜</button>
+      </div>
+
+      <div className="selector-bar-scroll">
+        <div className="scroll-wrapper">
+          {(activeTab === 'strap' ? strapTypes : wappenTypes).map(type => (
+            <div
+              key={type}
+              className={`thumb-box ${activeTab === 'strap' && selectedStrap === type ? 'selected' : ''}`}
+              onClick={activeTab === 'strap' ? () => setSelectedStrap(type) : undefined}
+              draggable={activeTab === 'wappen'}
+              onDragStart={activeTab === 'wappen' ? (e) => handleDragStart(e, type) : undefined}
+            >
+              <img src={`/assets/${type}.png`} alt={type} />
+              <span>{type}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -170,15 +151,6 @@ export default function WappenCustomize() {
               src={`/assets/${selectedStrap}.png`}
               alt={selectedStrap}
               className="strap-on-canvas"
-              style={{
-                pointerEvents: 'none',
-                position: 'absolute',
-                left: 60,
-                top: 60,
-                width: 200,
-                height: 500,
-                zIndex: 1
-              }}
             />
           )}
 
@@ -205,12 +177,8 @@ export default function WappenCustomize() {
         </div>
 
         <div className="canvas-controls">
-          <button onClick={handleSave} className="control-btn save-btn">
-            디자인 저장
-          </button>
-          <button onClick={() => navigate('/my-wappens')} className="control-btn">
-            나의 와펜 보기
-          </button>
+          <button onClick={handleSave} className="control-btn save-btn">디자인 저장</button>
+          <button onClick={() => navigate('/my-wappens')} className="control-btn">나의 와펜 보기</button>
         </div>
       </div>
     </div>

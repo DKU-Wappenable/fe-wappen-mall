@@ -130,11 +130,6 @@ export default function AccountSettings() {
       </div>
 
       <div className="form-group">
-        <label>연락처 (010으로 시작)</label>
-        <input name="phone" value={form.phone} onChange={handleChange} />
-      </div>
-
-      <div className="form-group">
         <label>비밀번호 (변경 시에만 입력)</label>
         <input name="password" type="password" value={form.password} onChange={handleChange} />
       </div>

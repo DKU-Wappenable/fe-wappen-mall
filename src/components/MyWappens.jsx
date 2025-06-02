@@ -62,11 +62,12 @@ export default function MyWappens() {
   const handleShare = async (design) => {
     const shared = {
       ...design,
-      nickname: user.nickname || user.name || 'user',
+      nickname: user.id || user.name || user.email || 'user',
       category: '유저디자인',
       name: design.title || `유저 디자인`,
       images: [design.image || '/assets/default.png'],
-      price: 500 + (design.wappens?.length || 0) * 500
+      price: 500 + (design.wappens?.length || 0) * 500,
+      createdAt: design.createdAt || new Date().toISOString()
     };
 
     try {
@@ -119,16 +120,27 @@ export default function MyWappens() {
                 </span>
               </div>
               <div className="wappen-buttons">
-                <button onClick={() => navigate(`/product/${design.id}`, { state: design })}>
-                  상세 보기
-                </button>
-                <button onClick={() => handleDelete(design.id)} className="delete-btn">
-                  삭제
-                </button>
-                <button onClick={() => handleShare(design)} className="create-btn">
-                  디자인 개시하기
-                </button>
-              </div>
+              <button
+                className="wappen-btn outline"
+                onClick={() => navigate(`/product/${design.id}`, { state: design })}
+              >
+                제품 상세
+              </button>
+              <button
+                className="wappen-btn outline"
+                onClick={() => handleDelete(design.id)}
+              >
+                삭제
+              </button>
+            </div>
+
+            <button
+              className="wappen-btn full"
+              onClick={() => handleShare(design)}
+            >
+              디자인 개시하기
+            </button>
+
             </div>
           ))}
         </div>

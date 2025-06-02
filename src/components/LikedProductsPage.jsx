@@ -166,7 +166,9 @@ export default function LikedProductsPage() {
 
             <h4 style={{ marginTop: '1rem' }}>{product.name || product.title}</h4>
             {product.nickname && (
-              <p style={{ fontSize: '13px', color: '#666' }}>by {product.nickname}</p>
+              <p style={{ fontSize: '13px', color: '#666' }}>
+              by {product.nickname || user?.email}
+            </p>
             )}
             <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 

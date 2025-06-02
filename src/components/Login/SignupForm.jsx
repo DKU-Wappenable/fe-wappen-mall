@@ -8,16 +8,18 @@ import "../../styles/AuthForm.css";
 export default function SignupForm() {
   const navigate = useNavigate();
 
-  const [id, setId] = useState("");
-  const [email, setEmail] = useState("");
+  const [id, setId] = useState(""); // 서버에서는 email(아이디)
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
+
   const validate = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!id.trim()) return "아이디를 입력해주세요.";
-    if (!emailRegex.test(email)) return "유효한 이메일을 입력해주세요.";
+    if (!emailRegex.test(recoveryEmail)) return "유효한 이메일을 입력해주세요.";
     if (password.length < 8) return "비밀번호는 8자 이상이어야 합니다.";
     if (password !== confirmPassword) return "비밀번호가 일치하지 않습니다.";
     return null;
@@ -32,8 +34,15 @@ export default function SignupForm() {
       setError(validationMsg);
       return;
     }
-
-    const signupData = { id, email, password };
+    const signupData = {
+        email: id, // 서버에서 email이 아이디로 사용됨
+        recoveryEmail,
+        nickname,
+        password,
+        confirmPassword,
+        role: "USER" // 기본값 설정
+      };
+    console.log("전송 데이터:", signupData);
 
     try {
       await axiosInstance.post("/users/signup", signupData);
@@ -53,14 +62,8 @@ export default function SignupForm() {
           return;
         }
 
-        const newUser = {
-          id,
-          email,
-          password,
-          role: "user",
-          termsAccepted: false,
-          linkedSocials: [],
-        };
+    
+
 
         const updatedUsers = [newUser, ...savedUsers];
         localStorage.setItem("users", JSON.stringify(updatedUsers));
@@ -92,38 +95,56 @@ export default function SignupForm() {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="아이디"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="이메일 (아이디 찾기에 사용)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="비밀번호 확인"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-          <button type="submit" className="submit-btn black">
-            가입하기
-          </button>
-        </form>
+        {/* 아이디용 이메일 (email 필드 → 로그인에 사용됨) */}
+        <input
+          type="text"
+          placeholder="아이디 (영소문자+숫자 4~20자)"
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+          required
+        />
+
+        {/* 닉네임 */}
+        <input
+          type="text"
+          placeholder="닉네임 (영문/숫자 2~20자)"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          required
+        />
+
+        {/* 이메일 (본인 확인용 → recoveryEmail) */}
+        <input
+          type="email"
+          placeholder="본인 이메일 (아이디 찾기용)"
+          value={recoveryEmail}
+          onChange={(e) => setRecoveryEmail(e.target.value)}
+          required
+        />
+
+        {/* 비밀번호 */}
+        <input
+          type="password"
+          placeholder="비밀번호 (영문+숫자+특수문자 8~20자)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        {/* 비밀번호 확인 */}
+        <input
+          type="password"
+          placeholder="비밀번호 확인"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+
+        <button type="submit" className="submit-btn black">
+          가입하기
+        </button>
+      </form>
+
 
         <div className="divider">또는 다른 서비스 계정으로 로그인</div>
 

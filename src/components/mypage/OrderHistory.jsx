@@ -10,7 +10,7 @@ export default function OrderHistory() {
     const fetchOrders = async () => {
       try {
         const res = await axiosInstance.get('/orders');
-        const sorted = [...res.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const sorted = [...ACres.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setOrders(sorted);
       } catch (err) {
         console.warn('서버 실패 → localStorage 대체');
@@ -75,7 +75,8 @@ export default function OrderHistory() {
                 <strong>• 주문 ID:</strong>{' '}
                 <Link to={`/my-orders/${order.id}`}>{order.id}</Link>
               </p>
-              <p>상품: {order.product?.name || '알 수 없음'}</p>
+              <p>상품: {order.product?.nickname ? order.product.nickname : order.product?.name || '유저 디자인'}</p>
+
               <p>수량: {order.quantity} 개</p>
               <p>총액: {order.totalPrice.toLocaleString()} 원</p>
               <p>주문 날짜: {new Date(order.createdAt).toLocaleDateString()}</p>

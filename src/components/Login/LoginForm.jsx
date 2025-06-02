@@ -1,4 +1,3 @@
-// src/components/Login/LoginForm.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../UserContext";
@@ -10,7 +9,7 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
 
-  const [id, setId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -27,24 +26,47 @@ export default function LoginForm() {
     setError("");
 
     try {
-      const res = await axiosInstance.post("/users/login", { id, password });
+      // 1차 서버 로그인 시도
+      const res = await axiosInstance.post("/users/login", { email, password });
       const { accessToken } = res.data;
 
       localStorage.setItem("access_token", accessToken);
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-      const userRes = await axiosInstance.get("/users/me");
-      const userData = userRes.data;
+      try {
+        // 2차 사용자 정보 조회
+        const userRes = await axiosInstance.get("/users/me");
+        const userData = userRes.data;
 
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-      toast.success("로그인 성공!");
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        toast.success("로그인 성공!");
 
-      if (userData.role === "admin") navigate("/admin");
-      else if (!userData.termsAccepted) return;
-      else if (userData.role === "owner") navigate("/admin/upload");
-      else navigate("/");
+        if (userData.role === "admin") navigate("/admin");
+        else if (!userData.termsAccepted) return;
+        else if (userData.role === "owner") navigate("/admin/upload");
+        else navigate("/");
+
+      } catch (meError) {
+        // users/me API가 없는 경우: 임시 사용자 처리
+        console.warn("/users/me 없음, 임시 로그인 처리:", meError);
+
+        const fallbackUser = {
+          email,
+          role: "user",
+          nickname: "임시사용자",
+          termsAccepted: false
+        };
+
+        localStorage.setItem("user", JSON.stringify(fallbackUser));
+        setUser(fallbackUser);
+        toast.success("로그인 성공 (임시 처리)");
+
+        navigate("/");
+      }
+
     } catch (err) {
+      // 서버 로그인 실패 → 로컬 fallback 시도
       console.warn("서버 로그인 실패, 로컬 fallback 시도:", err);
 
       try {
@@ -90,7 +112,7 @@ export default function LoginForm() {
         const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
         const allUsers = [...staticUsers, ...localUsers];
 
-        const found = allUsers.find((u) => u.id === id && u.password === password);
+        const found = allUsers.find((u) => u.email === email && u.password === password);
 
         if (found) {
           localStorage.setItem("user", JSON.stringify(found));
@@ -123,8 +145,8 @@ export default function LoginForm() {
           <input
             type="text"
             placeholder="아이디"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <input

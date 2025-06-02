@@ -1,7 +1,7 @@
-// src/components/CategoryProductPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
+import { useUser } from './UserContext';
 import '../styles/CategoryProductPage.css';
 
 export default function CategoryProductPage() {
@@ -12,10 +12,11 @@ export default function CategoryProductPage() {
   const [sortBy, setSortBy] = useState('최신순');
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
+  const { user } = useUser();
 
   const categoryList = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
-    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트','유저디자인'
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
   ];
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function CategoryProductPage() {
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
+          nickname: d.nickname || d.author || d.email || '익명',
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -58,28 +60,27 @@ export default function CategoryProductPage() {
         setProducts(sorted);
       } catch (err) {
         console.warn('서버 실패, 로컬로 대체');
-        let all = [];
 
-        if (cat === '유저디자인') {
-          all = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
-            ...d,
-            name: d.title || '',
-            price: 500 + 500 * (d.wappens?.length || 0),
-            images: [d.image || '/assets/default.png'],
-            category: '유저디자인',
-            description: d.description || '',
-            createdAt: d.createdAt || new Date().toISOString(),
-            uniqueKey: `${d.id}-${index}`
-          }));
-        } else {
-          all = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
-            ...p,
-            images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-            category: p.category || '',
-            uniqueKey: `${p.id}-${index}`
-          }));
-        }
+        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+          ...d,
+          name: d.title || '',
+          price: 500 + 500 * (d.wappens?.length || 0),
+          images: [d.image || '/assets/default.png'],
+          category: '유저디자인',
+          description: d.description || '',
+          createdAt: d.createdAt || new Date().toISOString(),
+          nickname: d.nickname || d.author || d.email || '익명',
+          uniqueKey: `${d.id}-${index}`
+        }));
 
+        const local = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
+          ...p,
+          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          category: p.category || '',
+          uniqueKey: `${p.id}-${index}`
+        }));
+
+        const all = [...local, ...shared];
         setAllProducts(all);
 
         const filtered = all.filter(p => {
@@ -161,6 +162,9 @@ export default function CategoryProductPage() {
                     onError={(e) => (e.target.src = '/assets/default.png')}
                   />
                   <h3>{p.name}</h3>
+                  {p.nickname && (
+                    <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
+                  )}
                   <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}

@@ -1,4 +1,4 @@
-//  리뷰 보기까지 포함한 ProductDetailPage.jsx
+// ProductDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
@@ -87,7 +87,8 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    navigate('/order/form', { state: { product, quantity } });
+    //  장바구니 구조와 동일하게 items 배열로 넘김
+    navigate('/order/form', { state: { items: [{ product, quantity }] } });
   };
 
   if (!product) return <div style={{ padding: '2rem' }}>상품 정보를 찾을 수 없습니다.</div>;

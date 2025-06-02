@@ -1,9 +1,8 @@
-// src/components/CartPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
-import { useUser } from '../UserContext'; //  로그인 유저
-import LoginRequiredModal from '../Login/LoginRequiredModal'; //  로그인 필요 모달
+import { useUser } from '../UserContext';
+import LoginRequiredModal from '../Login/LoginRequiredModal';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -11,10 +10,9 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  //  진입 시 로그인 확인
   useEffect(() => {
     if (!user) {
-      setShowLoginModal(true); // 로그인 안 되어 있으면 모달 띄움
+      setShowLoginModal(true);
       return;
     }
 
@@ -26,10 +24,23 @@ export default function CartPage() {
         console.warn('서버 실패, 로컬 장바구니로 대체');
         const saved = JSON.parse(localStorage.getItem('cart') || '[]');
         const products = JSON.parse(localStorage.getItem('products') || '[]');
+
         const synced = saved.map(item => {
-          const updated = products.find(p => p.id === item.product.id);
-          return updated ? { ...item, product: updated } : item;
-        });
+        const updated = products.find(p => p.id === item.product.id);
+        const updatedProduct = updated ? { ...updated } : { ...item.product };
+
+        // 닉네임, 카테고리 보정
+        if (!updatedProduct.nickname) {
+          updatedProduct.nickname = user.id || user.email || 'user';
+        }
+        if (!updatedProduct.category) {
+          updatedProduct.category = '유저디자인';
+        }
+
+        return { ...item, product: updatedProduct };
+      });
+
+
         setCartItems(synced);
         localStorage.setItem('cart', JSON.stringify(synced));
       }
@@ -94,7 +105,6 @@ export default function CartPage() {
     (sum, item) => sum + item.product.price * item.quantity, 0
   );
 
-  //  로그인 안 된 경우: 전체 화면 차단
   if (!user) {
     return (
       <>
@@ -113,22 +123,25 @@ export default function CartPage() {
       ) : (
         <ul>
           {cartItems.map(item => (
-            <li key={item.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <img
-                src={item.product.images?.[0] || '/placeholder.png'}
-                alt={item.product.name}
-                style={{ width: '80px', height: '80px', objectFit: 'cover', marginRight: '1rem', borderRadius: '8px' }}
-              />
-              <div>
-              <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
-                <br />
-                <button onClick={() => updateQuantity(item.id, -1)}>-</button>
-                <span style={{ margin: '0 1rem' }}>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.id, 1)}>+</button>
-                <button onClick={() => removeItem(item.id)} style={{ marginLeft: '1rem' }}>삭제</button>
-              </div>
-            </li>
-          ))}
+  <li key={item.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <img
+      src={item.product.images?.[0] || '/placeholder.png'}
+      alt={item.product.name}
+      style={{ width: '80px', height: '80px', objectFit: 'cover', marginRight: '1rem', borderRadius: '8px' }}
+    />
+    <div>
+      <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
+      <br />
+      <small style={{ color: '#666' }}>by {item.product?.nickname || '알 수 없음'}</small>
+      <br />
+      <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+      <span style={{ margin: '0 1rem' }}>{item.quantity}</span>
+      <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+      <button onClick={() => removeItem(item.id)} style={{ marginLeft: '1rem' }}>삭제</button>
+    </div>
+  </li>
+))}
+
         </ul>
       )}
       <hr />

@@ -1,5 +1,4 @@
-/* MyWappens.css */
-
+/* 전체 레이아웃 */
 .my-wappens-wrapper {
   padding: 40px;
   max-width: 1280px;
@@ -19,29 +18,17 @@
   color: #666;
 }
 
-.create-btn {
-  margin-top: 16px;
-  padding: 10px 20px;
-  font-size: 14px;
-  background: #265383;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.create-btn:hover {
-  background: #1c3e5d;
-}
-
+/* 와펜 카드 목록 */
 .my-wappens-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 24px;
 }
 
+/* 개별 카드 */
 .my-wappen-card {
   background: white;
-  padding: 11px;
+  padding: 16px;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -56,6 +43,7 @@
   margin-bottom: 8px;
 }
 
+/* 미리보기 이미지 */
 .my-wappen-preview {
   width: 100%;
   background: #f9f9f9;
@@ -66,12 +54,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 320px; 
-
-  /* 핵심: 저장된 와펜 이미지 비율과 동일하게 맞춤 */
+  height: 320px;
   aspect-ratio: 1 / 2;
-  max-height: 320px; 
+  max-height: 320px;
 }
+
 .my-wappen-img {
   width: 100%;
   height: auto;
@@ -79,6 +66,7 @@
   max-height: 100%;
 }
 
+/* fallback 구조 */
 .fallback-wappen {
   transform: scale(0.7);
   transform-origin: top center;
@@ -86,7 +74,6 @@
   height: 100%;
   position: relative;
 }
-
 
 .fallback-strap {
   position: absolute;
@@ -106,6 +93,7 @@
   pointer-events: none;
 }
 
+/* 텍스트 라벨 */
 .wappen-label {
   font-size: 14px;
   color: #555;
@@ -123,15 +111,48 @@
   color: #999;
 }
 
-.delete-btn {
-  padding: 6px 12px;
-  font-size: 12px;
-  background: #f44336;
+/* 버튼 그룹 */
+.wappen-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* 공통 버튼 스타일 */
+.wappen-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  border: 1px solid transparent;
+}
+
+/* ✅ 상세/삭제 통일 버튼 - outline 스타일 */
+.wappen-btn.outline {
+  background-color: white;
+  color: #0a3c7d;
+  border: 1px solid #0a3c7d;
+}
+.wappen-btn.outline:hover {
+  background-color: #f0f6ff;
+}
+
+/* ✅ 디자인 개시하기 - 진한 파랑 */
+.wappen-btn.primary {
+  background-color: #0a3c7d;
   color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
 }
-.delete-btn:hover {
-  background: #d32f2f;
+.wappen-btn.primary:hover {
+  background-color: #062c5c;
+}
+
+/* 하단 버튼만 긴 버튼 */
+.publish-btn {
+  margin-top: 10px;
+  width: 100%;
 }
