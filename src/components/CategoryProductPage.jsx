@@ -1,3 +1,4 @@
+//  CategoryProductPage.jsx (유저디자인만 이메일 표시)
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -13,7 +14,7 @@ export default function CategoryProductPage() {
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
   const { user } = useUser();
-  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
+  const currentUserEmail = user?.email || 'user';
 
   const categoryList = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
@@ -35,12 +36,12 @@ export default function CategoryProductPage() {
         const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
           ...d,
           name: d.title || '',
-          price: 500 + 500 * (d.wappens?.length || 0),
+          price: d.price || 1000,
           images: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: currentUserEmail, // ✅ 무조건 현재 로그인한 사용자 이메일로
+          createdBy: d.createdBy || d.owner || currentUserEmail,
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -65,12 +66,12 @@ export default function CategoryProductPage() {
         const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
           ...d,
           name: d.title || '',
-          price: 500 + 500 * (d.wappens?.length || 0),
+          price: d.price || 1000,
           images: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: currentUserEmail, // ✅ fallback에서도 동일
+          createdBy: d.createdBy || d.owner || currentUserEmail,
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -78,7 +79,6 @@ export default function CategoryProductPage() {
           ...p,
           images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
           category: p.category || '',
-          nickname: currentUserEmail, // ✅ fallback에서도 동일
           uniqueKey: `${p.id}-${index}`
         }));
 
@@ -164,7 +164,9 @@ export default function CategoryProductPage() {
                     onError={(e) => (e.target.src = '/assets/default.png')}
                   />
                   <h3>{p.name}</h3>
-                  <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
+                  {p.createdBy && (
+                    <p style={{ fontSize: '13px', color: '#666' }}>by {p.createdBy}</p>
+                  )}
                   <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}

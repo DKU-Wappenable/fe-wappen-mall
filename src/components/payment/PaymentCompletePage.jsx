@@ -1,4 +1,3 @@
-// src/pages/PaymentCompletePage.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/PaymentComplete.css';
@@ -10,7 +9,9 @@ export default function PaymentCompletePage() {
   useEffect(() => {
     const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
     if (allOrders.length > 0) {
-      const sorted = allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const sorted = allOrders
+        .filter(o => o.createdAt)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setLatestOrder(sorted[0]);
     }
   }, []);
@@ -30,12 +31,8 @@ export default function PaymentCompletePage() {
           <p>최근 주문 정보를 불러올 수 없습니다.</p>
         )}
 
-        <button className="mypage-btn" onClick={() => navigate('/')}>
-          홈으로 이동
-        </button>
-        <button className="mypage-btn" onClick={() => navigate('/my-page')}>
-          마이페이지
-        </button>
+        <button className="mypage-btn" onClick={() => navigate('/')}>홈으로 이동</button>
+        <button className="mypage-btn" onClick={() => navigate('/my-page')}>마이페이지</button>
       </div>
     </div>
   );

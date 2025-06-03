@@ -36,7 +36,12 @@ export default function OrderDetailPage() {
       <h2>주문 상세</h2>
       <p><strong>주문 ID:</strong> {order.id}</p>
       <p><strong>주문 날짜:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
-      <p>상품: by {user?.email || '유저 디자인'}</p>
+   <p>
+  {product.name
+    ? `상품: ${product.name}`
+    : `유저디자인: ${product.createdBy || product.owner || '알 수 없음'}`}
+</p>
+
       <p><strong>수량:</strong> {quantity}개</p>
       <p><strong>총 결제 금액:</strong> {totalPrice.toLocaleString()}원</p>
       <p><strong>결제 수단:</strong> {paymentMethod || '신용카드'}</p>

@@ -1,5 +1,4 @@
-// ✅ OrderFormPage.jsx - 서버 연동 + 공유 와펜 대응 결제 처리 리팩토링
-
+//  수정된 OrderFormPage.jsx - 무통장입금일 때만 저장하고 결제창 이동 안 함
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -9,10 +8,9 @@ export default function OrderFormPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { user } = useUser();
-
   const isCartOrder = state?.items && Array.isArray(state.items);
   const [items, setItems] = useState([]);
-
+  const [isProcessing, setIsProcessing] = useState(false);
   const [form, setForm] = useState({
     name: '', phone: '', email: '',
     receiver: '', receiverPhone1: '', receiverPhone2: '',
@@ -21,7 +19,6 @@ export default function OrderFormPage() {
     agreeTerms: false, agreePrivacy: false,
     paymentMethod: '신용카드', quantity: 1
   });
-
   const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
@@ -72,9 +69,13 @@ export default function OrderFormPage() {
     else setDiscount(0);
   };
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
     if (!form.agreeTerms || !form.agreePrivacy) {
       alert('약관에 동의해 주세요.');
+      setIsProcessing(false);
       return;
     }
 
@@ -92,39 +93,52 @@ export default function OrderFormPage() {
     if (form.paymentMethod === '무통장입금') {
       const now = new Date().toISOString();
       const newOrders = items.map(item => ({
-        id: Date.now() + Math.random(),
-        product: item.product,
-        quantity: item.quantity,
-        totalPrice: item.product.price * item.quantity,
-        reviewed: false,
-        createdAt: now,
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        receiver: form.receiver,
-        receiverPhone1: form.receiverPhone1,
-        receiverPhone2: form.receiverPhone2,
-        address1: form.address1,
-        address2: form.address2,
-        memo: form.memo,
-        paymentMethod: form.paymentMethod,
-      }));
+  id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
+  product: {
+    ...item.product,
+    createdBy: item.product.createdBy || user?.email || 'unknown',
+  },
+  quantity: item.quantity,
+  totalPrice: item.product.price * item.quantity,
+  reviewed: false,
+  createdAt: now,
+  name: form.name,
+  phone: form.phone,
+  email: form.email,
+  receiver: form.receiver,
+  receiverPhone1: form.receiverPhone1,
+  receiverPhone2: form.receiverPhone2,
+  address1: form.address1,
+  address2: form.address2,
+  memo: form.memo,
+  paymentMethod: form.paymentMethod,
+}));
+
 
       const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...newOrders, ...prevOrders]));
+      const filteredNewOrders = newOrders.filter(newOrder =>
+        !prevOrders.some(existing => existing.id === newOrder.id)
+      );
+      const nextOrders = [...filteredNewOrders, ...prevOrders];
+      localStorage.setItem('orders', JSON.stringify(nextOrders));
+
       if (isCartOrder) localStorage.removeItem('cart');
+
+      setIsProcessing(false);
       navigate('/order/complete');
-    } else {
-      navigate('/payment/mock', {
-        state: {
-          items,
-          amount: totalPrice,
-          buyer,
-          formData: form,
-          discount,
-        }
-      });
+      return; //  반드시 여기서 종료
     }
+
+    setIsProcessing(false);
+    navigate('/payment/mock', {
+      state: {
+        items,
+        amount: totalPrice,
+        buyer,
+        formData: form,
+        discount,
+      }
+    });
   };
 
   if (items.length === 0) return <div className="order-form-container">상품 정보가 없습니다.</div>;
@@ -174,12 +188,12 @@ export default function OrderFormPage() {
           <section>
             <h3>4. 쿠폰 / 포인트</h3>
             <div className="coupon-row">
-              <input name="coupon" placeholder="쿠폰 코드 입력" value={form.coupon} onChange={handleChange} />
-              <button type="button" onClick={applyCoupon} className="coupon-btn">쿠폰 사용</button>
+              <input name="coupon" placeholder="쿠폰 발행 전입니다! " value={form.coupon} onChange={handleChange} />
+              <button type="button" onClick={applyCoupon} className="coupon-btn">X</button>
             </div>
             <div className="checkbox-inline">
               <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
-              <label htmlFor="usePoints">포인트 사용하기</label>
+              <label htmlFor="usePoints">이벤트 포인트 사용하기(이벤트 기간X) </label>
             </div>
           </section>
 
@@ -212,9 +226,9 @@ export default function OrderFormPage() {
               />
               <div>
                 <p>{item.product.name}</p>
-                {item.product.nickname && (
+                {item.product.category === '유저디자인' && (
                   <p style={{ fontSize: '13px', color: '#666' }}>
-                    by {user.email}
+                    by {item.product.createdBy || item.product.owner || item.product.nickname || 'unknown'}
                   </p>
                 )}
                 <p>수량: {item.quantity}개</p>

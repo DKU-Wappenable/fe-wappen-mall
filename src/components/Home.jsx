@@ -28,8 +28,10 @@ export default function Home() {
         images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
         category: p.category || (p.title ? '유저디자인' : ''),
         name: p.name || p.title || '유저 디자인',
-        nickname: currentUserEmail,
         createdAt: p.createdAt || new Date().toISOString(),
+        nickname: p.category === '유저디자인'
+          ? p.createdBy || p.owner || currentUserEmail
+          : '', // 일반 상품은 표시 안 함
         uniqueKey: `${p.id}-${p.owner || p.author || i}`
       }));
 
@@ -46,8 +48,10 @@ export default function Home() {
         images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
         category: p.category || (p.title ? '유저디자인' : ''),
         name: p.name || p.title || '유저 디자인',
-        nickname: currentUserEmail,
         createdAt: p.createdAt || new Date().toISOString(),
+        nickname: p.category === '유저디자인'
+          ? p.createdBy || p.owner || currentUserEmail
+          : '',
         uniqueKey: `${p.id}-${p.owner || p.author || i}`
       }));
 
@@ -92,7 +96,9 @@ export default function Home() {
       </button>
       <div className="product-info">
         <h3>{p.name}</h3>
-        <p className="creator">by {p.nickname}</p>
+        {p.category === '유저디자인' && p.nickname && (
+          <p className="creator">by {p.nickname}</p>
+        )}
         <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
       </div>
     </div>

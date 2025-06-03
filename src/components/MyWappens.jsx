@@ -21,7 +21,7 @@ export default function MyWappens() {
         console.warn('서버 실패, 로컬 저장에서 불러옵니다.');
         const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
         setDesigns(local);
-      }
+      } 
     };
 
     fetchWappens();
@@ -57,14 +57,14 @@ export default function MyWappens() {
 
   const handleShare = async (design) => {
     const shared = {
-      ...design,
-      nickname: user.id || user.name || 'user',
+      ...design,  
+      createdBy: user.email,
       category: '유저디자인',
       name: design.title || `유저 디자인`,
       images: [design.image || '/assets/default.png'],
-      price: 500 + (design.wappens?.length || 0) * 500,
+      price: design.price || 1000,
       createdAt: design.createdAt || new Date().toISOString(),
-      id: design.id || Date.now(),
+      id: design.id || Date.now(),  
     };
 
     try {
@@ -113,7 +113,7 @@ export default function MyWappens() {
               <div className="wappen-info">
                 <span className="created-at">{new Date(design.createdAt).toLocaleDateString()}</span>
                 <span className="wappen-label">
-                  총 가격: {(500 + (design.wappens?.length || 0) * 500).toLocaleString()}원
+                  총 가격: {(design.price || 0).toLocaleString()}원
                 </span>
               </div>
               <div className="wappen-buttons">

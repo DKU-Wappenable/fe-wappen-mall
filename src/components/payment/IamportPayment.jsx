@@ -7,11 +7,11 @@ export default function IamportPayment() {
   const { items, amount, buyer, formData, discount } = state || {};
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.iamport.kr/js/iamport.payment-1.2.0.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => document.body.removeChild(script);
+    if (!items || !formData || !formData.name || !formData.address1) {
+      console.warn("❌ 결제 정보 누락 → 리디렉션");
+      alert("결제 정보가 누락되었습니다.");
+      navigate('/order/complete');
+    }
   }, []);
 
   const handlePayment = () => {
@@ -21,7 +21,7 @@ export default function IamportPayment() {
       return;
     }
 
-    IMP.init('imp19424728'); // 테스트용 imp 코드
+    IMP.init('imp19424728');
 
     let pg = 'html5_inicis.INIpayTest';
     let pay_method = 'card';
@@ -35,24 +35,18 @@ export default function IamportPayment() {
         pg = 'tosspay.tosstest';
         pay_method = 'tosspay';
         break;
-      case '무통장입금':
-        alert('무통장입금은 별도 안내가 진행됩니다.');
-        navigate('/order/complete');
-        return;
-      default:
-        pg = 'html5_inicis.INIpayTest';
-        pay_method = 'card';
     }
 
     const orderName = items.length === 1
-  ? items[0].product.name || '유저디자인'
-  : `${items[0].product.name || '유저디자인'} 외 ${items.length - 1}개`;
+      ? items[0].product.name || '유저디자인'
+      : `${items[0].product.name || '유저디자인'} 외 ${items.length - 1}개`;
 
+    const merchant_uid = `order_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
 
     IMP.request_pay({
       pg,
       pay_method,
-      merchant_uid: `order_${new Date().getTime()}`,
+      merchant_uid,
       name: orderName,
       amount: amount || 1000,
       buyer_email: buyer?.email || 'test@example.com',
@@ -60,12 +54,12 @@ export default function IamportPayment() {
       buyer_tel: buyer?.phone || '01012345678',
       buyer_addr: buyer?.address || '서울시 테스트구',
       buyer_postcode: '123-456',
-      product_desc: orderName,
     }, function (rsp) {
       if (rsp.success) {
         const now = new Date().toISOString();
+
         const newOrders = items.map(item => ({
-          id: Date.now() + Math.random(),
+          id: merchant_uid,
           product: item.product,
           quantity: item.quantity,
           totalPrice: item.product.price * item.quantity,
@@ -84,24 +78,30 @@ export default function IamportPayment() {
         }));
 
         const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        localStorage.setItem('orders', JSON.stringify([...newOrders, ...prevOrders]));
+        const isDuplicate = prevOrders.some(o => o.id === merchant_uid);
 
-        // 포인트 적립
-        const earnedPoint = Math.floor(amount * 0.05);
-        const history = JSON.parse(localStorage.getItem('pointHistory') || '[]');
-        history.unshift({
-          type: '적립',
-          amount: earnedPoint,
-          date: now.split('T')[0],
-          description: `${orderName} 결제 포인트 적립`,
-        });
-        localStorage.setItem('pointHistory', JSON.stringify(history));
+        if (!isDuplicate) {
+          const nextOrders = [...newOrders, ...prevOrders];
+          localStorage.setItem('orders', JSON.stringify(nextOrders));
 
+          // 포인트 적립
+          const earnedPoint = Math.floor(amount * 0.05);
+          const history = JSON.parse(localStorage.getItem('pointHistory') || '[]');
+          history.unshift({
+            type: '적립',
+            amount: earnedPoint,
+            date: now.split('T')[0],
+            description: `${orderName} 결제 포인트 적립`,
+          });
+          localStorage.setItem('pointHistory', JSON.stringify(history));
+        }
+
+        localStorage.removeItem('cart');
         alert('결제 성공!');
-        localStorage.removeItem('cart'); // 장바구니 비우기
         navigate('/order/complete');
       } else {
         alert('결제 실패: ' + rsp.error_msg);
+        navigate('/');
       }
     });
   };
@@ -117,7 +117,7 @@ export default function IamportPayment() {
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((item, i) => (
           <li key={i} style={{ marginBottom: '1rem' }}>
-             {item.product.name} - {item.quantity}개 - {(item.product.price * item.quantity).toLocaleString()}원
+            {item.product.name} - {item.quantity}개 - {(item.product.price * item.quantity).toLocaleString()}원
           </li>
         ))}
       </ul>
