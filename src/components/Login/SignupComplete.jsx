@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export default function SignupComplete() {
   return (
     <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-      <h2>🎉 회원가입이 완료되었습니다!</h2>
+      <h2> 회원가입이 완료되었습니다!</h2>
       <p style={{ margin: '1rem 0' }}>WAPPENABLE에 오신 것을 환영합니다.</p>
 
       <Link to="/login">

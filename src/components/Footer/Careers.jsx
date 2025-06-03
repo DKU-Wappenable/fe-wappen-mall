@@ -1,27 +1,35 @@
+// src/components/pages/Careers.jsx
+
 import React from 'react';
 import '../../styles/StaticPageStyle.css';
 
 export default function Careers() {
   return (
     <div className="page-container">
-      <h1>채용 안내</h1>
+      <h1>팀 소개</h1>
       <p>
-        WAPPENABLE과 함께 성장할 인재를 찾습니다. 창의적이고 열정적인 팀원들과 함께 혁신적인 와펜 문화를 만들어갈 분들의 많은 지원 바랍니다.
+        WAPPENABLE은 웹 상에서 사용자들이 직접 와펜(Wappen)을 조합하고 꾸밀 수 있는 기능을 중심으로 만든 커스터마이징 플랫폼입니다.
+        우리는 사용자의 개성과 취향을 표현할 수 있는 새로운 문화를 만들어가고 있습니다.
       </p>
-      <h2>모집 부문</h2>
+
+      <h2>프로젝트 개요</h2>
       <ul>
-        <li>프론트엔드 개발자 - React 기반 프로젝트 경험자 우대</li>
-        <li>UI/UX 디자이너 - Figma, Photoshop 능숙자</li>
-        <li>콘텐츠 마케터 - SNS 운영, 콘텐츠 기획 경험자</li>
+        <li>프로젝트명: WAPPENABLE</li>
+        <li>특징: 웹 상에서 다양한 와펜을 직접 배치·디자인하고 저장하는 커스터마이징 기능 제공</li>
+        <li>기술 스택: React, Node.js, Spring Boot, MySQL 등</li>
       </ul>
-      <h2>근무 조건</h2>
+
+      <h2>팀원 구성</h2>
       <ul>
-        <li>근무형태: 정규직 / 인턴</li>
-        <li>근무시간: 주 5일 (유연근무 가능)</li>
-        <li>근무장소: 서울 성수동</li>
+        <li><strong>오승민</strong> - PM (프로젝트 매니저)</li>
+        <li><strong>양상훈</strong>, <strong>박재홍</strong> - 백엔드 개발</li>
+        <li><strong>서종진</strong> - 프론트엔드 개발</li>
       </ul>
-      <h2>지원 방법</h2>
-      <p>이력서 및 포트폴리오를 recruit@wappenable.com 으로 제출해주세요.</p>
+
+      <h2>참고 사항</h2>
+      <p>
+        본 프로젝트는 단국대학교 컴퓨터공학과 문제해결프로그래밍 수업 팀 프로젝트로 진행되었습니다. 실제 상용 수준의 와펜 커머스 웹사이트를 목표로 개발되었으며, 와펜 커스터마이징, 상품 등록/구매, 마이페이지 등 다양한 기능이 구현되어 있습니다.
+      </p>
     </div>
   );
 }

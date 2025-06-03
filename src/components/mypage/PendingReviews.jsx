@@ -1,5 +1,6 @@
+// src/pages/PendingReviews.jsx
 import React, { useEffect, useState } from 'react';
-// import axios from '../api/axiosInstance'; // 서버 연동 시 사용
+import axiosInstance from '../../api/axiosInstance';
 
 export default function PendingReviews() {
   const [reviews, setReviews] = useState([]);
@@ -7,9 +8,20 @@ export default function PendingReviews() {
   const [ratings, setRatings] = useState({});
 
   useEffect(() => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const pending = orders.filter(order => !order.reviewed);
-    setReviews(pending);
+    const fetchOrders = async () => {
+      try {
+        const res = await axiosInstance.get('/orders');
+        const pending = res.data.filter(order => !order.reviewed);
+        setReviews(pending);
+      } catch (err) {
+        console.warn('서버 오류 발생, 로컬 주문 사용');
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const pending = orders.filter(order => !order.reviewed);
+        setReviews(pending);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
   const handleChangeText = (id, value) => {
@@ -28,12 +40,11 @@ export default function PendingReviews() {
     if (!rating || rating < 1 || rating > 5) return alert('별점을 선택해주세요.');
 
     try {
-      // ✅ 서버 연동 시 사용
-      /*
-      await axios.post('/api/reviews', { orderId: id, content, rating });
-      */
-
-      // 🔁 localStorage 기반 처리
+      await axiosInstance.post('/reviews', { orderId: id, content, rating });
+      setReviews(prev => prev.filter(o => o.id !== id));
+      alert('리뷰가 작성되었습니다!');
+    } catch (err) {
+      console.warn('서버 실패, 로컬로 리뷰 저장');
       const updated = JSON.parse(localStorage.getItem('orders') || '[]').map(order =>
         order.id === id
           ? { ...order, reviewed: true, review: { rating, content } }
@@ -41,10 +52,7 @@ export default function PendingReviews() {
       );
       localStorage.setItem('orders', JSON.stringify(updated));
       setReviews(prev => prev.filter(o => o.id !== id));
-      alert('리뷰가 작성되었습니다!');
-    } catch (err) {
-      console.error(err);
-      alert('리뷰 작성 실패');
+      alert('리뷰가 저장되었습니다.');
     }
   };
 

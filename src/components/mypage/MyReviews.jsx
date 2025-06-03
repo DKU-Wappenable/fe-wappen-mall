@@ -1,4 +1,6 @@
+// src/pages/MyReviews.jsx
 import React, { useEffect, useState } from 'react';
+import axiosInstance from '../../api/axiosInstance';
 
 export default function MyReviews() {
   const [myReviews, setMyReviews] = useState([]);
@@ -7,28 +9,54 @@ export default function MyReviews() {
   const [editRating, setEditRating] = useState('');
 
   useEffect(() => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const reviews = orders
-      .filter(order => order.reviewed && order.review)
-      .map(order => ({
-        orderId: order.id,
-        productName: order.product?.name || '(알 수 없음)',
-        productId: order.product?.id,
-        rating: order.review.rating,
-        content: order.review.content,
-        date: order.createdAt,
-      }));
-    setMyReviews(reviews);
+    const fetchReviews = async () => {
+      try {
+        const res = await axiosInstance.get('/orders');
+        const reviews = res.data
+          .filter(order => order.reviewed && order.review)
+          .map(order => ({
+            orderId: order.id,
+            productName: order.product?.name || '(알 수 없음)',
+            productId: order.product?.id,
+            rating: order.review.rating,
+            content: order.review.content,
+            date: order.createdAt,
+          }));
+        setMyReviews(reviews);
+      } catch (err) {
+        console.warn('서버 오류 발생, 로컬에서 리뷰 로드');
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const reviews = orders
+          .filter(order => order.reviewed && order.review)
+          .map(order => ({
+            orderId: order.id,
+            productName: order.product?.name || '(알 수 없음)',
+            productId: order.product?.id,
+            rating: order.review.rating,
+            content: order.review.content,
+            date: order.createdAt,
+          }));
+        setMyReviews(reviews);
+      }
+    };
+
+    fetchReviews();
   }, []);
 
-  const handleDelete = (orderId) => {
-    const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]').map(order =>
-      order.id === orderId
-        ? { ...order, reviewed: false, review: undefined }
-        : order
-    );
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    setMyReviews(prev => prev.filter(r => r.orderId !== orderId));
+  const handleDelete = async (orderId) => {
+    try {
+      await axiosInstance.delete(`/orders/${orderId}/review`);
+      setMyReviews(prev => prev.filter(r => r.orderId !== orderId));
+    } catch (err) {
+      console.warn('서버 실패, 로컬에서 리뷰 삭제');
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]').map(order =>
+        order.id === orderId
+          ? { ...order, reviewed: false, review: undefined }
+          : order
+      );
+      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      setMyReviews(prev => prev.filter(r => r.orderId !== orderId));
+    }
   };
 
   const startEdit = (review) => {
@@ -43,24 +71,36 @@ export default function MyReviews() {
     setEditRating('');
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editContent.trim() || editRating < 1 || editRating > 5) {
       alert('리뷰 내용과 별점을 모두 입력해주세요.');
       return;
     }
 
-    const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]').map(order =>
-      order.id === editingId
-        ? { ...order, review: { content: editContent, rating: Number(editRating) } }
-        : order
-    );
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-
-    setMyReviews(prev =>
-      prev.map(r =>
-        r.orderId === editingId ? { ...r, content: editContent, rating: Number(editRating) } : r
-      )
-    );
+    try {
+      await axiosInstance.put(`/orders/${editingId}/review`, {
+        content: editContent,
+        rating: Number(editRating),
+      });
+      setMyReviews(prev =>
+        prev.map(r =>
+          r.orderId === editingId ? { ...r, content: editContent, rating: Number(editRating) } : r
+        )
+      );
+    } catch (err) {
+      console.warn('서버 실패, 로컬에서 리뷰 수정');
+      const updatedOrders = JSON.parse(localStorage.getItem('orders') || '[]').map(order =>
+        order.id === editingId
+          ? { ...order, review: { content: editContent, rating: Number(editRating) } }
+          : order
+      );
+      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      setMyReviews(prev =>
+        prev.map(r =>
+          r.orderId === editingId ? { ...r, content: editContent, rating: Number(editRating) } : r
+        )
+      );
+    }
 
     cancelEdit();
   };

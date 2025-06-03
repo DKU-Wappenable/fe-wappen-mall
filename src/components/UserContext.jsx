@@ -1,4 +1,6 @@
+// src/components/UserContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import TermsModal from "./agree/TermsModal.jsx";
 
@@ -8,21 +10,38 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const navigate = useNavigate();
 
-  // ✅ 초기 로그인 상태 복원
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token");
+
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
-      if (!parsed.termsAccepted) {
+
+      //  서버에 없는 계정(admin 등)용 임시 토큰 처리
+      if (!token) {
+        localStorage.setItem("access_token", "dummy-token");
+        axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
+      } else {
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
+      if (parsed.role !== "admin" && !parsed.termsAccepted) {
         setShowTermsModal(true);
       }
     }
+
     setLoading(false);
   }, []);
 
-  // ✅ 약관 동의 처리 (로컬 전용)
+  useEffect(() => {
+    if (user && user.role !== "admin" && !user.termsAccepted) {
+      setShowTermsModal(true);
+    }
+  }, [user]);
+
   const acceptTerms = async () => {
     try {
       const updatedUser = { ...user, termsAccepted: true };
@@ -30,120 +49,111 @@ export const UserProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setShowTermsModal(false);
 
-      // ✅ 서버 연동 시
-      /*
-      await axiosInstance.put("/users/agree-terms");
-      */
+      try {
+        await axiosInstance.put("/users/agree-terms");
+      } catch (err) {
+        console.warn("서버 약관 동의 실패, localStorage로만 처리됨");
+      }
+
+      if (updatedUser.role === "admin") navigate("/admin");
+      else if (updatedUser.role === "owner") navigate("/admin/upload");
+      else navigate("/");
     } catch (err) {
-      console.error("약관 동의 처리 실패:", err);
+      console.error("약관 동의 실패:", err);
     }
   };
 
-  // ✅ 회원가입
-  const signup = async ({ email, password, name, phone }) => {
+  const login = async ({ id, password }) => {
     try {
-      const response = await axiosInstance.post("/users/signup", {
-        email,
-        password,
-        name,
-        phone,
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "회원가입 실패");
-    }
-  };
-
-  // ✅ 일반 로그인
-  const login = async ({ email, password }) => {
-    // ✅ 테스트 계정 로그인
-    if (email === "test@example.com" && password === "test1234") {
-      const userData = {
-        email,
-        name: "테스트 유저",
-        role: "admin",
-        termsAccepted: false,
-        linkedSocials: ["kakao", "google"] // ✅ 소셜 로그인 해제 버튼 테스트
-      };
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      localStorage.setItem("access_token", "test-token");
-      setShowTermsModal(true);
-      return;
-    }
-
-    // ✅ 실제 로그인
-    try {
-      const response = await axiosInstance.post("/users/login", {
-        email,
-        password,
-      });
-
-      const { accessToken, user } = response.data;
-
-      const userWithLinked = {
-        ...user,
-        linkedSocials: user.linkedSocials || [], // ✅ 없으면 빈 배열
-      };
+      const res = await axiosInstance.post("/users/login", { id, password });
+      const { accessToken } = res.data;
 
       localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("user", JSON.stringify(userWithLinked));
-      setUser(userWithLinked);
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-      if (!user.termsAccepted) {
-        setShowTermsModal(true);
+      const userRes = await axiosInstance.get("/users/me");
+      const userData = userRes.data;
+
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+
+      if (userData.role === "admin") navigate("/admin");
+      else if (!userData.termsAccepted) setShowTermsModal(true);
+      else if (userData.role === "owner") navigate("/admin/upload");
+      else navigate("/");
+    } catch (err) {
+      console.error("로그인 실패, localStorage fallback 시도:", err);
+      try {
+        const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        const found = localUsers.find(
+          (u) => u.id === id && u.password === password
+        );
+
+        if (found) {
+          localStorage.setItem("user", JSON.stringify(found));
+          setUser(found);
+
+          //  dummy access_token 추가
+          localStorage.setItem("access_token", "dummy-token");
+          axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
+
+          if (found.role === "admin") navigate("/admin");
+          else if (!found.termsAccepted) setShowTermsModal(true);
+          else if (found.role === "owner") navigate("/admin/upload");
+          else navigate("/");
+        } else {
+          throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+      } catch (fallbackErr) {
+        throw new Error("로그인 실패");
       }
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "로그인 실패");
     }
   };
 
-  // ✅ 소셜 로그인 (provider까지 받음)
   const socialLogin = async (accessToken, provider) => {
     try {
       const res = await axiosInstance.get("/users/me", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       const userData = {
         ...res.data,
-        linkedSocials: res.data.linkedSocials || [provider], // ✅ 없으면 현재 provider라도 넣기
+        linkedSocials: [provider],
       };
 
-      setUser(userData);
       localStorage.setItem("access_token", accessToken);
       localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
 
-      if (!userData.termsAccepted) {
-        setShowTermsModal(true);
-      }
+      if (userData.role === "admin") navigate("/admin");
+      else if (!userData.termsAccepted) setShowTermsModal(true);
+      else if (userData.role === "owner") navigate("/admin/upload");
+      else navigate("/");
+
+      return userData;
     } catch (err) {
-      throw new Error("사용자 정보를 불러올 수 없습니다.");
+      console.error("소셜 로그인 실패:", err);
+      throw new Error("소셜 로그인 실패");
     }
   };
 
-  // ✅ 로그아웃
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("access_token");
   };
 
-  if (loading) return <div>Loading...</div>;
-
   return (
     <UserContext.Provider
       value={{
         user,
-        setUser, // ✅ 저장 반영 가능하게 추가됨
-        signup,
+        setUser,
         login,
         logout,
         acceptTerms,
         socialLogin,
         isLoggedIn: !!user,
+        loading,
       }}
     >
       {children}

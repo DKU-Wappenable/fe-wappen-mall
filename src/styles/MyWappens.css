@@ -1,94 +1,158 @@
-.my-wappens-container {
-  max-width: 1200px;
-  margin: 80px auto 0;
-  padding: 20px;
+/* 전체 레이아웃 */
+.my-wappens-wrapper {
+  padding: 40px;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
-.my-wappens-container h2 {
-  margin-bottom: 24px;
+.my-wappens-title {
   font-size: 24px;
-  color: #333;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #222;
 }
 
 .no-wappens {
   text-align: center;
   padding: 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.no-wappens p {
   color: #666;
-  margin-bottom: 20px;
 }
 
-.create-btn {
-  background: #265383;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-
-.create-btn:hover {
-  background: #265383;
-}
-
-.wappens-grid {
+/* 와펜 카드 목록 */
+.my-wappens-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
 }
 
-.wappen-card {
+/* 개별 카드 */
+.my-wappen-card {
   background: white;
-  border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.wappen-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.wappen-preview {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  gap: 12px;
+}
+
+.my-wappen-card h5 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+/* 미리보기 이미지 */
+.my-wappen-preview {
+  width: 100%;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 320px;
+  aspect-ratio: 1 / 2;
+  max-height: 320px;
+}
+
+.my-wappen-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  max-height: 100%;
+}
+
+/* fallback 구조 */
+.fallback-wappen {
+  transform: scale(0.7);
+  transform-origin: top center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.fallback-strap {
+  position: absolute;
+  left: 90px;
+  top: 100px;
+  width: 120px;
+  height: 220px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.fallback-wappen-img {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 텍스트 라벨 */
+.wappen-label {
+  font-size: 14px;
+  color: #555;
 }
 
 .wappen-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .created-at {
   font-size: 12px;
-  color: #666;
+  color: #999;
 }
 
-.delete-btn {
-  background: #ff4444;
+/* 버튼 그룹 */
+.wappen-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* 공통 버튼 스타일 */
+.wappen-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  border: 1px solid transparent;
+}
+
+/* ✅ 상세/삭제 통일 버튼 - outline 스타일 */
+.wappen-btn.outline {
+  background-color: white;
+  color: #0a3c7d;
+  border: 1px solid #0a3c7d;
+}
+.wappen-btn.outline:hover {
+  background-color: #f0f6ff;
+}
+
+/* ✅ 디자인 개시하기 - 진한 파랑 */
+.wappen-btn.primary {
+  background-color: #0a3c7d;
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.2s;
+}
+.wappen-btn.primary:hover {
+  background-color: #062c5c;
 }
 
-.delete-btn:hover {
-  background: #cc0000;
-} 
+/* 하단 버튼만 긴 버튼 */
+.publish-btn {
+  margin-top: 10px;
+  width: 100%;
+}

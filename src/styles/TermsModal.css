@@ -1,135 +1,152 @@
 .terms-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  
-  .terms-modal {
-    background: white;
-    padding: 30px;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 500px;
-  }
-  
-  .terms-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-    
-  }
-  
-  .terms-checkbox {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #f7f7f7;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 15px;
-  }
-  
-  .terms-checkbox input[type="checkbox"] {
-    margin-right: 12px;
-    transform: scale(1.2);
-  }
-  
-  .terms-checkbox.all {
-    font-weight: bold;
-    background-color: #007bff;
-    color: white;
-    justify-content: flex-start; /* 👉 왼쪽 정렬 */
-  }
-  
-  .more-btn {
-    background: none;
-    border: none;
-    color: #007bff;
-    font-size: 14px;
-    cursor: pointer;
-    margin-left: auto;
-  }
-  
-  .next-button {
-    margin-top: 24px;
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border: none;
-    background: #ccc;
-    color: white;
-    border-radius: 8px;
-    cursor: not-allowed;
-  }
-  
-  .next-button:enabled {
-    background: #007bff;
-    cursor: pointer;
-  }
-  
-  /* 상세 약관 팝업 오버레이 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.terms-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.subtext {
+  font-size: 14px;
+  color: #555;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f7f7f7;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  white-space: nowrap; 
+}
+
+.terms-checkbox input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+.more-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.next-button {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  background: #ccc;
+  color: white;
+  border-radius: 8px;
+  cursor: not-allowed;
+}
+
+.next-button:enabled {
+  background: #007bff;
+  cursor: pointer;
+}
+
+/* 상세 약관 팝업 */
 .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background: white;
+  padding: 24px 28px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  animation: popup-fade-in 0.2s ease-in-out;
+}
+
+.popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.popup-content p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.close-btn {
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@keyframes popup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  /* 상세 팝업 내용 박스 */
-  .popup-content {
-    background: white;
-    padding: 24px 28px;
-    border-radius: 12px;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-    animation: popup-fade-in 0.2s ease-in-out;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .popup-content h3 {
-    font-size: 18px;
-    margin-bottom: 12px;
-  }
-  
-  .popup-content p {
-    font-size: 15px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-  }
-  
-  /* 닫기 버튼 */
-  .close-btn {
-    background: #007bff;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    font-size: 14px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  
-  /* 간단한 팝업 애니메이션 */
-  @keyframes popup-fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+}
+/* 전체 동의 박스 */
+.terms-checkbox.all {
+  gap: 12px;
+  background-color: #007bff;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+}
+
+/* 전체 텍스트 전용 */
+.all-label {
+  font-size: 16px;
+}
+.checkbox-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

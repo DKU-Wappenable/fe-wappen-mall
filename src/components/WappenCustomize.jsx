@@ -1,286 +1,187 @@
-import React, { useState, useRef } from 'react';
+// src/components/WappenCustomize.jsx
+import React, { useRef, useState, useEffect } from 'react';
+import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../components/UserContext';
+import { useUser } from './UserContext';
+import axiosInstance from '../api/axiosInstance';
 import '../styles/WappenCustomize.css';
 
 export default function WappenCustomize() {
-  const navigate = useNavigate();
   const { user } = useUser();
+  const navigate = useNavigate();
+  const canvasRef = useRef(null);
+
+  const [wappens, setWappens] = useState([]);
   const [selectedStrap, setSelectedStrap] = useState(null);
-  const [placedWappens, setPlacedWappens] = useState([]);
-  const [canvas] = useState({ width: 500, height: 300 });
-  const [customText, setCustomText] = useState('');
-  const [draggingWappen, setDraggingWappen] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [selectedWappen, setSelectedWappen] = useState(null);
-  
-  const [wappenList] = useState([
-    { id: 1, name: '레드 스타', style: { backgroundColor: '#FF0000', color: '#FFFFFF', borderRadius: '50%', padding: '10px' }, text: '★', category: '기본' },
-    { id: 2, name: '블루 하트', style: { backgroundColor: '#0066FF', color: '#FFFFFF', borderRadius: '50%', padding: '10px' }, text: '♥', category: '기본' },
-    { id: 3, name: '골드 크라운', style: { backgroundColor: '#FFD700', color: '#000000', borderRadius: '50%', padding: '10px' }, text: '👑', category: '기본' },
-    { id: 4, name: '실버 문', style: { backgroundColor: '#C0C0C0', color: '#000000', borderRadius: '50%', padding: '10px' }, text: '☽', category: '기본' },
-    { id: 5, name: '레인보우', style: { background: 'linear-gradient(45deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF)', color: '#FFFFFF', borderRadius: '50%', padding: '10px' }, text: '🌈', category: '특별' },
-    { id: 6, name: '커스텀 텍스트', style: { backgroundColor: '#333333', color: '#FFFFFF', borderRadius: '50%', padding: '10px' }, text: 'ABC', category: '텍스트' },
-  ]);
+  const [draggingId, setDraggingId] = useState(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState('strap');
 
-  const [strapList] = useState([
-    { id: 1, name: '클래식 블랙', color: '#000000', width: 460, height: 80 },
-    { id: 2, name: '네이비 와이드', color: '#000080', width: 460, height: 120 },
-    { id: 3, name: '레드 슬림', color: '#8B0000', width: 460, height: 60 },
-  ]);
+  const strapTypes = [
+    'strap_green', 'strap_black', 'strap_blue', 'strap_yellow',
+    'strap_red', 'strap_orange', 'strap_purple'
+  ];
 
-  const [categories] = useState(['전체', '기본', '특별', '텍스트']);
-  const [activeCategory, setActiveCategory] = useState('전체');
-
-  const handleDragStart = (wappen, e) => {
-    e.dataTransfer.setData('wappen', JSON.stringify(wappen));
-  };
+  const wappenTypes = [
+    'bear', 'dog', 'panda', 'capybara', 'squirrel', 'soccerball', 'penguin'
+  ];
 
   const handleDrop = (e) => {
     e.preventDefault();
-    if (!selectedStrap) {
-      alert('먼저 스트랩을 선택해주세요!');
-      return;
-    }
-    
-    const wappen = JSON.parse(e.dataTransfer.getData('wappen'));
-    const rect = e.currentTarget.getBoundingClientRect();
+    const type = e.dataTransfer.getData('type');
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    if (wappen.name === '커스텀 텍스트') {
-      const text = customText || 'ABC';
-      setPlacedWappens([...placedWappens, {
-        ...wappen,
-        text: text,
-        position: { x, y },
-        id: Date.now()
-      }]);
-    } else {
-      setPlacedWappens([...placedWappens, {
-        ...wappen,
-        position: { x, y },
-        id: Date.now()
-      }]);
+    const newWappen = { id: Date.now() + Math.random(), type, x, y };
+    setWappens(prev => [...prev, newWappen]);
+  };
+
+  const handleDragStart = (e, type) => {
+    e.dataTransfer.setData('type', type);
+  };
+
+  const handleMouseDown = (e, id) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const wappen = wappens.find((w) => w.id === id);
+    if (!wappen) return;
+    setDraggingId(id);
+    setOffset({ x: e.clientX - rect.left - wappen.x, y: e.clientY - rect.top - wappen.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (draggingId !== null) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - offset.x;
+      const y = e.clientY - rect.top - offset.y;
+      setWappens((prev) =>
+        prev.map((w) => (w.id === draggingId ? { ...w, x, y } : w))
+      );
     }
   };
 
-  const handleWappenMouseDown = (e, wappen) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-    setDraggingWappen(wappen);
+  const handleMouseUp = () => {
+    setDraggingId(null);
   };
 
-  const handleCanvasMouseMove = (e) => {
-    if (draggingWappen) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+  const handleSave = async () => {
+    if (!user) return alert('로그인이 필요합니다.');
 
-      setPlacedWappens(placedWappens.map(w => 
-        w.id === draggingWappen.id 
-          ? { ...w, position: { x, y } }
-          : w
-      ));
+    try {
+      const canvasElement = canvasRef.current;
+      const canvasImage = await html2canvas(canvasElement, {
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        scale: 2,
+        width: canvasElement.scrollWidth,
+        height: canvasElement.scrollHeight
+      });
+
+      const totalPrice = (selectedStrap ? 1000 : 0) + wappens.length * 1000;
+      const imageData = canvasImage.toDataURL('image/png');
+      const savedDesign = {
+        id: Date.now() + Math.random(),
+        strap: selectedStrap,
+        wappens,
+        image: imageData,
+        price: totalPrice,
+        createdAt: new Date().toISOString(),
+        owner: user?.id || 'unknown'  //
+      };
+
+      try {
+        await axiosInstance.post('/wappens', savedDesign);
+        alert('디자인이 서버에 저장되었습니다!');
+      } catch {
+        const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
+        saved.push(savedDesign);
+        localStorage.setItem(`savedWappens_${user.id}`, JSON.stringify(saved));
+        alert('디자인이 로컬에 저장되었습니다!');
+      }
+
+      navigate('/my-wappens');
+    } catch (err) {
+      console.error('저장 실패:', err);
+      alert('저장에 실패했습니다.');
     }
   };
 
-  const handleCanvasMouseUp = () => {
-    setDraggingWappen(null);
-  };
-
-  const handleSave = () => {
-    if (!user) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-    
-    const savedDesign = {
-      id: Date.now(),
-      strap: selectedStrap,
-      wappens: placedWappens.map(wappen => ({
-        ...wappen,
-        position: {
-          x: wappen.position.x,
-          y: wappen.position.y
-        },
-        style: {
-          ...wappen.style,
-          position: undefined,
-          left: undefined,
-          top: undefined,
-          transform: undefined
-        }
-      })),
-      createdAt: new Date().toISOString()
-    };
-
-    // 기존 저장된 디자인들을 가져옵니다
-    const savedDesigns = JSON.parse(localStorage.getItem(`savedWappens_${user.email}`) || '[]');
-    
-    // 새 디자인을 추가합니다
-    savedDesigns.push(savedDesign);
-    
-    // 로컬 스토리지에 저장합니다
-    localStorage.setItem(`savedWappens_${user.email}`, JSON.stringify(savedDesigns));
-    
-    alert('와펜 디자인이 저장되었습니다!');
-    navigate('/my-wappens');
-  };
-
-  const handleCustomTextChange = (e) => {
-    const newText = e.target.value || 'ABC';
-    setCustomText(newText);
-    
-    // 이미 배치된 커스텀 텍스트 와펜들도 업데이트
-    setPlacedWappens(placedWappens.map(w => 
-      w.name === '커스텀 텍스트' ? { ...w, text: newText } : w
-    ));
-  };
+  useEffect(() => {
+    if (!user) navigate('/login');
+  }, [user, navigate]);
 
   return (
-    <div className="customize-container">
-      <div className="customize-sidebar">
-        <h3>스트랩 선택</h3>
-        <div className="strap-list">
-          {strapList.map(strap => (
+    <div className="customize-wrapper">
+      <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
+        ✔ 기본 스트랩 1개 500원 / 와펜 1개당 500원으로 가격이 계산됩니다.
+      </p>
+
+      <div className="custom-tabs">
+        <button className={activeTab === 'strap' ? 'active' : ''} onClick={() => setActiveTab('strap')}>스트랩</button>
+        <button className={activeTab === 'wappen' ? 'active' : ''} onClick={() => setActiveTab('wappen')}>와펜</button>
+      </div>
+
+      <div className="selector-bar-scroll">
+        <div className="scroll-wrapper">
+          {(activeTab === 'strap' ? strapTypes : wappenTypes).map(type => (
             <div
-              key={strap.id}
-              className={`strap-item ${selectedStrap?.id === strap.id ? 'active' : ''}`}
-              onClick={() => setSelectedStrap(strap)}
+              key={type}
+              className={`thumb-box ${activeTab === 'strap' && selectedStrap === type ? 'selected' : ''}`}
+              onClick={activeTab === 'strap' ? () => setSelectedStrap(type) : undefined}
+              draggable={activeTab === 'wappen'}
+              onDragStart={activeTab === 'wappen' ? (e) => handleDragStart(e, type) : undefined}
             >
-              <div 
-                className="strap-preview"
-                style={{
-                  backgroundColor: strap.color,
-                  width: '100%',
-                  height: '30px',
-                  borderRadius: '4px'
-                }}
-              />
-              <span>{strap.name}</span>
+              <img src={`/assets/${type}.png`} alt={type} />
+              <span>{type}</span>
             </div>
           ))}
-        </div>
-
-        <h3 className="mt-4">와펜 선택</h3>
-        <div className="text-input-container">
-          <input
-            type="text"
-            value={customText}
-            onChange={handleCustomTextChange}
-            placeholder="원하는 텍스트를 입력하세요"
-            className="custom-text-input"
-          />
-        </div>
-        <div className="category-tabs">
-          {categories.map(category => (
-            <button
-              key={category}
-              className={`category-tab ${activeCategory === category ? 'active' : ''}`}
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-        <div className="wappen-list">
-          {wappenList
-            .filter(w => activeCategory === '전체' || w.category === activeCategory)
-            .map(wappen => (
-              <div
-                key={wappen.id}
-                className="wappen-item"
-                draggable
-                onDragStart={(e) => handleDragStart(wappen, e)}
-              >
-                <div className="wappen-preview" style={wappen.style}>
-                  {wappen.name === '커스텀 텍스트' ? (customText || 'ABC') : wappen.text}
-                </div>
-                <span className="wappen-name">{wappen.name}</span>
-              </div>
-            ))}
         </div>
       </div>
 
       <div className="customize-main">
-        <div className="canvas-container">
-          <div
-            className="canvas"
-            style={{ width: canvas.width, height: canvas.height }}
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            onMouseMove={handleCanvasMouseMove}
-            onMouseUp={handleCanvasMouseUp}
-            onMouseLeave={handleCanvasMouseUp}
-          >
-            {selectedStrap && (
-              <div 
-                className="strap"
-                style={{
-                  backgroundColor: selectedStrap.color,
-                  width: selectedStrap.width,
-                  height: selectedStrap.height,
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  borderRadius: '8px'
-                }}
-              />
-            )}
-            {placedWappens.map(wappen => (
-              <div
-                key={wappen.id}
-                className="placed-wappen"
-                style={{
-                  ...wappen.style,
-                  left: wappen.position.x,
-                  top: wappen.position.y,
-                  position: 'absolute',
-                  transform: 'translate(-50%, -50%)',
-                  minWidth: '40px',
-                  minHeight: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'move',
-                  userSelect: 'none',
-                  zIndex: 1
-                }}
-                onMouseDown={(e) => handleWappenMouseDown(e, wappen)}
-              >
-                {wappen.text}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="canvas-controls">
-          <button className="control-btn" onClick={() => setPlacedWappens([])}>초기화</button>
-          <button className="control-btn" disabled={placedWappens.length === 0}>실행취소</button>
-          <button 
-            className="save-btn" 
-            onClick={handleSave}
-            disabled={!selectedStrap || placedWappens.length === 0}
-          >
-            저장하기
-          </button>
-        </div>
-      </div>
+        <div
+          className="canvas"
+          ref={canvasRef}
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {selectedStrap && (
+            <img
+              src={`/assets/${selectedStrap}.png`}
+              alt={selectedStrap}
+              className="strap-on-canvas"
+            />
+          )}
 
-      <div className="customize-info">
-        <h3>도움말</h3>
-        <ul>
-          <li>먼저 스트랩을 선택해주세요.</li>
-          <li>원하는 와펜을 드래그하여 스트랩 위에 놓아보세요.</li>
-          <li>와펜을 드래그하여 위치를 조정할 수 있습니다.</li>
-          <li>텍스트 와펜은 직접 텍스트를 입력할 수 있습니다.</li>
-          <li>작업이 완료되면 저장 버튼을 눌러주세요.</li>
-        </ul>
+          {wappens.map((w) => (
+            <div
+              key={w.id}
+              style={{
+                position: 'absolute',
+                left: w.x - 40,
+                top: w.y - 40,
+                cursor: 'grab',
+                zIndex: 2
+              }}
+              onMouseDown={(e) => handleMouseDown(e, w.id)}
+            >
+              <img
+                src={`/assets/${w.type}.png`}
+                alt={w.type}
+                style={{ width: 80, height: 80, pointerEvents: 'none' }}
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="canvas-controls">
+          <button onClick={handleSave} className="control-btn save-btn">디자인 저장</button>
+          <button onClick={() => navigate('/my-wappens')} className="control-btn">나의 와펜 보기</button>
+        </div>
       </div>
     </div>
   );
-} 
+}

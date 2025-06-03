@@ -47,7 +47,7 @@ export default function MyPage() {
             포인트 내역
           </button>
 
-          {/* ✅ 포인트 옆에 정렬된 회원 탈퇴 버튼 */}
+          {/*  포인트 옆에 정렬된 회원 탈퇴 버튼 */}
           <Link to="/withdraw">
             <button className="withdraw-btn">회원 탈퇴</button>
           </Link>

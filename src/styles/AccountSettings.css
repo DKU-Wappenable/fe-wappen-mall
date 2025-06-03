@@ -1,36 +1,130 @@
+/* 기본 컨테이너 */
 .account-settings {
-    max-width: 500px;
-    margin-top: 1rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .form-group label {
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-  }
-  
-  input {
-    padding: 0.5rem;
-    font-size: 1rem;
-  }
-  
-  button {
-    padding: 0.6rem 1.2rem;
-    background-color: #e6f0ff;
-    color: #1e3a8a;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  
-  .success-msg {
-    color: green;
-    margin-top: 1rem;
-    font-weight: bold;
-  }
-  
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 입력 폼 그룹 */
+.form-group {
+  margin-bottom: 1.2rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #003366;
+  outline: none;
+}
+
+/* 저장 버튼 */
+button {
+  padding: 0.6rem 1.4rem;
+  background-color: #003366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #002244;
+}
+
+/* 저장 완료 메시지 */
+.success-msg {
+  color: green;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+/* 소셜 연동 영역 */
+.social-unlink-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.social-unlink-section h4 {
+  margin-bottom: 1rem;
+}
+
+.social-unlink-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.social-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.social-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.social-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* 연동 해제 버튼 */
+.unlink-btn {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  background-color: #003366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.unlink-btn:hover {
+  background-color: #bb2d3b;
+}
+
+/* 🔥 회원 탈퇴 버튼 */
+.account-settings a button {
+  margin-top: 2rem;
+  width: 100%;
+  background-color: #003366;
+  color: white;
+  font-size: 1rem;
+  padding: 0.7rem 0;
+  border-radius: 6px;
+}
+
+.account-settings a button:hover {
+  background-color: #bb2d3b;
+}

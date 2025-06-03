@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-// import axiosInstance from '../api/axiosInstance';
+import axiosInstance from '../api/axiosInstance';
+import { useUser } from './UserContext';
 import '../styles/CategoryProductPage.css';
 
 export default function CategoryProductPage() {
@@ -11,10 +12,12 @@ export default function CategoryProductPage() {
   const [sortBy, setSortBy] = useState('최신순');
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
+  const { user } = useUser();
+  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
 
   const categoryList = [
-    '전체', '의류', '굿즈', '패션잡화', '쿠션/패브릭', '문구/오피스',
-    '폰액세서리', '스티커/지류', '리빙', '스포츠', '키즈', '애견', '역자', '디지털/테크'
+    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
+    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
   ];
 
   useEffect(() => {
@@ -24,40 +27,88 @@ export default function CategoryProductPage() {
     setCategory(cat);
     setSortBy(sort);
 
-    const all = JSON.parse(localStorage.getItem('products') || '[]');
-    setAllProducts(all);
+    const fetchData = async () => {
+      try {
+        const res = await axiosInstance.get('/products');
+        const serverProducts = res.data;
 
-    const filtered = all.filter(p => {
-      const matchCat = cat === '전체' || p.category === cat;
-      const matchKeyword = p.name.toLowerCase().includes(keyword.toLowerCase());
-      return matchCat && matchKeyword;
-    });
+        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+          ...d,
+          name: d.title || '',
+          price: 500 + 500 * (d.wappens?.length || 0),
+          images: [d.image || '/assets/default.png'],
+          category: '유저디자인',
+          description: d.description || '',
+          createdAt: d.createdAt || new Date().toISOString(),
+          nickname: currentUserEmail, // ✅ 무조건 현재 로그인한 사용자 이메일로
+          uniqueKey: `${d.id}-${index}`
+        }));
 
-    const sorted = [...filtered].sort((a, b) => {
-      return sort === '가격순'
-        ? a.price - b.price
-        : new Date(b.createdAt) - new Date(a.createdAt);
-    });
+        const all = [...serverProducts, ...shared];
+        setAllProducts(all);
 
-    setProducts(sorted);
+        const filtered = all.filter(p => {
+          const matchCat = cat === '전체' || p.category === cat;
+          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
+          return matchCat && matchKeyword;
+        });
+
+        const sorted = [...filtered].sort((a, b) => {
+          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+
+        setProducts(sorted);
+      } catch (err) {
+        console.warn('서버 실패, 로컬로 대체');
+
+        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
+          ...d,
+          name: d.title || '',
+          price: 500 + 500 * (d.wappens?.length || 0),
+          images: [d.image || '/assets/default.png'],
+          category: '유저디자인',
+          description: d.description || '',
+          createdAt: d.createdAt || new Date().toISOString(),
+          nickname: currentUserEmail, // ✅ fallback에서도 동일
+          uniqueKey: `${d.id}-${index}`
+        }));
+
+        const local = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
+          ...p,
+          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          category: p.category || '',
+          nickname: currentUserEmail, // ✅ fallback에서도 동일
+          uniqueKey: `${p.id}-${index}`
+        }));
+
+        const all = [...local, ...shared];
+        setAllProducts(all);
+
+        const filtered = all.filter(p => {
+          const matchCat = cat === '전체' || p.category === cat;
+          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
+          return matchCat && matchKeyword;
+        });
+
+        const sorted = [...filtered].sort((a, b) => {
+          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+
+        setProducts(sorted);
+      }
+    };
+
+    fetchData();
   }, [searchParams]);
 
   const handleCategoryClick = (cat) => {
-    setSearchParams(prev => {
-      return {
-        ...Object.fromEntries(prev.entries()),
-        category: cat,
-      };
-    });
+    setSearchParams({ ...Object.fromEntries(searchParams.entries()), category: cat });
   };
 
   const handleSortChange = (e) => {
-    setSearchParams(prev => {
-      return {
-        ...Object.fromEntries(prev.entries()),
-        sort: e.target.value,
-      };
-    });
+    setSearchParams({ ...Object.fromEntries(searchParams.entries()), sort: e.target.value });
   };
 
   const handleResetSearch = () => {
@@ -103,13 +154,18 @@ export default function CategoryProductPage() {
             <div className="product-grid">
               {products.slice(0, visibleCount).map((p) => (
                 <div
-                  key={p.id}
+                  key={p.uniqueKey}
                   className="product-card"
-                  onClick={() => navigate(`/product/${p.id}`)}
+                  onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
                 >
-                  <img src={p.images?.[0]} alt={p.name} />
+                  <img
+                    src={p.images?.[0] || '/assets/default.png'}
+                    alt={p.name}
+                    onError={(e) => (e.target.src = '/assets/default.png')}
+                  />
                   <h3>{p.name}</h3>
-                  <p>₩{p.price.toLocaleString()}</p>
+                  <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
+                  <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}
             </div>
