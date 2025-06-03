@@ -27,13 +27,14 @@ export default function LoginForm() {
     }
   }, [location.state]);
 
-  // 이미 로그인된 사용자 리다이렉션
+  // ✅ 컴포넌트 마운트 시에만 기존 로그인 상태 확인
   useEffect(() => {
+    // 이미 로그인된 상태로 /login 페이지에 접근한 경우에만 리다이렉션
     if (user) {
-      console.log("🔄 이미 로그인된 사용자:", user);
+      console.log("🔄 이미 로그인된 사용자, 리다이렉션:", user);
       redirectUser(user);
     }
-  }, [user, navigate]);
+  }, []); // 의존성 배열 비움 - 마운트 시에만 실행
 
   // 사용자 역할에 따른 리다이렉션
   const redirectUser = (userData) => {
@@ -102,46 +103,65 @@ export default function LoginForm() {
         
         console.log("✅ 사용자 정보 조회 성공:", userData);
 
-        // 4. 사용자 정보 저장 및 상태 업데이트
+        // 4. 사용자 정보 저장 및 상태 업데이트 - 성공 시에만!
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
         
         toast.success(`환영합니다, ${userData.nickname}님!`);
 
-        // 5. 역할에 따른 페이지 이동
-        redirectUser(userData);
+        // 5. 약관 동의 여부에 따른 처리
+        if (userData.role !== "admin" && !userData.termsAccepted) {
+          console.log("📋 약관 동의가 필요한 사용자 - 약관 모달 표시");
+          // 약관 모달이 자동으로 표시됨 (UserContext의 useEffect에 의해)
+          // 약관 동의 완료 후 수동으로 리다이렉션 필요
+        } else {
+          console.log("✅ 약관 동의 완료된 사용자 - 즉시 리다이렉션");
+          // 약관 동의가 이미 완료된 사용자는 즉시 리다이렉션
+          redirectUser(userData);
+        }
 
       } catch (meError) {
         console.error("❌ 사용자 정보 조회 실패:", meError);
         
-        // 사용자 정보 조회 실패 시 기본 정보로 처리
-        const fallbackUser = {
-          email: formData.email,
-          nickname: formData.email,
-          role: "USER",
-          termsAccepted: false
-        };
-
-        localStorage.setItem("user", JSON.stringify(fallbackUser));
-        setUser(fallbackUser);
+        // ❌ 토큰 정리 및 로그인 실패 처리 - setUser 호출하지 않음
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user"); // 사용자 정보도 제거
+        delete axiosInstance.defaults.headers.common["Authorization"];
         
-        toast.success("로그인 성공!");
-        navigate("/");
+        setError("로그인에 실패했습니다. 다시 시도해주세요.");
+        // ✅ 화면 이동하지 않음 - 로그인 페이지에 머물러있음
       }
 
     } catch (error) {
       console.error("❌ 로그인 실패:", error);
       
+      // 토큰 및 사용자 정보 완전 정리
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      delete axiosInstance.defaults.headers.common["Authorization"];
+      
+      // ✅ user 상태도 null로 초기화 (혹시 모를 상황 대비)
+      setUser(null);
+      
       // 서버 에러 처리
       if (error.response) {
         const { status, data } = error.response;
         
-        if (status === 401) {
-          setError("아이디 또는 비밀번호가 올바르지 않습니다.");
-        } else if (status === 400) {
-          setError(data.message || "입력 정보를 확인해주세요.");
+        if (status === 400) {
+          // 유효성 검증 오류 (아이디 형식 등)
+          setError(data.error || "입력 형식을 확인해주세요.");
+        } else if (status === 401) {
+          // 로그인 정보 불일치
+          setError("아이디 또는 비밀번호를 확인해주세요.");
+        } else if (status === 404) {
+          // 사용자 없음
+          setError("등록되지 않은 아이디입니다.");
+        } else if (status >= 500) {
+          setError("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         } else {
-          setError("로그인에 실패했습니다. 다시 시도해주세요.");
+          setError(data.error || "로그인에 실패했습니다. 다시 시도해주세요.");
         }
       } else if (error.request) {
         setError("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
@@ -149,7 +169,8 @@ export default function LoginForm() {
         setError("예상치 못한 오류가 발생했습니다.");
       }
       
-      toast.error("로그인에 실패했습니다.");
+      // ❌ 중복 토스트 제거: setError로 에러 메시지 표시가 충분함  
+      // toast.error("로그인에 실패했습니다.");
     } finally {
       setIsLoading(false);
     }

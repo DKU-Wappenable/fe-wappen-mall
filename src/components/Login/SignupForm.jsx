@@ -90,7 +90,8 @@ export default function SignupForm() {
       const response = await axiosInstance.post("/users/signup", signupData);
       
       console.log("✅ 회원가입 성공:", response.data);
-      toast.success("회원가입 성공! 로그인 페이지로 이동합니다.");
+      // ❌ 중복 토스트 제거: navigate state 메시지로 충분함
+      // toast.success("회원가입 성공! 로그인 페이지로 이동합니다.");
       
       // 로그인 페이지로 이동
       navigate("/login", { 
@@ -123,7 +124,8 @@ export default function SignupForm() {
         setError("예상치 못한 오류가 발생했습니다.");
       }
       
-      toast.error("회원가입에 실패했습니다.");
+      // ❌ 중복 토스트 제거: setError로 에러 메시지 표시가 충분함
+      // toast.error("회원가입에 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
