@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useUser } from "../UserContext";
 import { toast } from "react-toastify";
 import axiosInstance from "../../api/axiosInstance";
@@ -7,140 +7,167 @@ import "../../styles/AuthForm.css";
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useUser();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // 상태 관리
+  const [formData, setFormData] = useState({
+    email: location.state?.email || "", // 회원가입에서 전달된 이메일
+    password: ""
+  });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
+  // 회원가입 완료 메시지 표시
+  useEffect(() => {
+    if (location.state?.message) {
+      toast.success(location.state.message);
+      // state 초기화
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // 이미 로그인된 사용자 리다이렉션
   useEffect(() => {
     if (user) {
-      if (user.role === "admin") navigate("/admin");
-      else if (user.role === "owner") navigate("/admin/upload");
-      else navigate("/");
+      console.log("🔄 이미 로그인된 사용자:", user);
+      redirectUser(user);
     }
-  }, [user]);
+  }, [user, navigate]);
 
+  // 사용자 역할에 따른 리다이렉션
+  const redirectUser = (userData) => {
+    if (userData.role === "ADMIN") {
+      navigate("/admin");
+    } else if (userData.role === "SHOP_OWNER") {
+      navigate("/admin/upload");
+    } else {
+      navigate("/");
+    }
+  };
+
+  // 입력값 변경 핸들러
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // 에러 메시지 초기화
+    if (error) setError("");
+  };
+
+  // 로그인 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
+
+    // 기본 유효성 검증
+    if (!formData.email.trim()) {
+      setError("아이디를 입력해주세요.");
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!formData.password.trim()) {
+      setError("비밀번호를 입력해주세요.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      // 1차 서버 로그인 시도
-      const res = await axiosInstance.post("/users/login", { email, password });
-      const { accessToken } = res.data;
+      console.log("🚀 로그인 요청:", { email: formData.email });
+      
+      // 1. 로그인 API 호출
+      const loginResponse = await axiosInstance.post("/users/login", {
+        email: formData.email,
+        password: formData.password
+      });
 
+      const { accessToken, refreshToken } = loginResponse.data;
+      console.log("✅ 로그인 성공, 토큰 받음");
+
+      // 2. 토큰 저장 및 axios 헤더 설정
       localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
       try {
-        // 2차 사용자 정보 조회
-        const userRes = await axiosInstance.get("/users/me");
-        const userData = userRes.data;
+        // 3. 사용자 정보 조회
+        console.log("👤 사용자 정보 조회 중...");
+        const userResponse = await axiosInstance.get("/users/me");
+        const userData = userResponse.data;
+        
+        console.log("✅ 사용자 정보 조회 성공:", userData);
 
+        // 4. 사용자 정보 저장 및 상태 업데이트
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
-        toast.success("로그인 성공!");
+        
+        toast.success(`환영합니다, ${userData.nickname}님!`);
 
-        if (userData.role === "admin") navigate("/admin");
-        else if (!userData.termsAccepted) return;
-        else if (userData.role === "owner") navigate("/admin/upload");
-        else navigate("/");
+        // 5. 역할에 따른 페이지 이동
+        redirectUser(userData);
 
       } catch (meError) {
-        // /users/me API가 없는 경우 → 임시 로그인 처리
-        console.warn("/users/me 없음, 임시 로그인 처리:", meError);
-
+        console.error("❌ 사용자 정보 조회 실패:", meError);
+        
+        // 사용자 정보 조회 실패 시 기본 정보로 처리
         const fallbackUser = {
-          email,
-          role: "user",
-          nickname: "임시사용자",
+          email: formData.email,
+          nickname: formData.email,
+          role: "USER",
           termsAccepted: false
         };
 
         localStorage.setItem("user", JSON.stringify(fallbackUser));
         setUser(fallbackUser);
-        toast.success("로그인 성공 (임시 처리)");
-
+        
+        toast.success("로그인 성공!");
         navigate("/");
       }
 
-    } catch (err) {
-      // 서버 로그인 실패 → 로컬 fallback
-      console.warn("서버 로그인 실패, 로컬 fallback 시도:", err);
-
-      try {
-        const staticUsers = [
-          {
-            id: "admin",
-            password: "admin1234",
-            email: "admin@example.com",
-            nickname: "관리자",
-            role: "admin",
-            termsAccepted: true,
-            linkedSocials: [],
-          },
-          {
-            id: "owner",
-            password: "owner1234",
-            email: "owner@example.com",
-            nickname: "오너",
-            role: "owner",
-            termsAccepted: false,
-            linkedSocials: [],
-          },
-          {
-            id: "user",
-            password: "user1234",
-            email: "user@example.com",
-            nickname: "사용자",
-            role: "user",
-            termsAccepted: false,
-            linkedSocials: [],
-          },
-          {
-            id: "test",
-            password: "test1234",
-            email: "test@example.com",
-            nickname: "테스트",
-            role: "admin",
-            termsAccepted: true,
-            linkedSocials: ["kakao"],
-          }
-        ];
-
-        const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const allUsers = [...staticUsers, ...localUsers];
-
-        const found = allUsers.find((u) => u.email === email && u.password === password);
-
-        if (found) {
-          localStorage.setItem("user", JSON.stringify(found));
-          setUser(found);
-          toast.success("로그인 성공!");
-
-          if (found.role === "admin") navigate("/admin");
-          else if (!found.termsAccepted) return;
-          else if (found.role === "owner") navigate("/admin/upload");
-          else navigate("/");
-        } else {
+    } catch (error) {
+      console.error("❌ 로그인 실패:", error);
+      
+      // 서버 에러 처리
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        if (status === 401) {
           setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+        } else if (status === 400) {
+          setError(data.message || "입력 정보를 확인해주세요.");
+        } else {
+          setError("로그인에 실패했습니다. 다시 시도해주세요.");
         }
-      } catch (fallbackErr) {
-        console.error("로컬 fallback 실패:", fallbackErr);
-        setError("로그인 실패");
+      } else if (error.request) {
+        setError("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
+      } else {
+        setError("예상치 못한 오류가 발생했습니다.");
       }
+      
+      toast.error("로그인에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // ✅ 소셜 로그인 이동 함수
+  // 소셜 로그인 처리
   const handleSocialLogin = (provider) => {
+    const baseURL = axiosInstance.defaults.baseURL.replace('/api', '');
     const providers = {
-      카카오: "/oauth2/authorization/kakao",
-      네이버: "/oauth2/authorization/naver",
-      구글: "/oauth2/authorization/google",
+      카카오: `${baseURL}/oauth2/authorization/kakao`,
+      네이버: `${baseURL}/oauth2/authorization/naver`,
+      구글: `${baseURL}/oauth2/authorization/google`,
     };
-    if (providers[provider]) window.location.href = providers[provider];
+    
+    if (providers[provider]) {
+      console.log(`🔗 ${provider} 소셜 로그인:`, providers[provider]);
+      window.location.href = providers[provider];
+    }
   };
 
   return (
@@ -154,20 +181,28 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit}>
           <input
             type="text"
+            name="email"
             placeholder="아이디"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
+            disabled={isLoading}
             required
           />
           <input
             type="password"
+            name="password"
             placeholder="비밀번호"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
+            disabled={isLoading}
             required
           />
-          <button type="submit" className="submit-btn black">
-            로그인
+          <button 
+            type="submit" 
+            className="submit-btn black"
+            disabled={isLoading}
+          >
+            {isLoading ? "로그인 중..." : "로그인"}
           </button>
         </form>
 
@@ -181,16 +216,27 @@ export default function LoginForm() {
           </p>
         </div>
 
-        {/* ✅ 소셜 로그인 안내 및 버튼 */}
         <div className="divider">또는 다른 서비스 계정으로 로그인</div>
         <div className="social-login-group">
-          <button className="social-btn kakao" onClick={() => handleSocialLogin("카카오")}>
+          <button 
+            className="social-btn kakao" 
+            onClick={() => handleSocialLogin("카카오")}
+            disabled={isLoading}
+          >
             <img src="/assets/kakao_icon.png" alt="카카오 로그인" />
           </button>
-          <button className="social-btn naver" onClick={() => handleSocialLogin("네이버")}>
+          <button 
+            className="social-btn naver" 
+            onClick={() => handleSocialLogin("네이버")}
+            disabled={isLoading}
+          >
             <img src="/assets/naver_icon.png" alt="네이버 로그인" />
           </button>
-          <button className="social-btn google" onClick={() => handleSocialLogin("구글")}>
+          <button 
+            className="social-btn google" 
+            onClick={() => handleSocialLogin("구글")}
+            disabled={isLoading}
+          >
             <img src="/assets/google_icon.png" alt="구글 로그인" />
           </button>
         </div>
