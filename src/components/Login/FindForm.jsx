@@ -16,12 +16,10 @@ export default function FindForm({ mode = 'id', onClose }) {
         const res = await axiosInstance.post('/users/find-id', {
           recoveryEmail,
         });
-        setFoundId(res.data); // 서버가 문자열만 주는 구조면 이거 그대로
+        setFoundId(res.data);
       } catch (err) {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const found = users.find((u) => u.recoveryEmail === recoveryEmail);
-        if (found) setFoundId(found.email); // email = 아이디
-        else alert('일치하는 사용자를 찾을 수 없습니다.');
+        console.error('❌ 아이디 찾기 실패:', err);
+        alert('일치하는 사용자를 찾을 수 없습니다.');
       }
     } else {
       if (!email || !recoveryEmail) return alert('아이디와 이메일을 모두 입력하세요.');
@@ -33,14 +31,8 @@ export default function FindForm({ mode = 'id', onClose }) {
         setVerifiedUser({ email, recoveryEmail });
         setShowResetModal(true);
       } catch (err) {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const found = users.find((u) => u.email === email && u.recoveryEmail === recoveryEmail);
-        if (found) {
-          setVerifiedUser(found);
-          setShowResetModal(true);
-        } else {
-          alert('일치하는 사용자를 찾을 수 없습니다.');
-        }
+        console.error('❌ 비밀번호 찾기 실패:', err);
+        alert('일치하는 사용자를 찾을 수 없습니다.');
       }
     }
   };
