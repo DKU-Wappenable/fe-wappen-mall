@@ -1,0 +1,36 @@
+.account-settings {
+    max-width: 500px;
+    margin-top: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group label {
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+  }
+  
+  input {
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  button {
+    padding: 0.6rem 1.2rem;
+    background-color: #e6f0ff;
+    color: #1e3a8a;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .success-msg {
+    color: green;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  

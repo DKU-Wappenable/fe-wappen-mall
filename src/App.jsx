@@ -1,93 +1,108 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LoginForm from "./components/LoginForm";
-import SignupForm from "./components/SignupForm";
-import FindForm from "./components/FindForm";
-import { UserProvider, useUser } from "./components/UserContext";
-import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
-import "./styles/App.css";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './styles/App.css';
 
-function Header({ onLoginClick, onSignupClick }) {
-  const { user, logout } = useUser();
+import { useUser } from './components/UserContext';
+import Navigation from './components/Navigation';
+import Footer from './components/Footer/Footer.jsx';
 
-  return (
-    <header className="app-header">
-      <div className="header-inner">
-        <div className="logo">WAPPEN</div>
-        <div className="header-right">
-          {user ? (
-            <>
-              <span>{user.nickname}님 환영합니다!</span>
-              <button onClick={logout}>로그아웃</button>
-            </>
-          ) : (
-            <>
-              <button onClick={onLoginClick}>로그인</button>
-              <button onClick={onSignupClick}>회원가입</button>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
 
-function AppContent() {
-  const [modalType, setModalType] = useState(null);
-  const [signupStep, setSignupStep] = useState("kakao");
+// 모든 컴포넌트 그대로 유지 (생략)
+import Home from './components/Home';
+import MyPage from './components/MyPage';
+import WappenCustomize from './components/WappenCustomize';
+import MyWappens from './components/MyWappens';
+import LoginForm from './components/Login/LoginForm';
+import SignupForm from './components/Login/SignupForm';
+import FindForm from './components/Login/FindForm';
+import OAuthCallback from './components/Login/OAuthCallback';
+import ProductUploadPage from './components/product/ProductUploadPage';
+import PurchaseSuccessPage from './components/payment/PurchaseSuccessPage';
+import ProductDetailPage from './components/product/ProductDetailPage';
+import PurchaseModal from './components/payment/PurchaseModal';
+import OrderFormPage from './components/payment/OrderFormPage';
+import PaymentCompletePage from './components/payment/PaymentCompletePage';
+import AutoLogoutManager from './components/Login/AutoLogoutManager';
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminProductUpload from './components/admin/AdminProductUpload';
+import AdminProductList from './components/admin/AdminProductList';
+import AdminProductEdit from './components/admin/AdminProductEdit';
+import AdminReviewDashboard from './components/admin/AdminReviewDashboard';
+import OrderDetailPage from './components/mypage/OrderDetailPage';
+import CartPage from './components/payment/CartPage';
+import PointHistory from './components/mypage/PointHistory';
+import ResetPasswordModal from './components/Login/ResetPasswordModal';
+import IamportPayment from './components/payment/IamportPayment';
+import WithdrawPage from './components/Login/WithdrawPage';
+import SignupComplete from './components/Login/SignupComplete';
+import Careers from './components/Footer/Careers';
+import HelpCenter from './components/Footer/HelpCenter';
+import Subscribe from './components/Footer/Subscribe'; 
+import TermsOfService from './components/Footer/TermsOfService';
+import PrivacyPolicy from './components/Footer/PrivacyPolicy';
+import LikedProductsPage from './components/LikedProductsPage.jsx';
+import CategoryProductPage from './components/CategoryProductPage';
+
+
+function ProtectedRoute({ children }) {
   const { user } = useUser();
-
-  useEffect(() => {
-    const esc = (e) => {
-      if (e.key === "Escape") setModalType(null);
-    };
-    window.addEventListener("keydown", esc);
-    return () => window.removeEventListener("keydown", esc);
-  }, []);
-
-  return (
-    <div>
-      <Header
-        onLoginClick={() => setModalType("login")}
-        onSignupClick={() => {
-          setSignupStep("kakao");
-          setModalType("signup");
-        }}
-      />
-
-      {!user && modalType === "login" && (
-        <LoginForm
-          onClose={() => setModalType(null)}
-          onSwitch={setModalType}
-          setStep={setSignupStep}
-        />
-      )}
-      {!user && modalType === "signup" && (
-        <SignupForm
-          onClose={() => setModalType(null)}
-          step={signupStep}
-          setStep={setSignupStep}
-        />
-      )}
-      {!user && modalType === "find-id" && <FindForm onClose={() => setModalType(null)} mode="id" />}
-      {!user && modalType === "find-pw" && <FindForm onClose={() => setModalType(null)} mode="pw" />}
-    </div>
-  );
+  React.useEffect(() => {
+    if (!user) toast.error('로그인이 필요한 서비스입니다.');
+  }, [user]);
+  return user ? children : null;
 }
 
 function App() {
   return (
-    <UserProvider>
-      <Router>
+    <div className="wrapper"> {/* ✅ 전체 페이지 wrapper */}
+      <Navigation />
+
+      <main> {/* ✅ 가운데 main 영역 */}
         <Routes>
-          <Route path="/" element={<AppContent />} />
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
+          <Route path="/find-id" element={<FindForm mode="id" onClose={() => window.history.back()} />} />
+          <Route path="/find-pw" element={<FindForm mode="pw" onClose={() => window.history.back()} />} />
+          <Route path="/wappen-customize" element={<ProtectedRoute><WappenCustomize /></ProtectedRoute>} />
+          <Route path="/my-page" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+          <Route path="/my-wappens" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
+          <Route path="/admin/upload" element={<ProductUploadPage />} />
+          <Route path="/purchase-success" element={<PurchaseSuccessPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/purchase-test" element={<PurchaseModal />} />
+          <Route path="/order/form" element={<ProtectedRoute><OrderFormPage /></ProtectedRoute>} />
+          <Route path="/order/complete" element={<PaymentCompletePage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/products" element={<AdminProductList />} />
+          <Route path="/admin/edit/:id" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
+          <Route path="/admin/reviews" element={<AdminReviewDashboard />} />
+          <Route path="/my-orders/:id" element={<OrderDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/Point" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} />
+          <Route path="/ResetPasswordModal" element={<ResetPasswordModal />} />
+          <Route path="/payment/mock" element={<IamportPayment />} />
+          <Route path="/withdraw" element={<WithdrawPage />} />
+          <Route path="/signup/complete" element={<SignupComplete />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/subscribe" element={<Subscribe />} />
+          <Route path="/create" element={<ProtectedRoute><WappenCustomize /></ProtectedRoute>} />
+          <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path ="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
+          <Route path="/products" element={<CategoryProductPage />} />
         </Routes>
-        <ToastContainer position="top-center" autoClose={2000} />
-      </Router>
-    </UserProvider>
+      </main>
+
+      <Footer /> {/* ✅ 항상 맨 아래 */}
+      <ToastContainer position="top-center" autoClose={2000} />
+    </div>
   );
 }
 
