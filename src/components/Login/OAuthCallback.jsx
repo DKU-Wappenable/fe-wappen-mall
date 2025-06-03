@@ -28,15 +28,15 @@ export default function OAuthCallback() {
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
 
-          if (userData.role === 'admin') navigate('/admin');
-          else if (userData.role === 'owner') navigate('/admin/upload');
+          if (userData.role === 'ADMIN') navigate('/admin');
+          else if (userData.role === 'SHOP_OWNER') navigate('/admin/upload');
           else navigate('/');
         } catch (err) {
           console.warn('서버 실패, localStorage fallback 시도');
           const fallbackUser = {
             email: 'social@example.com',
             nickname: provider + ' 유저',
-            role: 'user',
+            role: 'USER',
             phone: '010-0000-0000',
             linkedSocials: [provider],
             termsAccepted: false,

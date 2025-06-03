@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
-// import axiosInstance from '../../api/axiosInstance';
+import axiosInstance from '../../api/axiosInstance';
 import '../../styles/OrderFormPage.css';
+
+const IMAGE_BASE_URL = 'http://localhost:8080';
 
 export default function OrderFormPage() {
   const { state } = useLocation();
@@ -14,30 +16,22 @@ export default function OrderFormPage() {
   const [items, setItems] = useState([]);
 
   const [form, setForm] = useState({
-    name: '', phone: '', email: '',
-    receiver: '', receiverPhone1: '', receiverPhone2: '',
-    address1: '', address2: '', memo: '',
-    coupon: '', usePoints: false,
-    agreeTerms: false, agreePrivacy: false,
-    paymentMethod: '신용카드', quantity: 1
+    receiver: '',
+    receiverPhone1: '',
+    receiverPhone2: '',
+    address1: '',
+    address2: '',
+    memo: '',
+    paymentMethod: 'CARD',
+    agree1: false,
+    agree2: false,
   });
 
-  const [discount, setDiscount] = useState(0);
-
   useEffect(() => {
-    // 유저 정보로 기본 값 세팅
-    if (user) {
-      setForm(prev => ({
-        ...prev,
-        name: user.id || user.name || '',
-        email: user.email || '',
-      }));
-    }
-
     if (isCartOrder) {
       setItems(state.items);
     } else if (state?.product) {
-      setItems([{ product: state.product, quantity: form.quantity }]);
+      setItems([{ product: state.product, quantity: 1 }]);
     } else {
       alert('잘못된 접근입니다.');
       navigate('/');
@@ -50,82 +44,45 @@ export default function OrderFormPage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-
-    if (!isCartOrder && name === 'quantity') {
-      setItems([{ product: state.product, quantity: Number(value) }]);
-    }
   };
 
-  const applyCoupon = () => {
-    if (form.coupon.trim().toUpperCase() === 'WAPPEN3000') setDiscount(3000);
-    else setDiscount(0);
-  };
-
-  const handlePayment = async () => {
-    if (!form.agreeTerms || !form.agreePrivacy) {
-      alert('약관에 동의해 주세요.');
+  const handleSubmit = async () => {
+    if (!form.agree1 || !form.agree2) {
+      alert('약관에 모두 동의하셔야 합니다.');
       return;
     }
 
-    const productTotal = items.reduce((sum, item) =>
-      sum + item.product.price * item.quantity, 0);
-    const totalPrice = productTotal - discount;
-
-    const buyer = {
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      address: `${form.address1} ${form.address2}`,
-    };
-
-    if (form.paymentMethod === '무통장입금') {
-      const now = new Date().toISOString();
-      const newOrders = items.map(item => ({
-        id: Date.now() + Math.random(),
-        product: item.product,
-        quantity: item.quantity,
-        totalPrice: item.product.price * item.quantity,
-        reviewed: false,
-        createdAt: now,
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        receiver: form.receiver,
-        receiverPhone1: form.receiverPhone1,
-        receiverPhone2: form.receiverPhone2,
-        address1: form.address1,
-        address2: form.address2,
-        memo: form.memo,
-        paymentMethod: form.paymentMethod,
-      }));
-
-      try {
-        // await axiosInstance.post('/api/orders', newOrders);
-      } catch (err) {
-        const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        localStorage.setItem('orders', JSON.stringify([...newOrders, ...prevOrders]));
-        if (isCartOrder) localStorage.removeItem('cart');
+    try {
+      if (items.length === 1) {
+        const { product, quantity } = items[0];
+        await axiosInstance.post('/orders', {
+          paymentMethod: form.paymentMethod,
+          deliveryAddress: `${form.address1} ${form.address2}`.trim(),
+          deliveryRequest: form.memo,
+          items: [
+            {
+              productId: product.id,
+              quantity: quantity
+            }
+          ]
+        });
+      } else {
+        await axiosInstance.post('/orders/checkout', null, {
+          params: {
+            address: `${form.address1} ${form.address2}`.trim(),
+            requestMessage: form.memo
+          }
+        });
       }
-
-      navigate('/order/complete');
-    } else {
-      navigate('/payment/mock', {
-        state: {
-          items,
-          amount: totalPrice,
-          buyer,
-          formData: form,
-          discount,
-        }
-      });
+      alert('주문이 완료되었습니다.');
+      navigate('/my-page');
+    } catch (err) {
+      console.error('주문 실패:', err);
+      alert('주문에 실패했습니다.');
     }
   };
 
-  if (items.length === 0) return <div className="order-form-container">상품 정보가 없습니다.</div>;
-
-  const productTotal = items.reduce((sum, item) =>
-    sum + item.product.price * item.quantity, 0);
-  const totalPrice = productTotal - discount;
+  const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   return (
     <div className="order-form-container">
@@ -135,63 +92,42 @@ export default function OrderFormPage() {
 
           <section>
             <h3>1. 주문자 정보</h3>
-            <input name="name" placeholder="이름" value={form.name} onChange={handleChange} />
-            <input name="phone" placeholder="연락처" value={form.phone} onChange={handleChange} />
-            <input name="email" placeholder="이메일" value={form.email} onChange={handleChange} />
+            <input value="admin" disabled />
+            <input value="010-0000-0000" disabled />
           </section>
 
           <section>
             <h3>2. 배송지 정보</h3>
-            <input name="receiver" placeholder="수령인" value={form.receiver} onChange={handleChange} />
-            <input name="receiverPhone1" placeholder="연락처 1" value={form.receiverPhone1} onChange={handleChange} />
-            <input name="receiverPhone2" placeholder="연락처 2 (선택)" value={form.receiverPhone2} onChange={handleChange} />
-            <input name="address1" placeholder="주소" value={form.address1} onChange={handleChange} />
-            <input name="address2" placeholder="상세 주소" value={form.address2} onChange={handleChange} />
-            <input name="memo" placeholder="배송 메모" value={form.memo} onChange={handleChange} />
+            <input name="receiver" placeholder="수령인" onChange={handleChange} />
+            <input name="receiverPhone1" placeholder="연락처 1" onChange={handleChange} />
+            <input name="receiverPhone2" placeholder="연락처 2 (선택)" onChange={handleChange} />
+            <input name="address1" placeholder="주소" onChange={handleChange} />
+            <input name="address2" placeholder="상세 주소" onChange={handleChange} />
+            <input name="memo" placeholder="배송 메모" onChange={handleChange} />
           </section>
 
           <section>
             <h3>3. 결제 수단</h3>
-            <div className="horizontal-group">
-              <select name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
-                <option value="신용카드">신용카드</option>
-                <option value="카카오페이">카카오페이</option>
-                <option value="토스">토스</option>
-                <option value="무통장입금">무통장 입금</option>
-              </select>
-              {!isCartOrder && (
-                <input type="number" name="quantity" value={form.quantity} onChange={handleChange} min={1} className="quantity-input" />
-              )}
-            </div>
+            <select name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
+              <option value="CARD">신용카드</option>
+              <option value="BANK">무통장 입금</option>
+              <option value="KAKAO">카카오페이</option>
+              <option value="TOSS">토스</option>
+            </select>
           </section>
 
           <section>
-            <h3>4. 쿠폰 / 포인트</h3>
-            <div className="coupon-row">
-              <input name="coupon" placeholder="쿠폰 코드 입력" value={form.coupon} onChange={handleChange} />
-              <button type="button" onClick={applyCoupon} className="coupon-btn">쿠폰 사용</button>
-            </div>
-            <div className="checkbox-inline">
-              <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
-              <label htmlFor="usePoints">포인트 사용하기</label>
-            </div>
+            <h3>4. 약관 동의</h3>
+            <label>
+              <input type="checkbox" name="agree1" onChange={handleChange} /> 구매 동의 (필수)
+            </label>
+            <label>
+              <input type="checkbox" name="agree2" onChange={handleChange} /> 개인정보 수집 동의 (필수)
+            </label>
           </section>
 
-          <section>
-            <h3>5. 약관 동의</h3>
-            <div className="checkbox-group">
-              <div className="checkbox-inline">
-                <input type="checkbox" id="agreeTerms" name="agreeTerms" checked={form.agreeTerms} onChange={handleChange} />
-                <label htmlFor="agreeTerms">구매 동의 (필수)</label>
-              </div>
-              <div className="checkbox-inline">
-                <input type="checkbox" id="agreePrivacy" name="agreePrivacy" checked={form.agreePrivacy} onChange={handleChange} />
-                <label htmlFor="agreePrivacy">개인정보 수집 동의 (필수)</label>
-              </div>
-            </div>
-          </section>
-
-          <button className="submit-btn" onClick={handlePayment}>결제하기</button>
+          <h2>총 결제 금액: {totalPrice.toLocaleString()}원</h2>
+          <button className="submit-btn" onClick={handleSubmit}>결제하기</button>
         </div>
 
         <div className="order-summary">
@@ -199,7 +135,7 @@ export default function OrderFormPage() {
           {items.map((item, i) => (
             <div key={i} className="summary-item">
               <img
-                src={item.product.images?.[0] || '/placeholder.png'}
+                src={IMAGE_BASE_URL + item.product.imageUrls?.[0] || '/placeholder.png'}
                 alt={item.product.name}
                 className="summary-image"
                 onError={(e) => (e.target.src = '/placeholder.png')}
@@ -207,18 +143,13 @@ export default function OrderFormPage() {
               <div>
                 <p>{item.product.name}</p>
                 {item.product.nickname && (
-                  <p style={{ fontSize: '13px', color: '#666' }}>
-                    by {item.product.nickname}
-                  </p>
+                  <p style={{ fontSize: '13px', color: '#666' }}>by {item.product.nickname}</p>
                 )}
                 <p>수량: {item.quantity}개</p>
                 <p>금액: {(item.product.price * item.quantity).toLocaleString()}원</p>
               </div>
             </div>
           ))}
-
-          {discount > 0 && <p>할인 금액: -{discount.toLocaleString()}원</p>}
-          <p><strong>총 결제 금액: {totalPrice.toLocaleString()}원</strong></p>
         </div>
       </div>
     </div>

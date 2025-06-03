@@ -97,10 +97,10 @@ export default function Navigation() {
               <Link to="/wappen-customize" onClick={() => setShowDropdown(false)}>와펜 만들기</Link>
               <Link to="/my-wappens" onClick={() => setShowDropdown(false)}>내 와펜</Link>
               <Link to="/account-settings" onClick={() => setShowDropdown(false)}>계정 설정</Link>
-              {user.role === 'admin' && (
+              {user.role === 'ADMIN' && (
                 <Link to="/admin" onClick={() => setShowDropdown(false)}>관리자 대시보드</Link>
               )}
-              {user && (user.role === 'owner' || user.role === 'admin') && (
+              {user && (user.role === 'SHOP_OWNER' || user.role === 'ADMIN') && (
                 <button onClick={() => navigate('/admin/upload')}>상품 등록</button>
               )}
 

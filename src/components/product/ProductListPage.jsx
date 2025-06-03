@@ -1,32 +1,28 @@
-//  ProductListPage.jsx - 서버 연동 + 로컬 fallback 구조 반영
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import axiosInstance from '../../api/axiosInstance';
-import '../../styles/ProductListPage.css';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axiosInstance from "../../api/axiosInstance";
+import "../../styles/ProductListPage.css";
 
 export default function ProductListPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [products, setProducts] = useState([]);
-  const [keyword, setKeyword] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const kw = params.get('keyword') || '';
-    setKeyword(kw);
+    const keyword = new URLSearchParams(location.search).get("keyword") || "";
 
     const fetchProducts = async () => {
       try {
-        const res = await axiosInstance.get(`/products?keyword=${kw}`);
+        const res = await axiosInstance.get(`/products?keyword=${keyword}`);
         setProducts(res.data);
-      } catch (err) {
-        console.warn('서버 실패, 로컬 상품 목록으로 대체');
-        const local = JSON.parse(localStorage.getItem('products') || '[]');
-        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
-        const merged = [...local, ...shared];
-        const filtered = kw
-          ? merged.filter(p => p.name.includes(kw))
-          : merged;
+      } catch {
+        console.warn("서버 실패 → 로컬 대체");
+        const local = JSON.parse(localStorage.getItem("products") || "[]");
+        const shared = JSON.parse(localStorage.getItem("sharedWappens") || "[]");
+        const all = [...local, ...shared];
+        const filtered = keyword
+          ? all.filter((p) => p.name.includes(keyword))
+          : all;
         setProducts(filtered);
       }
     };
@@ -38,16 +34,16 @@ export default function ProductListPage() {
     <div className="product-list-container">
       <h2>상품 목록</h2>
       <div className="product-grid">
-        {products.map(product => (
+        {products.map((product) => (
           <div
             key={product.id}
             className="product-card"
             onClick={() => navigate(`/product/${product.id}`)}
           >
             <img
-              src={product.images?.[0] || '/assets/default.png'}
+              src={product.images?.[0] || "/assets/default.png"}
               alt={product.name}
-              onError={(e) => (e.target.src = '/assets/default.png')}
+              onError={(e) => (e.target.src = "/assets/default.png")}
             />
             <h4>{product.name}</h4>
             <p>{(product.price ?? 0).toLocaleString()}원</p>

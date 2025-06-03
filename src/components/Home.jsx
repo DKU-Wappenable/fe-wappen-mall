@@ -5,6 +5,8 @@ import { useUser } from '../components/UserContext';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/Home.css';
 
+const IMAGE_BASE_URL = 'http://localhost:8080'; // 프론트 기준이 아닌 백엔드 기준 URL
+
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [popular, setPopular] = useState([]);
@@ -21,11 +23,11 @@ export default function Home() {
   const loadProducts = async () => {
     try {
       const res = await axiosInstance.get('/products');
-      const official = res.data;
+      const official = res.data.content;
       const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
         ...d,
         name: d.title || '유저 디자인',
-        images: [d.image],
+        imageUrls: [d.image],
         category: '유저디자인',
         createdAt: d.createdAt || new Date().toISOString(),
         __source: 'shared',
@@ -34,7 +36,7 @@ export default function Home() {
       const merged = [...official, ...shared];
       const sanitized = merged.map(p => ({
         ...p,
-        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+        imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
         uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
       }));
       setProducts(sanitized);
@@ -92,7 +94,8 @@ export default function Home() {
 
   const renderProductCard = (p) => (
     <div key={p.uniqueKey} className="product-card" onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}>
-      <img src={p.images?.[0] || '/assets/default.png'} alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
+      <img  src={p.imageUrls?.[0] ? IMAGE_BASE_URL + p.imageUrls[0] : '/assets/default.png'} 
+      alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
       <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(p); }}>
         {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>

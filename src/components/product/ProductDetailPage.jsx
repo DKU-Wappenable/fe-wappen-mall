@@ -3,6 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 
+const IMAGE_BASE_URL = 'http://localhost:8080';
+
+
 export default function ProductDetailPage() {
   const { id } = useParams();
   const { state } = useLocation();
@@ -18,7 +21,7 @@ export default function ProductDetailPage() {
         const p = res.data;
         setProduct({
           ...p,
-          images: p.images?.length ? p.images : [p.image || '/assets/default.png']
+          images: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png']
         });
       } catch (err) {
         console.warn('서버 실패, 로컬에서 상품 검색');
@@ -29,12 +32,12 @@ export default function ProductDetailPage() {
         if (found) {
           setProduct({
             ...found,
-            images: found.images?.length ? found.images : [found.image || '/assets/default.png']
+            images: found.imageUrls?.length ? found.imageUrls : [found.image || '/assets/default.png']
           });
         } else if (state) {
           setProduct({
             ...state,
-            images: state.images?.length ? state.images : [state.image || '/assets/default.png']
+            images: state.imageUrls?.length ? state.imageUrls : [state.image || '/assets/default.png']
           });
         }
       }
@@ -97,7 +100,7 @@ export default function ProductDetailPage() {
     <div style={{ padding: '2rem' }}>
       <h2>{product.name}</h2>
       <img
-        src={product.images[0]}
+        src={IMAGE_BASE_URL + product.imageUrls[0]}
         alt={product.name}
         style={{ width: '300px', height: '300px', objectFit: 'contain', borderRadius: '8px' }}
         onError={(e) => (e.target.src = '/assets/default.png')}

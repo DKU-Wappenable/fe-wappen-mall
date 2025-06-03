@@ -15,8 +15,8 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === "admin") navigate("/admin");
-      else if (user.role === "owner") navigate("/admin/upload");
+      if (user.role === "ADMIN") navigate("/admin");
+      else if (user.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
     }
   }, [user]);
@@ -42,9 +42,9 @@ export default function LoginForm() {
         setUser(userData);
         toast.success("로그인 성공!");
 
-        if (userData.role === "admin") navigate("/admin");
+        if (userData.role === "ADMIN") navigate("/admin");
         else if (!userData.termsAccepted) return;
-        else if (userData.role === "owner") navigate("/admin/upload");
+        else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
         else navigate("/");
 
       } catch (meError) {
@@ -53,7 +53,7 @@ export default function LoginForm() {
 
         const fallbackUser = {
           email,
-          role: "user",
+          role: "USER",
           nickname: "임시사용자",
           termsAccepted: false
         };
@@ -76,7 +76,7 @@ export default function LoginForm() {
             password: "admin1234",
             email: "admin@example.com",
             nickname: "관리자",
-            role: "admin",
+            role: "ADMIN",
             termsAccepted: true,
             linkedSocials: [],
           },
@@ -85,7 +85,7 @@ export default function LoginForm() {
             password: "owner1234",
             email: "owner@example.com",
             nickname: "오너",
-            role: "owner",
+            role: "SHOP_OWNER",
             termsAccepted: false,
             linkedSocials: [],
           },
@@ -94,7 +94,7 @@ export default function LoginForm() {
             password: "user1234",
             email: "user@example.com",
             nickname: "사용자",
-            role: "user",
+            role: "USER",
             termsAccepted: false,
             linkedSocials: [],
           },
@@ -103,7 +103,7 @@ export default function LoginForm() {
             password: "test1234",
             email: "test@example.com",
             nickname: "테스트",
-            role: "admin",
+            role: "ADMIN",
             termsAccepted: true,
             linkedSocials: ["kakao"],
           }
@@ -119,9 +119,9 @@ export default function LoginForm() {
           setUser(found);
           toast.success("로그인 성공!");
 
-          if (found.role === "admin") navigate("/admin");
+          if (found.role === "ADMIN") navigate("/admin");
           else if (!found.termsAccepted) return;
-          else if (found.role === "owner") navigate("/admin/upload");
+          else if (found.role === "SHOP_OWNER") navigate("/admin/upload");
           else navigate("/");
         } else {
           setError("아이디 또는 비밀번호가 올바르지 않습니다.");

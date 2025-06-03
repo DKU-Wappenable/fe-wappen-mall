@@ -13,20 +13,31 @@ export const UserProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    return;
     const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token");
+
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
-      if (parsed.role !== "admin" && !parsed.termsAccepted) {
+
+      //  서버에 없는 계정(admin 등)용 임시 토큰 처리
+      if (!token) {
+        localStorage.setItem("access_token", "dummy-token");
+        axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
+      } else {
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
+      if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
         setShowTermsModal(true);
       }
     }
+
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (user && user.role !== "admin" && !user.termsAccepted) {
+    if (user && user.role !== "ADMIN" && !user.termsAccepted) {
       setShowTermsModal(true);
     }
   }, [user]);
@@ -44,8 +55,8 @@ export const UserProvider = ({ children }) => {
         console.warn("서버 약관 동의 실패, localStorage로만 처리됨");
       }
 
-      if (updatedUser.role === "admin") navigate("/admin");
-      else if (updatedUser.role === "owner") navigate("/admin/upload");
+      if (updatedUser.role === "ADMIN") navigate("/admin");
+      else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
     } catch (err) {
       console.error("약관 동의 실패:", err);
@@ -66,9 +77,9 @@ export const UserProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
-      if (userData.role === "admin") navigate("/admin");
+      if (userData.role === "ADMIN") navigate("/admin");
       else if (!userData.termsAccepted) setShowTermsModal(true);
-      else if (userData.role === "owner") navigate("/admin/upload");
+      else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
     } catch (err) {
       console.error("로그인 실패, localStorage fallback 시도:", err);
@@ -82,9 +93,13 @@ export const UserProvider = ({ children }) => {
           localStorage.setItem("user", JSON.stringify(found));
           setUser(found);
 
-          if (found.role === "admin") navigate("/admin");
+          //  dummy access_token 추가
+          localStorage.setItem("access_token", "dummy-token");
+          axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
+
+          if (found.role === "ADMIN") navigate("/admin");
           else if (!found.termsAccepted) setShowTermsModal(true);
-          else if (found.role === "owner") navigate("/admin/upload");
+          else if (found.role === "SHOP_OWNER") navigate("/admin/upload");
           else navigate("/");
         } else {
           throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
@@ -110,9 +125,9 @@ export const UserProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
-      if (userData.role === "admin") navigate("/admin");
+      if (userData.role === "ADMIN") navigate("/admin");
       else if (!userData.termsAccepted) setShowTermsModal(true);
-      else if (userData.role === "owner") navigate("/admin/upload");
+      else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
 
       return userData;
