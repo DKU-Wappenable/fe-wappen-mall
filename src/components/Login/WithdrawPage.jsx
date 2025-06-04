@@ -32,25 +32,14 @@ export default function WithdrawPage() {
       toast.success('회원 탈퇴가 완료되었습니다.');
       navigate('/');
     } catch (err) {
-      console.warn(' 서버 오류 발생. 로컬 fallback 수행 중...');
-
-      //  로컬 fallback
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const found = users.find(
-        (u) => u.email === user.email && u.password === password
-      );
-
-      if (!found) {
+      console.error('❌ 회원 탈퇴 실패:', err);
+      
+      // ❌ localStorage fallback 제거 - 실제 서버 응답에만 의존
+      if (err.response?.status === 401) {
         setError('비밀번호가 틀렸습니다.');
-        return;
+      } else {
+        setError('회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
       }
-
-      const updatedUsers = users.filter((u) => u.email !== user.email);
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-      logout();
-      toast.success('회원 탈퇴가 완료되었습니다.');
-      navigate('/');
     }
   };
 

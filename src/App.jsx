@@ -64,34 +64,33 @@
     return children;
   }
 
-
   function App() {
-    useEffect(() => {
-    const defaultUsers = [
-      {
-        email: 'admin@example.com', password: 'admin1234', nickname: '관리자', role: 'admin', phone: '010-0000-0000', termsAccepted: true, linkedSocials: []
-      },
-      {
-        email: 'owner@example.com', password: 'owner1234', nickname: '오너', role: 'owner', phone: '010-1111-1111', termsAccepted: true, linkedSocials: []
-      },
-      {
-        email: 'user@example.com', password: 'user1234', nickname: '사용자', role: 'user', phone: '010-2222-2222', termsAccepted: true, linkedSocials: []
-      },
-      {
-        email: 'test@example.com', password: 'test1234', nickname: '테스트', role: 'admin', phone: '010-3333-4444', termsAccepted: false, linkedSocials: ['kakao']
-      }
-    ];
+    // ❌ 로컬 사용자 초기화 제거 - 실제 BE API에만 의존
+    // useEffect(() => {
+    //   const defaultUsers = [
+    //     {
+    //       email: 'admin@example.com', password: 'admin1234', nickname: '관리자', role: 'admin', phone: '010-0000-0000', termsAccepted: true, linkedSocials: []
+    //     },
+    //     {
+    //       email: 'owner@example.com', password: 'owner1234', nickname: '오너', role: 'owner', phone: '010-1111-1111', termsAccepted: true, linkedSocials: []
+    //     },
+    //     {
+    //       email: 'user@example.com', password: 'user1234', nickname: '사용자', role: 'user', phone: '010-2222-2222', termsAccepted: true, linkedSocials: []
+    //     },
+    //     {
+    //       email: 'test@example.com', password: 'test1234', nickname: '테스트', role: 'admin', phone: '010-3333-4444', termsAccepted: false, linkedSocials: ['kakao']
+    //     }
+    //   ];
 
-    if (!localStorage.getItem('users')) {
-      localStorage.setItem('users', JSON.stringify(defaultUsers));
-      //  개별 유저도 따로 저장
-      defaultUsers.forEach(user => {
-        const key = user.email.split('@')[0]; // admin, owner, user, test
-        localStorage.setItem(key, JSON.stringify(user));
-      });
-    }
-  }, []);
-
+    //   if (!localStorage.getItem('users')) {
+    //     localStorage.setItem('users', JSON.stringify(defaultUsers));
+    //     //  개별 유저도 따로 저장
+    //     defaultUsers.forEach(user => {
+    //       const key = user.email.split('@')[0]; // admin, owner, user, test
+    //       localStorage.setItem(key, JSON.stringify(user));
+    //     });
+    //   }
+    // }, []);
 
     return (
       <div className="wrapper">

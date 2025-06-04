@@ -30,16 +30,15 @@ export default function ResetPasswordModal({ email, onClose }) {
       alert('비밀번호가 성공적으로 변경되었습니다.');
       onClose();
     } catch (err) {
-      console.warn('서버 실패, 로컬 fallback 시도');
-
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const updatedUsers = users.map((u) =>
-        u.email === email ? { ...u, password: newPassword } : u
-      );
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-      alert('비밀번호가 로컬에서 변경되었습니다.');
-      onClose();
+      console.error('❌ 비밀번호 재설정 실패:', err);
+      
+      if (err.response?.status === 400) {
+        setMessage('잘못된 요청입니다. 다시 시도해주세요.');
+      } else if (err.response?.status === 404) {
+        setMessage('사용자를 찾을 수 없습니다.');
+      } else {
+        setMessage('비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
+      }
     }
   };
 

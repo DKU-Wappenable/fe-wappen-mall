@@ -35,6 +35,8 @@ axiosInstance.interceptors.response.use(
       "/orders",
       "/cart",
       "/likes",
+      "/users/login",
+      "/users/signup",
     ];
 
     const shouldSkip401Alert = skip401AlertEndpoints.some((endpoint) =>
@@ -44,8 +46,9 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !shouldSkip401Alert) {
       toast.error("세션이 만료되었습니다. 다시 로그인 해주세요.");
       localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
-      window.location.href = "/";
+      // window.location.href = "/login"; // 로그인 페이지로 리다이렉션
     }
 
     return Promise.reject(error);
