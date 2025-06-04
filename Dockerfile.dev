@@ -7,16 +7,13 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY package.json yarn.lock ./
 
-# Yarn 4 대응: 설치만 하고 lockfile 수정 안 하게
-RUN yarn set version stable \
-  && yarn config set enableImmutableInstalls false \
-  && yarn config set nodeLinker node-modules \
-  && yarn install || true  # 🚨 실패해도 통과 (임시 우회)
+# Yarn 설정을 먼저 하고 정상적으로 설치
+RUN yarn set version stable && \
+    yarn config set enableImmutableInstalls false && \
+    yarn config set nodeLinker node-modules && \
+    yarn install
 
 COPY . .
-
-# 필요한 패키지는 여기서 추가
-RUN yarn add html2canvas esbuild-wasm react-hook-form yup @hookform/resolvers
 
 EXPOSE 5173
 

@@ -12,11 +12,33 @@ export const UserProvider = ({ children }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ 로컬 데이터 완전 정리 함수
+  const clearAllLocalData = () => {
+    // 인증 관련 데이터 제거
+    localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    
+    // ❌ 기존 로컬 사용자 데이터 제거 (개발용)
+    localStorage.removeItem("users");
+    localStorage.removeItem("admin");
+    localStorage.removeItem("owner");
+    localStorage.removeItem("test");
+    
+    // axios 헤더 정리
+    delete axiosInstance.defaults.headers.common["Authorization"];
+    
+    console.log("🧹 모든 로컬 데이터 정리 완료");
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("access_token");
 
     if (storedUser) {
+    const token = localStorage.getItem("access_token");
+
+    if (storedUser && token) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
 
@@ -31,6 +53,9 @@ export const UserProvider = ({ children }) => {
       if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
         setShowTermsModal(true);
       }
+    } else {
+      // ❌ 토큰이 없으면 모든 데이터 정리
+      clearAllLocalData();
     }
 
     setLoading(false);
@@ -55,9 +80,17 @@ export const UserProvider = ({ children }) => {
         console.warn("서버 약관 동의 실패, localStorage로만 처리됨");
       }
 
-      if (updatedUser.role === "ADMIN") navigate("/admin");
-      else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
-      else navigate("/");
+      // ✅ 약관 동의 완료 후 현재 위치 확인하여 리다이렉션
+      const currentPath = window.location.pathname;
+      if (currentPath === "/login" || currentPath === "/signup") {
+        console.log("✅ 로그인/회원가입 페이지에서 약관 동의 완료 - 리다이렉션");
+        if (updatedUser.role === "ADMIN") navigate("/admin");
+        else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
+        else navigate("/");
+      } else {
+        console.log("✅ 약관 동의 완료 - 현재 페이지 유지");
+      }
+      
     } catch (err) {
       console.error("약관 동의 실패:", err);
     }
@@ -82,6 +115,16 @@ export const UserProvider = ({ children }) => {
       else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
     } catch (err) {
+      console.error("로그인 실패:", err);
+      
+      // ❌ localStorage fallback 제거 - 실제 서버 응답에만 의존
+      // 토큰 정리
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      delete axiosInstance.defaults.headers.common["Authorization"];
+      
+      // 에러를 다시 throw하여 호출하는 곳에서 처리하도록 함
+      throw new Error("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
       console.error("로그인 실패, localStorage fallback 시도:", err);
       try {
         const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
@@ -139,8 +182,7 @@ export const UserProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("access_token");
+    clearAllLocalData(); // 완전한 데이터 정리
   };
 
   return (

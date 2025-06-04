@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
+import { useUser } from '../../components/UserContext';
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'canceled'
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -75,7 +77,7 @@ export default function OrderHistory() {
                 <strong>• 주문 ID:</strong>{' '}
                 <Link to={`/my-orders/${order.id}`}>{order.id}</Link>
               </p>
-              <p>상품: {order.product?.nickname ? order.product.nickname : order.product?.name || '유저 디자인'}</p>
+              <p>상품: by {user?.email || '유저 디자인'}</p>
 
               <p>수량: {order.quantity} 개</p>
               <p>총액: {order.totalPrice.toLocaleString()} 원</p>

@@ -1,4 +1,3 @@
-// src/components/Home.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
@@ -14,6 +13,7 @@ export default function Home() {
   const [liked, setLiked] = useState([]);
   const navigate = useNavigate();
   const { user } = useUser();
+  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
 
   const categories = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
@@ -39,30 +39,28 @@ export default function Home() {
         imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
         uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
       }));
-      setProducts(sanitized);
-      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
-      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 10));
-    } catch (err) {
+
+      setProducts(merged);
+      setPopular([...merged].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
+      setNewItems([...merged].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10));
+    } catch {
       console.warn('서버 실패, 로컬에서 대체');
-      const official = JSON.parse(localStorage.getItem('products') || '[]');
-      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
-        ...d,
-        name: d.title || '유저 디자인',
-        images: [d.image],
-        category: '유저디자인',
-        createdAt: d.createdAt || new Date().toISOString(),
-        __source: 'shared',
-        uniqueKey: `${d.id}-${d.author}`
-      }));
-      const merged = [...official, ...shared];
-      const sanitized = merged.map(p => ({
+      const local = JSON.parse(localStorage.getItem('products') || '[]');
+      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+
+      const merged = [...local, ...shared].map((p, i) => ({
         ...p,
         images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-        uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
+        category: p.category || (p.title ? '유저디자인' : ''),
+        name: p.name || p.title || '유저 디자인',
+        nickname: currentUserEmail,
+        createdAt: p.createdAt || new Date().toISOString(),
+        uniqueKey: `${p.id}-${p.owner || p.author || i}`
       }));
-      setProducts(sanitized);
-      setPopular([...sanitized].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
-      setNewItems([...sanitized].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 10));
+
+      setProducts(merged);
+      setPopular([...merged].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
+      setNewItems([...merged].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10));
     }
   };
 
@@ -81,11 +79,12 @@ export default function Home() {
     setLiked(updated);
   };
 
-  const isLiked = (uniqueKey) => liked.some(p => p.uniqueKey === uniqueKey);
+  const isLiked = (key) => liked.some(p => p.uniqueKey === key);
+
   const handleCategoryClick = (cat) => navigate(`/products?category=${cat}`);
   const handleStartClick = () => {
     if (!user) {
-      alert('로그인 후 이용 가능합니다.');
+      alert('로그인 후 이용해주세요');
       navigate('/login');
     } else {
       navigate('/wappen-customize');
@@ -100,8 +99,8 @@ export default function Home() {
         {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>
       <div className="product-info">
-        <h3>{(p.name || '').replace(/\s+/g, ' ')}</h3>
-        <p className="creator">by {p.nickname || user?.email || 'user'}</p>
+        <h3>{p.name}</h3>
+        <p className="creator">by {p.nickname}</p>
         <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
       </div>
     </div>
@@ -112,17 +111,13 @@ export default function Home() {
       <div className="home-container">
         <aside className="sidebar">
           {categories.map(cat => (
-            <button key={cat} onClick={() => handleCategoryClick(cat)}>
-              <span>• {cat}</span>
-            </button>
+            <button key={cat} onClick={() => handleCategoryClick(cat)}>• {cat}</button>
           ))}
         </aside>
 
         <main className="home-main">
-          <div className="cta-banner">
-            <h3>나만의 와펜 만들기</h3>
-            <p>쉽고 빠르게 원하는 와펜을 커스터마이징하세요!</p>
-            <button onClick={handleStartClick}>지금 시작하기 →</button>
+          <div className="cta-banner-img full" onClick={handleStartClick}>
+            <img src="/assets/custom-banner-dog.png" alt="커스터마이징 배너" />
           </div>
 
           <section>

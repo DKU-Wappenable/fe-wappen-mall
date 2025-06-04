@@ -1,3 +1,5 @@
+// ✅ 1번 해결 완료: 관리자 상품 수정 시 localStorage 모든 저장소 반영 + 작성자(owner) 유지
+
 // src/components/admin/AdminProductEdit.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -42,7 +44,6 @@ export default function AdminProductEdit() {
         }
       }
     };
-
     fetchProduct();
   }, [id]);
 
@@ -85,6 +86,31 @@ export default function AdminProductEdit() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      await axiosInstance.delete(`/products/${id}`);
+      alert('상품 삭제 완료');
+    } catch (err) {
+      console.warn('서버 삭제 실패, 로컬 삭제 진행');
+
+      const removeById = (list) => list.filter(p => String(p.id) !== String(id));
+
+      localStorage.setItem('products', JSON.stringify(removeById(JSON.parse(localStorage.getItem('products') || '[]'))));
+      localStorage.setItem('sharedWappens', JSON.stringify(removeById(JSON.parse(localStorage.getItem('sharedWappens') || '[]'))));
+      localStorage.setItem('liked', JSON.stringify(removeById(JSON.parse(localStorage.getItem('liked') || '[]'))));
+
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const updatedCart = cart.filter(item => String(item.product?.id) !== String(id));
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+      alert('로컬 삭제 완료');
+    }
+
+    navigate('/admin/products');
+  };
+
   if (error) return <div style={{ padding: '2rem' }}>{error}</div>;
 
   return (
@@ -99,22 +125,27 @@ export default function AdminProductEdit() {
         <option value="의류">의류</option>
         <option value="굿즈">굿즈</option>
         <option value="유저디자인">유저디자인</option>
-        {/* 필요시 추가 */}
+        {/* 필요에 따라 추가 */}
       </select>
 
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="상품 설명" />
 
-      <div>
-        <label>이미지 변경 (최대 5장)</label>
-        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
-        <div className="preview-container">
-          {form.images.map((img, i) => (
-            <img key={i} src={img} alt={`preview-${i}`} style={{ width: 80, margin: 5 }} />
-          ))}
-        </div>
+      <div className="preview-container">
+        {form.images.map((img, i) => (
+          <img key={i} src={img} alt={`preview-${i}`} style={{ width: 80, margin: 5 }} />
+        ))}
       </div>
 
+      {form.owner && <p style={{ fontSize: '0.85rem', color: '#555' }}>by {form.owner}</p>}
+
       <button type="submit">수정 완료</button>
+      <button
+        type="button"
+        onClick={handleDelete}
+        style={{ marginTop: '1rem', backgroundColor: '#fff', color: '#333', border: '1px solid #ccc' }}
+      >
+        삭제
+      </button>
     </form>
   );
 }

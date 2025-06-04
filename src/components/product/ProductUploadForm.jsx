@@ -1,3 +1,5 @@
+// ProductUploadForm.jsx - 서버 연동 + 실패 시 localStorage fallback
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -74,7 +76,7 @@ export default function ProductUploadForm() {
     },
   });
 
-  const handleImageUpload = (e) => {
+  const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     const previews = files.map(file => URL.createObjectURL(file));
     setImageFiles(prev => [...prev, ...files].slice(0, 5));
@@ -135,6 +137,7 @@ export default function ProductUploadForm() {
 
       <select name="category" {...formik.getFieldProps('category')}>
         <option value="">카테고리 선택</option>
+        {categoryOptions.map((cat) => (
         {categoryOptions.map((cat) => (
           <option key={cat} value={cat}>{cat}</option>
         ))}

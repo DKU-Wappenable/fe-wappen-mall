@@ -13,6 +13,7 @@ export default function CategoryProductPage() {
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
   const { user } = useUser();
+  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
 
   const categoryList = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
@@ -39,7 +40,7 @@ export default function CategoryProductPage() {
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: d.nickname || d.author || d.email || '익명',
+          nickname: currentUserEmail, // ✅ 무조건 현재 로그인한 사용자 이메일로
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -69,7 +70,7 @@ export default function CategoryProductPage() {
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: d.nickname || d.author || d.email || '익명',
+          nickname: currentUserEmail, // ✅ fallback에서도 동일
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -77,6 +78,7 @@ export default function CategoryProductPage() {
           ...p,
           images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
           category: p.category || '',
+          nickname: currentUserEmail, // ✅ fallback에서도 동일
           uniqueKey: `${p.id}-${index}`
         }));
 
@@ -162,9 +164,7 @@ export default function CategoryProductPage() {
                     onError={(e) => (e.target.src = '/assets/default.png')}
                   />
                   <h3>{p.name}</h3>
-                  {p.nickname && (
-                    <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
-                  )}
+                  <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
                   <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}

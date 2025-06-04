@@ -1,4 +1,4 @@
-// src/components/admin/AdminProductList.jsx
+//  AdminProductList.jsx - 서버 연동 + 실패 시 localStorage fallback 처리
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
@@ -57,7 +57,7 @@ export default function AdminProductList() {
 
     try {
       await axiosInstance.delete(`/products/${id}`);
-      setProducts(products.filter(p => p.id !== id));
+      setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
     } catch (err) {
       console.warn('서버 삭제 실패 → 로컬 삭제 시도');
       const updated = products.filter(p => p.id !== id);

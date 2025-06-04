@@ -19,30 +19,38 @@ export default function CartPage() {
     const fetchCart = async () => {
       try {
         const res = await axiosInstance.get('/cart');
-        setCartItems(res.data);
+        if (Array.isArray(res.data)) {
+          setCartItems(res.data);
+        } else {
+          throw new Error('응답이 배열이 아님');
+        }
       } catch (err) {
         console.warn('서버 실패, 로컬 장바구니로 대체');
-        const saved = JSON.parse(localStorage.getItem('cart') || '[]');
-        const products = JSON.parse(localStorage.getItem('products') || '[]');
+        try {
+          const saved = JSON.parse(localStorage.getItem('cart') || '[]');
+          const products = JSON.parse(localStorage.getItem('products') || '[]');
 
-        const synced = saved.map(item => {
-        const updated = products.find(p => p.id === item.product.id);
-        const updatedProduct = updated ? { ...updated } : { ...item.product };
+          const synced = Array.isArray(saved)
+            ? saved.map(item => {
+                const updated = products.find(p => p.id === item.product.id);
+                const updatedProduct = updated ? { ...updated } : { ...item.product };
 
-        // 닉네임, 카테고리 보정
-        if (!updatedProduct.nickname) {
-          updatedProduct.nickname = user.id || user.email || 'user';
+                if (!updatedProduct.nickname) {
+                  updatedProduct.nickname = user.id || user.email || 'user';
+                }
+                if (!updatedProduct.category) {
+                  updatedProduct.category = '유저디자인';
+                }
+
+                return { ...item, product: updatedProduct };
+              })
+            : [];
+
+          setCartItems(synced);
+          localStorage.setItem('cart', JSON.stringify(synced));
+        } catch {
+          setCartItems([]);
         }
-        if (!updatedProduct.category) {
-          updatedProduct.category = '유저디자인';
-        }
-
-        return { ...item, product: updatedProduct };
-      });
-
-
-        setCartItems(synced);
-        localStorage.setItem('cart', JSON.stringify(synced));
       }
     };
 
@@ -78,7 +86,9 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (cartItems.length === 0) return alert('장바구니가 비어 있습니다.');
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return alert('장바구니가 비어 있습니다.');
+    }
 
     try {
       await axiosInstance.post('/orders/bulk', cartItems);
@@ -101,9 +111,12 @@ export default function CartPage() {
     }
   };
 
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity, 0
-  );
+  const totalPrice = Array.isArray(cartItems)
+    ? cartItems.reduce(
+        (sum, item) => sum + (item?.product?.price ?? 0) * (item?.quantity ?? 1),
+        0
+      )
+    : 0;
 
   if (!user) {
     return (
@@ -118,35 +131,34 @@ export default function CartPage() {
   return (
     <div style={{ padding: '2rem' }}>
       <h2>장바구니</h2>
-      {cartItems.length === 0 ? (
+      {Array.isArray(cartItems) && cartItems.length === 0 ? (
         <p>장바구니에 담긴 상품이 없습니다.</p>
       ) : (
         <ul>
           {cartItems.map(item => (
-  <li key={item.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-    <img
-      src={item.product.images?.[0] || '/placeholder.png'}
-      alt={item.product.name}
-      style={{ width: '80px', height: '80px', objectFit: 'cover', marginRight: '1rem', borderRadius: '8px' }}
-    />
-    <div>
-      <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
-      <br />
-      <small style={{ color: '#666' }}>by {item.product?.nickname || '알 수 없음'}</small>
-      <br />
-      <button onClick={() => updateQuantity(item.id, -1)}>-</button>
-      <span style={{ margin: '0 1rem' }}>{item.quantity}</span>
-      <button onClick={() => updateQuantity(item.id, 1)}>+</button>
-      <button onClick={() => removeItem(item.id)} style={{ marginLeft: '1rem' }}>삭제</button>
-    </div>
-  </li>
-))}
-
+            <li key={item.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <img
+                src={item.product.images?.[0] || '/placeholder.png'}
+                alt={item.product.name}
+                style={{ width: '80px', height: '80px', objectFit: 'cover', marginRight: '1rem', borderRadius: '8px' }}
+              />
+              <div>
+                <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
+                <br />
+                <small style={{ color: '#666' }}>by {user.email || '알 수 없음'}</small>
+                <br />
+                <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                <span style={{ margin: '0 1rem' }}>{item.quantity}</span>
+                <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                <button onClick={() => removeItem(item.id)} style={{ marginLeft: '1rem' }}>삭제</button>
+              </div>
+            </li>
+          ))}
         </ul>
       )}
       <hr />
       <p><strong>총 금액:</strong> {totalPrice.toLocaleString()}원</p>
-      <button onClick={handleCheckout} disabled={cartItems.length === 0}>
+      <button onClick={handleCheckout} disabled={!Array.isArray(cartItems) || cartItems.length === 0}>
         결제하기
       </button>
     </div>

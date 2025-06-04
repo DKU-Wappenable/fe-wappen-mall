@@ -32,18 +32,16 @@ export default function OAuthCallback() {
           else if (userData.role === 'SHOP_OWNER') navigate('/admin/upload');
           else navigate('/');
         } catch (err) {
-          console.warn('서버 실패, localStorage fallback 시도');
-          const fallbackUser = {
-            email: 'social@example.com',
-            nickname: provider + ' 유저',
-            role: 'USER',
-            phone: '010-0000-0000',
-            linkedSocials: [provider],
-            termsAccepted: false,
-          };
-          localStorage.setItem('user', JSON.stringify(fallbackUser));
-          setUser(fallbackUser);
-          navigate('/');
+          console.error('❌ 소셜 로그인 실패:', err);
+          
+          // ❌ localStorage fallback 제거 - 실제 서버 응답에만 의존
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          delete axiosInstance.defaults.headers.common['Authorization'];
+          
+          alert('소셜 로그인에 실패했습니다. 다시 시도해주세요.');
+          navigate('/login');
         }
       };
 

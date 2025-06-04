@@ -13,6 +13,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
+  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "";
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -91,6 +92,18 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     //  장바구니 구조와 동일하게 items 배열로 넘김
+    const order = {
+    id: Date.now(),
+    product,
+    quantity,
+    totalPrice: product.price * quantity,
+    createdAt: new Date().toISOString(),
+  };
+
+  // 결제 데이터를 localStorage에 저장
+  const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+  localStorage.setItem('orders', JSON.stringify([order, ...prevOrders]));
+
     navigate('/order/form', { state: { items: [{ product, quantity }] } });
   };
 
@@ -106,7 +119,7 @@ export default function ProductDetailPage() {
         onError={(e) => (e.target.src = '/assets/default.png')}
       />
       <p>{product.description || '설명 없음'}</p>
-      {product.nickname && <p>by {product.nickname}</p>}
+      {product.nickname && <p>by {currentUserEmail}</p>}
       <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 
       <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>

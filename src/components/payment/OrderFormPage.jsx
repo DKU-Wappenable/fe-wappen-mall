@@ -1,4 +1,5 @@
-// src/pages/OrderFormPage.jsx
+// ✅ OrderFormPage.jsx - 서버 연동 + 공유 와펜 대응 결제 처리 리팩토링
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -28,6 +29,15 @@ export default function OrderFormPage() {
   });
 
   useEffect(() => {
+    // 유저 정보로 기본 값 세팅
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        name: user.id || user.name || '',
+        email: user.email || '',
+      }));
+    }
+
     if (isCartOrder) {
       setItems(state.items);
     } else if (state?.product) {
