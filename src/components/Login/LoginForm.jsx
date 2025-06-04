@@ -133,12 +133,12 @@ export default function LoginForm() {
     }
   };
 
-  // ✅ 소셜 로그인 이동 함수
+  //  소셜 로그인 이동 함수
   const handleSocialLogin = (provider) => {
     const providers = {
-      카카오: "/oauth2/authorization/kakao",
-      네이버: "/oauth2/authorization/naver",
-      구글: "/oauth2/authorization/google",
+      카카오: "http://localhost:8080/oauth2/authorization/kakao",
+    네이버: "http://localhost:8080/oauth2/authorization/naver",
+    구글: "http://localhost:8080/oauth2/authorization/google",
     };
     if (providers[provider]) window.location.href = providers[provider];
   };
@@ -181,7 +181,7 @@ export default function LoginForm() {
           </p>
         </div>
 
-        {/* ✅ 소셜 로그인 안내 및 버튼 */}
+        {/*  소셜 로그인 안내 및 버튼 */}
         <div className="divider">또는 다른 서비스 계정으로 로그인</div>
         <div className="social-login-group">
           <button className="social-btn kakao" onClick={() => handleSocialLogin("카카오")}>

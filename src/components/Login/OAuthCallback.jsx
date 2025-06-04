@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import { useUser } from '../UserContext';
+import axiosNoApi from "../../api/axiosNoApi";
 
 export default function OAuthCallback() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function OAuthCallback() {
 
       const fetchUser = async () => {
         try {
-          const res = await axiosInstance.get('/users/me');
+          const res = await axiosNoApi.get('/users/me');
           const userData = {
             ...res.data,
             linkedSocials: [provider],

@@ -102,7 +102,7 @@
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/signup" element={<SignupForm />} />
-            <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/oauth/success" element={<OAuthCallback />} />
             <Route path="/find-id" element={<FindForm mode="id" onClose={() => window.history.back()} />} />
             <Route path="/find-pw" element={<FindForm mode="pw" onClose={() => window.history.back()} />} />
 

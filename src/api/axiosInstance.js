@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
   },
 });
 
-// ✅ 토큰 자동 주입
+//  토큰 자동 주입
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -22,13 +22,13 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ 응답 에러 처리
+//  응답 에러 처리
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const originalRequest = error.config;
 
-    // ✅ 다음 요청은 401이어도 세션 만료 알림 띄우지 않음
+    //  다음 요청은 401이어도 세션 만료 알림 띄우지 않음
     const skip401AlertEndpoints = [
       "/users/me",
       "/admin/check-auth",
