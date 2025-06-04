@@ -167,7 +167,7 @@ export const UserProvider = ({ children }) => {
     >
       {children}
       {showTermsModal && <TermsModal onAgree={acceptTerms} />}
-    </UserContext.Provider>
+    </UserContext.Provider> 
   );
 };
 

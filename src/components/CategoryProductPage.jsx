@@ -13,7 +13,8 @@ export default function CategoryProductPage() {
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
   const { user } = useUser();
-  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
+  const currentUserEmail = user?.email || 'user';
+  const [liked, setLiked] = useState([]);
 
   const categoryList = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
@@ -21,6 +22,8 @@ export default function CategoryProductPage() {
   ];
 
   useEffect(() => {
+    setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
+
     const cat = searchParams.get('category') || '전체';
     const keyword = searchParams.get('keyword') || '';
     const sort = searchParams.get('sort') || '최신순';
@@ -35,12 +38,12 @@ export default function CategoryProductPage() {
         const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
           ...d,
           name: d.title || '',
-          price: 500 + 500 * (d.wappens?.length || 0),
+          price: d.price || 1000,
           images: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: currentUserEmail, // ✅ 무조건 현재 로그인한 사용자 이메일로
+          createdBy: d.createdBy || d.owner || currentUserEmail,
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -65,12 +68,12 @@ export default function CategoryProductPage() {
         const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
           ...d,
           name: d.title || '',
-          price: 500 + 500 * (d.wappens?.length || 0),
+          price: d.price || 1000,
           images: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
-          nickname: currentUserEmail, // ✅ fallback에서도 동일
+          createdBy: d.createdBy || d.owner || currentUserEmail,
           uniqueKey: `${d.id}-${index}`
         }));
 
@@ -78,7 +81,6 @@ export default function CategoryProductPage() {
           ...p,
           images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
           category: p.category || '',
-          nickname: currentUserEmail, // ✅ fallback에서도 동일
           uniqueKey: `${p.id}-${index}`
         }));
 
@@ -119,6 +121,18 @@ export default function CategoryProductPage() {
     setVisibleCount(prev => prev + 8);
   };
 
+  const toggleLike = (product) => {
+    const current = JSON.parse(localStorage.getItem('liked') || '[]');
+    const exists = current.some(p => p.id === product.id);
+    const updated = exists
+      ? current.filter(p => p.id !== product.id)
+      : [{ ...product }, ...current];
+    localStorage.setItem('liked', JSON.stringify(updated));
+    setLiked(updated);
+  };
+
+  const isLiked = (id) => liked.some(p => p.id === id);
+
   return (
     <div className="category-page">
       <aside className="category-sidebar">
@@ -156,6 +170,7 @@ export default function CategoryProductPage() {
                 <div
                   key={p.uniqueKey}
                   className="product-card"
+                  style={{ position: 'relative' }}
                   onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
                 >
                   <img
@@ -163,8 +178,29 @@ export default function CategoryProductPage() {
                     alt={p.name}
                     onError={(e) => (e.target.src = '/assets/default.png')}
                   />
+                  {/* 좋아요 버튼 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLike(p);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '1.5rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isLiked(p.id) ? '💖' : '🤍'}
+                  </button>
+
                   <h3>{p.name}</h3>
-                  <p style={{ fontSize: '13px', color: '#666' }}>by {p.nickname}</p>
+                  {p.createdBy && (
+                    <p style={{ fontSize: '13px', color: '#666' }}>by {p.createdBy}</p>
+                  )}
                   <p>₩{(p.price ?? 0).toLocaleString()}</p>
                 </div>
               ))}

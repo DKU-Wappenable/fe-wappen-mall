@@ -1,4 +1,4 @@
-// src/components/LikedProductsPage.jsx
+//  LikedProductsPage.jsx (유저디자인만 이메일 표시)
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -14,7 +14,7 @@ export default function LikedProductsPage() {
 
   useEffect(() => {
     if (!user) {
-      setShowLoginModal(true); // 모달 표시
+      setShowLoginModal(true);
       return;
     }
 
@@ -48,7 +48,6 @@ export default function LikedProductsPage() {
     fetchLiked();
   }, [user]);
 
-  //  로그인 안 된 경우: 모달만 렌더
   if (!user && showLoginModal) {
     return <LoginRequiredModal onClose={() => navigate('/login')} />;
   }
@@ -165,10 +164,8 @@ export default function LikedProductsPage() {
             </button>
 
             <h4 style={{ marginTop: '1rem' }}>{product.name || product.title}</h4>
-            {product.nickname && (
-              <p style={{ fontSize: '13px', color: '#666' }}>
-              by {product.nickname || user?.email}
-            </p>
+            {product.createdBy && (
+              <p style={{ fontSize: '13px', color: '#666' }}>by {product.createdBy}</p>
             )}
             <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 

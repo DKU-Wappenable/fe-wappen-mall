@@ -36,7 +36,11 @@ export default function CartPage() {
                 const updatedProduct = updated ? { ...updated } : { ...item.product };
 
                 if (!updatedProduct.nickname) {
-                  updatedProduct.nickname = user.id || user.email || 'user';
+                  updatedProduct.nickname =
+                    updatedProduct.createdBy ||
+                    updatedProduct.owner ||
+                    updatedProduct.author ||
+                    'unknown';
                 }
                 if (!updatedProduct.category) {
                   updatedProduct.category = '유저디자인';
@@ -90,25 +94,7 @@ export default function CartPage() {
       return alert('장바구니가 비어 있습니다.');
     }
 
-    try {
-      await axiosInstance.post('/orders/bulk', cartItems);
-      await axiosInstance.delete('/cart/clear');
-      navigate('/order/complete');
-    } catch (err) {
-      console.warn('서버 실패, 로컬 주문으로 대체');
-      const orders = cartItems.map(item => ({
-        id: Date.now() + Math.random(),
-        product: item.product,
-        quantity: item.quantity,
-        totalPrice: item.product.price * item.quantity,
-        reviewed: false,
-        createdAt: new Date().toISOString(),
-      }));
-      const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...orders, ...prevOrders]));
-      localStorage.removeItem('cart');
-      navigate('/order/form', { state: { fromCart: true, items: cartItems } });
-    }
+    navigate('/order/form', { state: { fromCart: true, items: cartItems } });
   };
 
   const totalPrice = Array.isArray(cartItems)
@@ -145,7 +131,12 @@ export default function CartPage() {
               <div>
                 <strong>{item.product?.name || '이름없음'}</strong> / {(item.product?.price ?? 0).toLocaleString()}원
                 <br />
-                <small style={{ color: '#666' }}>by {user.email || '알 수 없음'}</small>
+                <small style={{ color: '#666' }}>
+                  {item.product.category === '유저디자인' &&
+                  (item.product.createdBy || item.product.owner)
+                    ? `by ${item.product.createdBy || item.product.owner}`
+                    : ''}
+                </small>
                 <br />
                 <button onClick={() => updateQuantity(item.id, -1)}>-</button>
                 <span style={{ margin: '0 1rem' }}>{item.quantity}</span>
