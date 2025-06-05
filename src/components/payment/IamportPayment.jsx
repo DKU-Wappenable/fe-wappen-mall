@@ -7,12 +7,13 @@ export default function IamportPayment() {
   const { items, amount, buyer, formData, discount } = state || {};
 
   useEffect(() => {
-    if (!items || !formData || !formData.name || !formData.address1) {
-      console.warn("❌ 결제 정보 누락 → 리디렉션");
-      alert("결제 정보가 누락되었습니다.");
-      navigate('/order/complete');
-    }
-  }, []);
+  console.log("🚚 전달된 결제 state:", state);
+  console.log("🧾 items:", items);
+  console.log("🧾 formData:", formData);
+  console.log("🧾 formData.name:", formData?.name);
+  console.log("🧾 formData.address1:", formData?.address1);
+}, []);
+
 
   const handlePayment = () => {
     const { IMP } = window;

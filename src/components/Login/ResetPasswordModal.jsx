@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import '../../styles/ResetPasswordModal.css';
 import axiosInstance from '../../api/axiosInstance';
+import axiosNoApi from '../../api/axiosNoApi';
+import { useNavigate } from 'react-router-dom';
 
 export default function ResetPasswordModal({ email, onClose }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -21,21 +23,24 @@ export default function ResetPasswordModal({ email, onClose }) {
       setMessage('비밀번호가 일치하지 않습니다.');
       return;
     }
-  
+
     try {
-      await axiosInstance.put('/users/reset-password', {
+      await axiosNoApi.post('api/users/reset-password', {
         email,
         newPassword,
       });
       alert('비밀번호가 성공적으로 변경되었습니다.');
       onClose();
+      navigate('/login'); // 로그인 페이지로 이동
     } catch (err) {
       console.error('❌ 비밀번호 재설정 실패:', err);
-      
+
       if (err.response?.status === 400) {
         setMessage('잘못된 요청입니다. 다시 시도해주세요.');
       } else if (err.response?.status === 404) {
         setMessage('사용자를 찾을 수 없습니다.');
+      } else if (err.response?.status === 403) {
+        setMessage('접근 권한이 없습니다. 관리자에게 문의하세요.');
       } else {
         setMessage('비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
       }

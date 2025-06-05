@@ -54,13 +54,13 @@
   function AdminRoute({ children }) {
     const { user } = useUser();
     if (!user) return <Navigate to="/login" />;
-    if (user.role !== 'admin') return <Navigate to="/" />;
+    if (user.role !== 'ADMIN') return <Navigate to="/" />;
     return children;
   }
   function AdminOrOwnerRoute({ children }) {
     const { user } = useUser();
     if (!user) return <Navigate to="/login" />;
-    if (user.role !== 'admin' && user.role !== 'owner') return <Navigate to="/" />;
+    if (user.role !== 'ADMIN' && user.role !== 'OWNER') return <Navigate to="/" />;
     return children;
   }
 
@@ -114,12 +114,14 @@
             <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
             <Route path="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
 
+            
+
             <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
             <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />
             <Route path="/admin/reviews" element={<AdminRoute><AdminReviewDashboard /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
             <Route path="/admin/upload" element={<AdminOrOwnerRoute><ProductUploadPage /></AdminOrOwnerRoute>} />
-
+          
 
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/purchase-test" element={<PurchaseModal />} />

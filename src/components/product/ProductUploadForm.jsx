@@ -15,7 +15,7 @@ export default function ProductUploadForm() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user || (user.role !== 'owner' && user.role !== 'admin')) {
+    if (!user || (user.role !== 'SHOP_OWNER' && user.role !== 'ADMIN')) {
       alert('상품 등록 권한이 없습니다.');
       navigate('/');
     }
