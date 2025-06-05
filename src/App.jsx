@@ -51,46 +51,46 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function AdminRoute({ children }) {
-  const { user } = useUser();
-  if (!user) return <Navigate to="/login" />;
-  if (user.role !== 'ADMIN') return <Navigate to="/" />;
-  return children;
-}
-function AdminOrOwnerRoute({ children }) {
-  const { user } = useUser();
-  if (!user) return <Navigate to="/login" />;
-  if (user.role !== 'ADMIN' && user.role !== 'SHOP_OWNER') return <Navigate to="/" />;
-  return children;
-}
-
-
-function App() {
-  useEffect(() => {
-  const defaultUsers = [
-    {
-      email: 'admin@example.com', password: 'admin1234', nickname: '관리자', role: 'ADMIN', phone: '010-0000-0000', termsAccepted: true, linkedSocials: []
-    },
-    {
-      email: 'owner@example.com', password: 'owner1234', nickname: '오너', role: 'SHOP_OWNER', phone: '010-1111-1111', termsAccepted: true, linkedSocials: []
-    },
-    {
-      email: 'user@example.com', password: 'user1234', nickname: '사용자', role: 'USER', phone: '010-2222-2222', termsAccepted: true, linkedSocials: []
-    },
-    {
-      email: 'test@example.com', password: 'test1234', nickname: '테스트', role: 'ADMIN', phone: '010-3333-4444', termsAccepted: false, linkedSocials: ['kakao']
-    }
-  ];
-
-  if (!localStorage.getItem('users')) {
-    localStorage.setItem('users', JSON.stringify(defaultUsers));
-    //  개별 유저도 따로 저장
-    defaultUsers.forEach(user => {
-      const key = user.email.split('@')[0]; // admin, owner, user, test
-      localStorage.setItem(key, JSON.stringify(user));
-    });
+  function AdminRoute({ children }) {
+    const { user } = useUser();
+    if (!user) return <Navigate to="/login" />;
+    if (user.role !== 'ADMIN') return <Navigate to="/" />;
+    return children;
   }
-}, []);
+  function AdminOrOwnerRoute({ children }) {
+    const { user } = useUser();
+    if (!user) return <Navigate to="/login" />;
+    if (user.role !== 'ADMIN' && user.role !== 'SHOP_OWNER') return <Navigate to="/" />;
+    return children;
+  }
+
+
+  function App() {
+    /* useEffect(() => {
+    const defaultUsers = [
+      {
+        email: 'admin@example.com', password: 'admin1234', nickname: '관리자', role: 'admin', phone: '010-0000-0000', termsAccepted: true, linkedSocials: []
+      },
+      {
+        email: 'owner@example.com', password: 'owner1234', nickname: '오너', role: 'owner', phone: '010-1111-1111', termsAccepted: true, linkedSocials: []
+      },
+      {
+        email: 'user@example.com', password: 'user1234', nickname: '사용자', role: 'user', phone: '010-2222-2222', termsAccepted: true, linkedSocials: []
+      },
+      {
+        email: 'test@example.com', password: 'test1234', nickname: '테스트', role: 'admin', phone: '010-3333-4444', termsAccepted: false, linkedSocials: ['kakao']
+      }
+    ];
+
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify(defaultUsers));
+      //  개별 유저도 따로 저장
+      defaultUsers.forEach(user => {
+        const key = user.email.split('@')[0]; // admin, owner, user, test
+        localStorage.setItem(key, JSON.stringify(user));
+      });
+    }
+  }, []); */
 
 
   return (
@@ -106,14 +106,14 @@ function App() {
           <Route path="/find-id" element={<FindForm mode="id" onClose={() => window.history.back()} />} />
           <Route path="/find-pw" element={<FindForm mode="pw" onClose={() => window.history.back()} />} />
 
-          <Route path="/wappen-customize" element={<ProtectedRoute><WappenCustomize /></ProtectedRoute>} />
-          <Route path="/my-page" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
-          <Route path="/my-wappens" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
-          <Route path="/order/form" element={<ProtectedRoute><OrderFormPage /></ProtectedRoute>} />
-          <Route path="/Point" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} />
-          <Route path="/account-settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
-          <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
-          <Route path="/Like" element={<LikedProductsPage />} />
+            <Route path="/wappen-customize" element={<ProtectedRoute><WappenCustomize /></ProtectedRoute>} />
+            <Route path="/my-page" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
+            <Route path="/my-wappens" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
+            <Route path="/order/form" element={<ProtectedRoute><OrderFormPage /></ProtectedRoute>} />
+            <Route path="/Point" element={<ProtectedRoute><PointHistory /></ProtectedRoute>} />
+            <Route path="/account-settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+            <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
+            <Route path="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
 
           <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
           <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />

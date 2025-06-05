@@ -35,20 +35,12 @@ export const UserProvider = ({ children }) => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("access_token");
 
-    if (storedUser) {
-    const token = localStorage.getItem("access_token");
-
     if (storedUser && token) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
 
-      //  서버에 없는 계정(admin 등)용 임시 토큰 처리
-      if (!token) {
-        localStorage.setItem("access_token", "dummy-token");
-        axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
-      } else {
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      }
+      // ✅ 실제 토큰만 설정
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
         setShowTermsModal(true);
@@ -96,6 +88,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  
   const login = async ({ id, password }) => {
     try {
       const res = await axiosInstance.post("/users/login", { id, password });
@@ -106,6 +99,9 @@ export const UserProvider = ({ children }) => {
 
       const userRes = await axiosInstance.get("/users/me");
       const userData = userRes.data;
+
+      console.log("🧾 로그인 후 유저 정보 확인:", userData); // 👈 id 포함되어 있는지 확인
+
 
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
@@ -125,31 +121,6 @@ export const UserProvider = ({ children }) => {
       
       // 에러를 다시 throw하여 호출하는 곳에서 처리하도록 함
       throw new Error("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
-      console.error("로그인 실패, localStorage fallback 시도:", err);
-      try {
-        const localUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        const found = localUsers.find(
-          (u) => u.id === id && u.password === password
-        );
-
-        if (found) {
-          localStorage.setItem("user", JSON.stringify(found));
-          setUser(found);
-
-          //  dummy access_token 추가
-          localStorage.setItem("access_token", "dummy-token");
-          axiosInstance.defaults.headers.common["Authorization"] = "Bearer dummy-token";
-
-          if (found.role === "ADMIN") navigate("/admin");
-          else if (!found.termsAccepted) setShowTermsModal(true);
-          else if (found.role === "SHOP_OWNER") navigate("/admin/upload");
-          else navigate("/");
-        } else {
-          throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
-        }
-      } catch (fallbackErr) {
-        throw new Error("로그인 실패");
-      }
     }
   };
 
@@ -170,7 +141,7 @@ export const UserProvider = ({ children }) => {
 
       if (userData.role === "ADMIN") navigate("/admin");
       else if (!userData.termsAccepted) setShowTermsModal(true);
-      else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
+      else if (userData.role === "OWNER") navigate("/admin/upload");
       else navigate("/");
 
       return userData;

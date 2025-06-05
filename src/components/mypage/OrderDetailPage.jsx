@@ -1,72 +1,104 @@
-// src/pages/OrderDetailPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import { useUser } from '../../components/UserContext';
-export default function OrderDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
+
+export default function OrderHistory() {
+  const [orders, setOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'canceled'
   const { user } = useUser();
+
+  // ✅ 상태값 매핑
+  const statusMap = {
+    PAID: '결제 완료',
+    WAITING_FOR_DEPOSIT: '입금 대기',
+    ORDERED: '주문 완료',
+    CANCELED: '취소됨',
+    COMPLETED: '배송 완료'
+  };
+
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchOrders = async () => {
       try {
-        const res = await axiosInstance.get(`/orders/${id}`);
-        setOrder(res.data);
+        const res = await axiosInstance.get('/orders/user');
+        const sorted = [...res.data].sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+        setOrders(sorted);
       } catch (err) {
-        console.warn('서버 오류, 로컬로 대체');
-        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const found = orders.find(o => o.id.toString() === id.toString());
-        setOrder(found);
+        console.warn('서버 실패 → localStorage 대체');
+        const saved = JSON.parse(localStorage.getItem('orders') || '[]');
+        const sorted = [...saved].sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+        setOrders(sorted);
       }
     };
 
-    fetchOrder();
-  }, [id]);
+    fetchOrders();
+  }, []);
 
-  if (!order) return <div style={{ padding: '2rem' }}>주문 정보를 찾을 수 없습니다.</div>;
+  const cancelOrder = async (id) => {
+    try {
+      await axiosInstance.patch(`/orders/${id}/cancel`);
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: 'CANCELED' } : order
+      );
+      setOrders(updated);
+    } catch (err) {
+      console.warn('서버 실패 → localStorage 대체');
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: 'CANCELED' } : order
+      );
+      setOrders(updated);
+      localStorage.setItem('orders', JSON.stringify(updated));
+    }
+  };
 
-  const {
-    product, quantity, totalPrice, paymentMethod,
-    receiver, receiverPhone1, address1, address2, memo
-  } = order;
+  const filteredOrders =
+    activeTab === 'active'
+      ? orders.filter(order => order.status !== 'CANCELED')
+      : orders.filter(order => order.status === 'CANCELED');
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>주문 상세</h2>
-      <p><strong>주문 ID:</strong> {order.id}</p>
-      <p><strong>주문 날짜:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
-      <p>상품: by {user?.email || '유저 디자인'}</p>
-      <p><strong>수량:</strong> {quantity}개</p>
-      <p><strong>총 결제 금액:</strong> {totalPrice.toLocaleString()}원</p>
-      <p><strong>결제 수단:</strong> {paymentMethod || '신용카드'}</p>
+    <div>
+      <h3>주문 내역</h3>
 
-      {product.images?.[0] && (
-        <div style={{ marginTop: '1rem' }}>
-          <p><strong>주문 디자인 미리보기:</strong></p>
-          <img
-            src={product.images[0]}
-            alt="커스터마이징 이미지"
-            style={{
-              width: '200px',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              marginTop: '8px'
-            }}
-          />
-        </div>
+      <div style={{ marginBottom: '1rem' }}>
+        <button
+          onClick={() => setActiveTab('active')}
+          className={activeTab === 'active' ? 'active-tab' : ''}
+        >
+          주문 보기
+        </button>
+        <button
+          onClick={() => setActiveTab('canceled')}
+          className={activeTab === 'canceled' ? 'active-tab' : ''}
+          style={{ marginLeft: '1rem' }}
+        >
+          취소된 주문 보기
+        </button>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <p>{activeTab === 'active' ? '주문 내역이 없습니다.' : '취소된 주문이 없습니다.'}</p>
+      ) : (
+        <ul>
+          {filteredOrders.map((order) => (
+            <li key={order.id} style={{ marginBottom: '2rem' }}>
+              <p><strong>주문 ID:</strong> <Link to={`/my-orders/${order.id}`}>{order.id}</Link></p>
+              <p>상품: by {user?.email || '사용자'}</p>
+              <p>수량: {order.items?.reduce((sum, item) => sum + item.quantity, 0)} 개</p>
+              <p>총액: {Number(order.totalPrice).toLocaleString()} 원</p>
+              <p>주문 날짜: {order.orderedAt ? new Date(order.orderedAt).toLocaleDateString() : '날짜 없음'}</p>
+              <p>상태: {statusMap[order.status] || order.status}</p>
+
+              {/* 상태가 주문 완료 또는 입금 대기 등에서만 취소 가능 */}
+              {activeTab === 'active' && ['ORDERED', 'WAITING_FOR_DEPOSIT'].includes(order.status) && (
+                <button onClick={() => cancelOrder(order.id)} style={{ marginTop: '0.5rem' }}>
+                  주문 취소
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
-
-      <hr style={{ margin: '2rem 0' }} />
-      <h3>배송 정보</h3>
-      <p><strong>수령인:</strong> {receiver}</p>
-      <p><strong>연락처:</strong> {receiverPhone1}</p>
-      <p><strong>주소:</strong> {address1} {address2}</p>
-      <p><strong>배송 메모:</strong> {memo || '(없음)'}</p>
-
-      <button onClick={() => navigate('/my-page')} style={{ marginTop: '1.5rem' }}>
-        ← 마이페이지로 돌아가기
-      </button>
     </div>
   );
 }

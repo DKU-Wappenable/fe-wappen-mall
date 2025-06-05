@@ -5,28 +5,41 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/MyWappens.css';
 
+const IMAGE_BASE_URL = "http://localhost:8080"; // 실제 배포 시 서버 주소로 변경
+
 export default function MyWappens() {
   const { user } = useUser();
   const [designs, setDesigns] = useState([]);
   const navigate = useNavigate();
+ 
+// ✅ 강제 디버깅
+const localUser = JSON.parse(localStorage.getItem("user"));
+console.log("🔍 useUser():", user);
+console.log("🔍 localStorage user:", localUser);
+
+// ✅ user.id 보장
+const userId = user?.id || localUser?.id;
+  
+  //const userId = user?.id || JSON.parse(localStorage.getItem("user"))?.id;
 
   useEffect(() => {
     if (!user) return;
-
+  
     const fetchWappens = async () => {
       try {
-        const res = await axiosInstance.get(`/wappens?email=${user.id}`);
-        setDesigns(res.data);
+        const res = await axiosInstance.get('/custom-images');
+        console.log("🔥 전체 디자인:", res.data);
+        const userDesigns = res.data.filter(d => d.userId === userId);
+        console.log("🎨 내 디자인:", userDesigns);
+        setDesigns(userDesigns);
       } catch (err) {
-        console.warn('서버 실패, 로컬 저장에서 불러옵니다.');
-        const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
-        setDesigns(local);
+        console.warn('🚨 서버 실패:', err);
       }
     };
-
+  
     fetchWappens();
-  }, [user]);
-
+  }, [userId]);
+  
   const handleDelete = async (id) => {
     const confirm = window.confirm('이 디자인을 삭제하시겠습니까?');
     if (!confirm) return;
@@ -36,48 +49,33 @@ export default function MyWappens() {
       setDesigns(prev => prev.filter(d => d.id !== id));
     } catch (err) {
       console.warn('서버 실패, 로컬 삭제 진행');
-      const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
+      const local = JSON.parse(localStorage.getItem(`savedWappens_${userId}`) || '[]');
       const updated = local.filter(d => d.id !== id);
-      localStorage.setItem(`savedWappens_${user.id}`, JSON.stringify(updated));
+      localStorage.setItem(`savedWappens_${userId}`, JSON.stringify(updated));
       setDesigns(updated);
     }
 
     const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
-    const updatedShared = shared.filter(d => d.id !== id);
-    localStorage.setItem('sharedWappens', JSON.stringify(updatedShared));
+    localStorage.setItem('sharedWappens', JSON.stringify(shared.filter(d => d.id !== id)));
 
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const newCart = cart.filter(item => item.product.id !== id);
-    localStorage.setItem('cart', JSON.stringify(newCart));
+    localStorage.setItem('cart', JSON.stringify(cart.filter(item => item.product.id !== id)));
 
     const liked = JSON.parse(localStorage.getItem('liked') || '[]');
-    const newLiked = liked.filter(item => item.id !== id);
-    localStorage.setItem('liked', JSON.stringify(newLiked));
+    localStorage.setItem('liked', JSON.stringify(liked.filter(item => item.id !== id)));
   };
 
   const handleShare = async (design) => {
-    const shared = {
-      ...design,
-      nickname: user.id || user.name || 'user',
-      category: '유저디자인',
-      name: design.title || `유저 디자인`,
-      images: [design.image || '/assets/default.png'],
-      price: 500 + (design.wappens?.length || 0) * 500,
-      createdAt: design.createdAt || new Date().toISOString(),
-      id: design.id || Date.now(),
-    };
-
     try {
-      await axiosInstance.post('/products', shared);
-      alert('공유 완료! 관리자 승인 후 반영됩니다.');
+      await axiosInstance.post(`/products/publish-custom/${design.id}`);
+      alert('디자인이 상품으로 등록되었습니다!');
+      navigate('/'); // 홈으로 이동 (또는 상품 페이지로 이동 가능)
     } catch (err) {
-      console.warn('서버 실패, 로컬 공유 저장');
-      const prev = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
-      const updated = [shared, ...prev.filter(d => d.id !== shared.id)];
-      localStorage.setItem('sharedWappens', JSON.stringify(updated));
-      alert('공유 완료!');
+      console.error('상품화 실패:', err);
+      alert('상품 등록에 실패했습니다.');
     }
   };
+  
 
   return (
     <div className="my-wappens-wrapper">
@@ -88,10 +86,10 @@ export default function MyWappens() {
         <div className="my-wappens-grid">
           {designs.map((design) => (
             <div key={design.id} className="my-wappen-card">
-              {design.image ? (
+              {design.customizedImageUrl ? (
                 <div className="my-wappen-preview">
                   <img
-                    src={design.image}
+                    src={`${IMAGE_BASE_URL}${design.customizedImageUrl}`}
                     alt="saved design"
                     className="my-wappen-img"
                     onError={(e) => (e.target.src = '/assets/default.png')}
@@ -136,4 +134,4 @@ export default function MyWappens() {
       )}
     </div>
   );
-}
+} 
