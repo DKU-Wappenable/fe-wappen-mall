@@ -16,7 +16,7 @@ export default function AdminProductEdit() {
     description: '',
     category: '',
     images: [],
-    owner: '',
+    newImages: [] // 실제로 서버로 보낼 MultipartFile
   });
   const [error, setError] = useState('');
 
@@ -24,16 +24,21 @@ export default function AdminProductEdit() {
     const fetchProduct = async () => {
       try {
         const res = await axiosInstance.get(`/products/${id}`);
-        setForm({ ...res.data, images: res.data.images || [], owner: res.data.owner || '' });
+        setForm({
+          ...res.data,
+          images: res.data.imageUrls || [],
+          newImages: []
+        });
       } catch (err) {
         console.warn('서버 실패, 로컬 fallback');
         const products = JSON.parse(localStorage.getItem('products') || '[]');
-        const customs = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
-        const all = [...products, ...customs];
-        const found = all.find(p => String(p.id) === String(id));
+        const found = products.find(p => String(p.id) === String(id));
         if (found) {
-          const images = found.images && found.images.length ? found.images : found.image ? [found.image] : [];
-          setForm({ ...found, images, owner: found.owner || '' });
+          setForm({
+            ...found,
+            images: found.imageUrls || [],
+            newImages: []
+          });
         } else {
           setError('해당 상품을 찾을 수 없습니다.');
         }
@@ -47,53 +52,37 @@ export default function AdminProductEdit() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setForm(prev => ({
+      ...prev,
+      newImages: files,
+      images: previews.slice(0, 5)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedProduct = {
-      ...form,
-      price: parseInt(form.price),
-      stock: parseInt(form.stock)
-    };
+
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('price', parseInt(form.price));
+    formData.append('stock', parseInt(form.stock));
+
+    if (form.newImages && form.newImages.length > 0) {
+      form.newImages.forEach(file => {
+        formData.append('images', file);
+      });
+    }
 
     try {
-      await axiosInstance.put(`/products/${id}`, updatedProduct);
+      await axiosInstance.put(`/products/${id}`, formData);
       alert('상품 수정 완료');
       navigate('/admin/products');
     } catch (err) {
-      console.warn('서버 실패, 로컬 저장');
-
-      const updateList = (key) => {
-        const list = JSON.parse(localStorage.getItem(key) || '[]');
-        const updated = list.map(p => String(p.id) === String(id) ? { ...p, ...updatedProduct } : p);
-        localStorage.setItem(key, JSON.stringify(updated));
-        return updated;
-      };
-
-      updateList('products');
-      updateList('sharedWappens');
-
-      const updateCart = () => {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const updatedCart = cart.map(item =>
-          String(item.product?.id) === String(id)
-            ? { ...item, product: { ...item.product, ...updatedProduct } }
-            : item
-        );
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-      };
-
-      const updateLiked = () => {
-        const liked = JSON.parse(localStorage.getItem('liked') || '[]');
-        const updatedLiked = liked.map(item =>
-          String(item.id) === String(id) ? { ...item, ...updatedProduct } : item
-        );
-        localStorage.setItem('liked', JSON.stringify(updatedLiked));
-      };
-
-      updateCart();
-      updateLiked();
-      alert('상품 로컬 수정 완료');
-      navigate('/admin/products');
+      console.error('상품 수정 실패:', err);
+      alert('상품 수정 실패');
     }
   };
 
@@ -126,16 +115,19 @@ export default function AdminProductEdit() {
 
   return (
     <form className="upload-container" onSubmit={handleSubmit}>
-      <h2> 상품 수정</h2>
-      <input name="name" value={form.name} onChange={handleChange} placeholder="상품명" />
-      <input name="price" value={form.price} onChange={handleChange} placeholder="가격" type="number" />
-      <input name="stock" value={form.stock} onChange={handleChange} placeholder="재고" type="number" />
+      <h2>상품 수정</h2>
+      <input name="name" value={form.name} onChange={handleChange} placeholder="상품명" required />
+      <input name="price" value={form.price} onChange={handleChange} placeholder="가격" type="number" required />
+      <input name="stock" value={form.stock} onChange={handleChange} placeholder="재고" type="number" required />
+
       <select name="category" value={form.category} onChange={handleChange}>
         <option value="">카테고리 선택</option>
         <option value="의류">의류</option>
         <option value="굿즈">굿즈</option>
         <option value="유저디자인">유저디자인</option>
+        {/* 필요에 따라 추가 */}
       </select>
+
       <textarea name="description" value={form.description} onChange={handleChange} placeholder="상품 설명" />
 
       <div className="preview-container">

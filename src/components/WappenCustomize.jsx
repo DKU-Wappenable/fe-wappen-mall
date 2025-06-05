@@ -1,4 +1,4 @@
-// WappenCustomize.jsx
+// src/components/WappenCustomize.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
@@ -112,21 +112,14 @@ export default function WappenCustomize() {
         strap: selectedStrap,
         wappens,
         textInputs,
-        image: imageData,
+        customizedImageUrl: imageData,
         price: totalPrice,
         createdAt: new Date().toISOString(),
         owner: user?.id || 'unknown'
       };
 
-      try {
-        await axiosInstance.post('/wappens', savedDesign);
-        alert('디자인이 서버에 저장되었습니다!');
-      } catch {
-        const saved = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
-        saved.push(savedDesign);
-        localStorage.setItem(`savedWappens_${user.id}`, JSON.stringify(saved));
-        alert('디자인이 로컬에 저장되었습니다!');
-      }
+      await axiosInstance.post('/custom-images/save', savedDesign);
+      alert('디자인이 저장되었습니다!');
       navigate('/my-wappens');
     } catch (err) {
       console.error('저장 실패:', err);
@@ -141,7 +134,7 @@ export default function WappenCustomize() {
   return (
     <div className="customize-wrapper">
       <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
-        ✔ 기본 스트랩 1개 500원 / 와펜·텍스트 1개당 500원으로 가격이 계산됩니다.
+        ✔ 기본 스트랩 1개 500원 / 와펜 1개당 500원으로 가격이 계산됩니다.
       </p>
 
       <div className="custom-tabs">

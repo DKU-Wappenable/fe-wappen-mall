@@ -42,7 +42,7 @@ export const UserProvider = ({ children }) => {
       // ✅ 실제 토큰만 설정
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      if (parsed.role !== "admin" && !parsed.termsAccepted) {
+      if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
         setShowTermsModal(true);
       }
     } else {
@@ -54,7 +54,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && user.role !== "admin" && !user.termsAccepted) {
+    if (user && user.role !== "ADMIN" && !user.termsAccepted) {
       setShowTermsModal(true);
     }
   }, [user]);
@@ -76,8 +76,8 @@ export const UserProvider = ({ children }) => {
       const currentPath = window.location.pathname;
       if (currentPath === "/login" || currentPath === "/signup") {
         console.log("✅ 로그인/회원가입 페이지에서 약관 동의 완료 - 리다이렉션");
-        if (updatedUser.role === "admin") navigate("/admin");
-        else if (updatedUser.role === "owner") navigate("/admin/upload");
+        if (updatedUser.role === "ADMIN") navigate("/admin");
+        else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
         else navigate("/");
       } else {
         console.log("✅ 약관 동의 완료 - 현재 페이지 유지");
@@ -88,6 +88,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  
   const login = async ({ id, password }) => {
     try {
       const res = await axiosInstance.post("/users/login", { id, password });
@@ -99,12 +100,15 @@ export const UserProvider = ({ children }) => {
       const userRes = await axiosInstance.get("/users/me");
       const userData = userRes.data;
 
+      console.log("🧾 로그인 후 유저 정보 확인:", userData); // 👈 id 포함되어 있는지 확인
+
+
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
-      if (userData.role === "admin") navigate("/admin");
+      if (userData.role === "ADMIN") navigate("/admin");
       else if (!userData.termsAccepted) setShowTermsModal(true);
-      else if (userData.role === "owner") navigate("/admin/upload");
+      else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
       else navigate("/");
     } catch (err) {
       console.error("로그인 실패:", err);
@@ -135,9 +139,9 @@ export const UserProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
-      if (userData.role === "admin") navigate("/admin");
+      if (userData.role === "ADMIN") navigate("/admin");
       else if (!userData.termsAccepted) setShowTermsModal(true);
-      else if (userData.role === "owner") navigate("/admin/upload");
+      else if (userData.role === "OWNER") navigate("/admin/upload");
       else navigate("/");
 
       return userData;

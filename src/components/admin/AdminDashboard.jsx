@@ -15,14 +15,14 @@ export default function AdminDashboard() {
       try {
         //  서버 인증 시도
         const res = await axiosInstance.get('/admin/check-auth');
-        if (res.data?.role === 'admin') {
+        if (res.data?.role === 'ADMIN') {
           setIsAuthorized(true);
         } else {
           throw new Error('not admin');
         }
       } catch (err) {
         //  서버 실패 시 로컬 fallback
-        if (user && user.role === 'admin') {
+        if (user && user.role === 'ADMIN') {
           console.warn('⚠️ 서버 인증 실패. 로컬 user.role 기반으로 관리자 권한 부여됨.');
           setIsAuthorized(true);
         } else {

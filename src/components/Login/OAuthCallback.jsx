@@ -29,8 +29,8 @@ export default function OAuthCallback() {
           localStorage.setItem('user', JSON.stringify(userData));
           setUser(userData);
 
-          if (userData.role === 'admin') navigate('/admin');
-          else if (userData.role === 'owner') navigate('/admin/upload');
+          if (userData.role === 'ADMIN') navigate('/admin');
+          else if (userData.role === 'SHOP_OWNER') navigate('/admin/upload');
           else navigate('/');
         } catch (err) {
           console.error('❌ 소셜 로그인 실패:', err);
