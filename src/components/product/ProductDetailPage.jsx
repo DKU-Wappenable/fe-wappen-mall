@@ -65,7 +65,7 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     try {
-      await axiosInstance.post('/cart', { productId: product.id, quantity });
+      await axiosInstance.post('/cart', { productId: product.id, quantity, customizationImageUrl: product.imageUrls?.[0] || '/uploads/custom/default.png'});
       alert('장바구니에 담았습니다!');
     } catch (err) {
       console.warn('서버 실패, 로컬 장바구니로 대체');

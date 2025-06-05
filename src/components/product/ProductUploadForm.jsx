@@ -51,8 +51,9 @@ export default function ProductUploadForm() {
       imageFiles.forEach(file => formData.append('images', file)); // ✅ 파일 추가
 
       try {
-        await axiosInstance.post('/products', formData);
-        alert('상품이 서버에 등록되었습니다!');
+        const res = await axiosInstance.post('/products', formData);
+        console.log("✅ 서버 응답:", res);
+        alert('상품이 서버에 등록되었습니다!'); 
         resetForm();
         setImagePreviews([]);
         setImageFiles([]);
