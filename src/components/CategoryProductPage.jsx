@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useUser } from './UserContext';
 import '../styles/CategoryProductPage.css';
 
+const IMAGE_BASE_URL = 'http://localhost:8080';
 export default function CategoryProductPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [category, setCategory] = useState('전체');
@@ -33,13 +34,13 @@ export default function CategoryProductPage() {
     const fetchData = async () => {
       try {
         const res = await axiosInstance.get('/products');
-        const serverProducts = res.data;
-
+        const serverProducts = res.data.content || [];
+        
         const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
           ...d,
           name: d.title || '',
           price: d.price || 1000,
-          images: [d.image || '/assets/default.png'],
+          imageUrls: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
@@ -69,7 +70,7 @@ export default function CategoryProductPage() {
           ...d,
           name: d.title || '',
           price: d.price || 1000,
-          images: [d.image || '/assets/default.png'],
+          imageUrls: [d.image || '/assets/default.png'],
           category: '유저디자인',
           description: d.description || '',
           createdAt: d.createdAt || new Date().toISOString(),
@@ -79,7 +80,7 @@ export default function CategoryProductPage() {
 
         const local = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
           ...p,
-          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
           category: p.category || '',
           uniqueKey: `${p.id}-${index}`
         }));
@@ -174,7 +175,7 @@ export default function CategoryProductPage() {
                   onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
                 >
                   <img
-                    src={p.images?.[0] || '/assets/default.png'}
+                    src={IMAGE_BASE_URL + p.imageUrls?.[0] || '/assets/default.png'}
                     alt={p.name}
                     onError={(e) => (e.target.src = '/assets/default.png')}
                   />

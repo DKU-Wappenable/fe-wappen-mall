@@ -69,7 +69,9 @@ export default function AdminProductEdit() {
     formData.append('name', form.name);
     formData.append('price', parseInt(form.price));
     formData.append('stock', parseInt(form.stock));
-
+    formData.append('category', form.category);
+    formData.append('description', form.description);
+    
     if (form.newImages && form.newImages.length > 0) {
       form.newImages.forEach(file => {
         formData.append('images', file);
