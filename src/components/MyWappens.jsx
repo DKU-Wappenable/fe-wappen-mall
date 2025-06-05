@@ -33,7 +33,9 @@ const userId = user?.id || localUser?.id;
         console.log("🎨 내 디자인:", userDesigns);
         setDesigns(userDesigns);
       } catch (err) {
-        console.warn('🚨 서버 실패:', err);
+        console.warn('서버 실패, 로컬 저장에서 불러옵니다.');
+        const local = JSON.parse(localStorage.getItem(`savedWappens_${user.id}`) || '[]');
+        setDesigns(local);
       }
     };
   
@@ -111,7 +113,7 @@ const userId = user?.id || localUser?.id;
               <div className="wappen-info">
                 <span className="created-at">{new Date(design.createdAt).toLocaleDateString()}</span>
                 <span className="wappen-label">
-                  총 가격: {(500 + (design.wappens?.length || 0) * 500).toLocaleString()}원
+                  총 가격: {(design.price || 0).toLocaleString()}원
                 </span>
               </div>
               <div className="wappen-buttons">

@@ -93,18 +93,18 @@ function ProtectedRoute({ children }) {
   }, []); */
 
 
-  return (
-    <div className="wrapper">
-      <Navigation />
-      <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/signup" element={<SignupForm />} />
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
-          <Route path="/find-id" element={<FindForm mode="id" onClose={() => window.history.back()} />} />
-          <Route path="/find-pw" element={<FindForm mode="pw" onClose={() => window.history.back()} />} />
+    return (
+      <div className="wrapper">
+        <Navigation />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/signup" element={<SignupForm />} />
+            <Route path="/oauth/success" element={<OAuthCallback />} />
+            <Route path="/find-id" element={<FindForm mode="id" onClose={() => window.history.back()} />} />
+            <Route path="/find-pw" element={<FindForm mode="pw" onClose={() => window.history.back()} />} />
 
             <Route path="/wappen-customize" element={<ProtectedRoute><WappenCustomize /></ProtectedRoute>} />
             <Route path="/my-page" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />

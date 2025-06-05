@@ -1,4 +1,3 @@
-// ProductDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
@@ -13,7 +12,6 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
-  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "";
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -91,19 +89,6 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    //  장바구니 구조와 동일하게 items 배열로 넘김
-    const order = {
-    id: Date.now(),
-    product,
-    quantity,
-    totalPrice: product.price * quantity,
-    createdAt: new Date().toISOString(),
-  };
-
-  // 결제 데이터를 localStorage에 저장
-  const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-  localStorage.setItem('orders', JSON.stringify([order, ...prevOrders]));
-
     navigate('/order/form', { state: { items: [{ product, quantity }] } });
   };
 
@@ -118,8 +103,10 @@ export default function ProductDetailPage() {
         style={{ width: '300px', height: '300px', objectFit: 'contain', borderRadius: '8px' }}
         onError={(e) => (e.target.src = '/assets/default.png')}
       />
-      <p>{product.description || '설명 없음'}</p>
-      {product.nickname && <p>by {currentUserEmail}</p>}
+      <p>{product.description || '유저 디자인'}</p>
+      {product.createdBy && (
+        <p style={{ fontSize: '14px', color: '#777' }}>by {product.createdBy}</p>
+      )}
       <p style={{ fontWeight: 'bold' }}>{(product.price ?? 0).toLocaleString()}원</p>
 
       <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>

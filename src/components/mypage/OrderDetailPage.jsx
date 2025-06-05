@@ -57,48 +57,46 @@ export default function OrderHistory() {
       : orders.filter(order => order.status === 'CANCELED');
 
   return (
-    <div>
-      <h3>주문 내역</h3>
+    <div style={{ padding: '2rem' }}>
+      <h2>주문 상세</h2>
+      <p><strong>주문 ID:</strong> {order.id}</p>
+      <p><strong>주문 날짜:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
+   <p>
+  {product.name
+    ? `상품: ${product.name}`
+    : `유저디자인: ${product.createdBy || product.owner || '알 수 없음'}`}
+</p>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <button
-          onClick={() => setActiveTab('active')}
-          className={activeTab === 'active' ? 'active-tab' : ''}
-        >
-          주문 보기
-        </button>
-        <button
-          onClick={() => setActiveTab('canceled')}
-          className={activeTab === 'canceled' ? 'active-tab' : ''}
-          style={{ marginLeft: '1rem' }}
-        >
-          취소된 주문 보기
-        </button>
-      </div>
+      <p><strong>수량:</strong> {quantity}개</p>
+      <p><strong>총 결제 금액:</strong> {totalPrice.toLocaleString()}원</p>
+      <p><strong>결제 수단:</strong> {paymentMethod || '신용카드'}</p>
 
-      {filteredOrders.length === 0 ? (
-        <p>{activeTab === 'active' ? '주문 내역이 없습니다.' : '취소된 주문이 없습니다.'}</p>
-      ) : (
-        <ul>
-          {filteredOrders.map((order) => (
-            <li key={order.id} style={{ marginBottom: '2rem' }}>
-              <p><strong>주문 ID:</strong> <Link to={`/my-orders/${order.id}`}>{order.id}</Link></p>
-              <p>상품: by {user?.email || '사용자'}</p>
-              <p>수량: {order.items?.reduce((sum, item) => sum + item.quantity, 0)} 개</p>
-              <p>총액: {Number(order.totalPrice).toLocaleString()} 원</p>
-              <p>주문 날짜: {order.orderedAt ? new Date(order.orderedAt).toLocaleDateString() : '날짜 없음'}</p>
-              <p>상태: {statusMap[order.status] || order.status}</p>
-
-              {/* 상태가 주문 완료 또는 입금 대기 등에서만 취소 가능 */}
-              {activeTab === 'active' && ['ORDERED', 'WAITING_FOR_DEPOSIT'].includes(order.status) && (
-                <button onClick={() => cancelOrder(order.id)} style={{ marginTop: '0.5rem' }}>
-                  주문 취소
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+      {product.images?.[0] && (
+        <div style={{ marginTop: '1rem' }}>
+          <p><strong>주문 디자인 미리보기:</strong></p>
+          <img
+            src={product.images[0]}
+            alt="커스터마이징 이미지"
+            style={{
+              width: '200px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              marginTop: '8px'
+            }}
+          />
+        </div>
       )}
+
+      <hr style={{ margin: '2rem 0' }} />
+      <h3>배송 정보</h3>
+      <p><strong>수령인:</strong> {receiver}</p>
+      <p><strong>연락처:</strong> {receiverPhone1}</p>
+      <p><strong>주소:</strong> {address1} {address2}</p>
+      <p><strong>배송 메모:</strong> {memo || '(없음)'}</p>
+
+      <button onClick={() => navigate('/my-page')} style={{ marginTop: '1.5rem' }}>
+        ← 마이페이지로 돌아가기
+      </button>
     </div>
   );
 }

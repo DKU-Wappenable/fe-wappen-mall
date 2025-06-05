@@ -9,7 +9,6 @@ const IMAGE_BASE_URL = 'http://localhost:8080'; // 프론트 기준이 아닌 �
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [popular, setPopular] = useState([]);
-  const [newItems, setNewItems] = useState([]);
   const [liked, setLiked] = useState([]);
   const navigate = useNavigate();
   const { user } = useUser();
@@ -21,46 +20,68 @@ export default function Home() {
   ];
 
   const loadProducts = async () => {
+    const likedItems = JSON.parse(localStorage.getItem('liked') || '[]');
+
     try {
       const res = await axiosInstance.get('/products');
-      const official = res.data.content;
-      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map(d => ({
-        ...d,
-        name: d.title || '유저 디자인',
-        imageUrls: [d.image],
-        category: '유저디자인',
-        createdAt: d.createdAt || new Date().toISOString(),
-        __source: 'shared',
-        uniqueKey: `${d.id}-${d.author}`
-      }));
-      const merged = [...official, ...shared];
-      const sanitized = merged.map(p => ({
-        ...p,
-        imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
-        uniqueKey: p.uniqueKey || `${p.id}-${p.__source || 'official'}`
-      }));
+      const official = res.data;
+      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+
+      const merged = [...official, ...shared].map((p, i) => {
+        const uniqueKey = `${p.id}-${p.owner || p.author || i}`;
+        const likedMatch = likedItems.find(lp => `${lp.id}-${lp.owner || lp.author || i}` === uniqueKey);
+
+        return {
+          ...p,
+          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
+          category: p.category || (p.title ? '유저디자인' : ''),
+          name: p.name || p.title || '유저 디자인',
+          createdAt: p.createdAt || new Date().toISOString(),
+          nickname: p.category === '유저디자인'
+            ? p.createdBy || p.owner || currentUserEmail
+            : '',
+          uniqueKey,
+          likes: likedMatch ? 1 : 0
+        };
+      });
 
       setProducts(merged);
-      setPopular([...merged].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
-      setNewItems([...merged].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10));
+      setPopular(
+        [...merged]
+          .filter(p => (p.likes || 0) > 0)
+          .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+          .slice(0, 10)
+      );
     } catch {
       console.warn('서버 실패, 로컬에서 대체');
       const local = JSON.parse(localStorage.getItem('products') || '[]');
       const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
 
-      const merged = [...local, ...shared].map((p, i) => ({
-        ...p,
-        images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
-        category: p.category || (p.title ? '유저디자인' : ''),
-        name: p.name || p.title || '유저 디자인',
-        nickname: currentUserEmail,
-        createdAt: p.createdAt || new Date().toISOString(),
-        uniqueKey: `${p.id}-${p.owner || p.author || i}`
-      }));
+      const merged = [...local, ...shared].map((p, i) => {
+        const uniqueKey = `${p.id}-${p.owner || p.author || i}`;
+        const likedMatch = likedItems.find(lp => `${lp.id}-${lp.owner || lp.author || i}` === uniqueKey);
+
+        return {
+          ...p,
+          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
+          category: p.category || (p.title ? '유저디자인' : ''),
+          name: p.name || p.title || '유저 디자인',
+          createdAt: p.createdAt || new Date().toISOString(),
+          nickname: p.category === '유저디자인'
+            ? p.createdBy || p.owner || currentUserEmail
+            : '',
+          uniqueKey,
+          likes: likedMatch ? 1 : 0
+        };
+      });
 
       setProducts(merged);
-      setPopular([...merged].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 10));
-      setNewItems([...merged].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10));
+      setPopular(
+        [...merged]
+          .filter(p => (p.likes || 0) > 0)
+          .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+          .slice(0, 10)
+      );
     }
   };
 
@@ -72,11 +93,24 @@ export default function Home() {
   const toggleLike = (product) => {
     const current = JSON.parse(localStorage.getItem('liked') || '[]');
     const exists = current.some(p => p.uniqueKey === product.uniqueKey);
+
+    if (!product.likes) product.likes = 0;
+    product.likes += exists ? -1 : 1;
+
     const updated = exists
       ? current.filter(p => p.uniqueKey !== product.uniqueKey)
       : [{ ...product }, ...current];
+
     localStorage.setItem('liked', JSON.stringify(updated));
     setLiked(updated);
+
+    setProducts(prev =>
+      prev.map(p =>
+        p.uniqueKey === product.uniqueKey
+          ? { ...p, likes: product.likes }
+          : p
+      )
+    );
   };
 
   const isLiked = (key) => liked.some(p => p.uniqueKey === key);
@@ -98,13 +132,16 @@ export default function Home() {
       <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(p); }}>
         {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>
-      <div className="product-info">
-        <h3>{p.name}</h3>
+    <div className="product-info">
+      <h3>{p.name}</h3>
+      {p.category === '유저디자인' && p.nickname && (
         <p className="creator">by {p.nickname}</p>
-        <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
-      </div>
+      )}
+      <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
     </div>
-  );
+  </div>
+);
+
 
   return (
     <div className="home-wrapper">
@@ -123,16 +160,10 @@ export default function Home() {
           <section>
             <h2 className="section-title">인기 와펜 상품</h2>
             <div className="product-scroll with-scroll">
-              {popular.map(renderProductCard)}
+              {popular.map(p => renderProductCard(p, false))}
             </div>
           </section>
 
-          <section>
-            <h2 className="section-title">신상품</h2>
-            <div className="product-scroll with-scroll">
-              {newItems.map(renderProductCard)}
-            </div>
-          </section>
         </main>
       </div>
     </div>

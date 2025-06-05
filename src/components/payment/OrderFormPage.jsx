@@ -1,5 +1,4 @@
-// ✅ OrderFormPage.jsx - 서버 연동 + 공유 와펜 대응 결제 처리 리팩토링
-
+//  수정된 OrderFormPage.jsx - 무통장입금일 때만 저장하고 결제창 이동 안 함
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../components/UserContext';
@@ -12,10 +11,9 @@ export default function OrderFormPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { user } = useUser();
-
   const isCartOrder = state?.items && Array.isArray(state.items);
   const [items, setItems] = useState([]);
-
+  const [isProcessing, setIsProcessing] = useState(false);
   const [form, setForm] = useState({
     receiver: '',
     receiverPhone1: '',
@@ -27,6 +25,7 @@ export default function OrderFormPage() {
     agree1: false,
     agree2: false,
   });
+  const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
     // 유저 정보로 기본 값 세팅
@@ -56,41 +55,84 @@ export default function OrderFormPage() {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!form.agree1 || !form.agree2) {
-      alert('약관에 모두 동의하셔야 합니다.');
+  const applyCoupon = () => {
+    if (form.coupon.trim().toUpperCase() === 'WAPPEN3000') setDiscount(3000);
+    else setDiscount(0);
+  };
+
+  const handlePayment = () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    if (!form.agreeTerms || !form.agreePrivacy) {
+      alert('약관에 동의해 주세요.');
+      setIsProcessing(false);
       return;
     }
 
-    try {
-      if (items.length === 1) {
-        const { product, quantity } = items[0];
-        await axiosInstance.post('/orders', {
-          paymentMethod: form.paymentMethod,
-          deliveryAddress: `${form.address1} ${form.address2}`.trim(),
-          deliveryRequest: form.memo,
-          items: [
-            {
-              productId: product.id,
-              quantity: quantity
-            }
-          ]
-        });
-      } else {
-        await axiosInstance.post('/orders/checkout', null, {
-          params: {
-            address: `${form.address1} ${form.address2}`.trim(),
-            requestMessage: form.memo
-          }
-        });
-      }
-      alert('주문이 완료되었습니다.');
-      navigate('/my-page');
-    } catch (err) {
-      console.error('주문 실패:', err);
-      alert('주문에 실패했습니다.');
+    const productTotal = items.reduce((sum, item) =>
+      sum + item.product.price * item.quantity, 0);
+    const totalPrice = productTotal - discount;
+
+    const buyer = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      address: `${form.address1} ${form.address2}`,
+    };
+
+    if (form.paymentMethod === '무통장입금') {
+      const now = new Date().toISOString();
+      const newOrders = items.map(item => ({
+  id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
+  product: {
+    ...item.product,
+    createdBy: item.product.createdBy || user?.email || 'unknown',
+  },
+  quantity: item.quantity,
+  totalPrice: item.product.price * item.quantity,
+  reviewed: false,
+  createdAt: now,
+  name: form.name,
+  phone: form.phone,
+  email: form.email,
+  receiver: form.receiver,
+  receiverPhone1: form.receiverPhone1,
+  receiverPhone2: form.receiverPhone2,
+  address1: form.address1,
+  address2: form.address2,
+  memo: form.memo,
+  paymentMethod: form.paymentMethod,
+}));
+
+
+      const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const filteredNewOrders = newOrders.filter(newOrder =>
+        !prevOrders.some(existing => existing.id === newOrder.id)
+      );
+      const nextOrders = [...filteredNewOrders, ...prevOrders];
+      localStorage.setItem('orders', JSON.stringify(nextOrders));
+
+      if (isCartOrder) localStorage.removeItem('cart');
+
+      setIsProcessing(false);
+      navigate('/order/complete');
+      return; //  반드시 여기서 종료
     }
+
+    setIsProcessing(false);
+    navigate('/payment/mock', {
+      state: {
+        items,
+        amount: totalPrice,
+        buyer,
+        formData: form,
+        discount,
+      }
+    });
   };
+
+  if (items.length === 0) return <div className="order-form-container">상품 정보가 없습니다.</div>;
 
   const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
@@ -127,13 +169,15 @@ export default function OrderFormPage() {
           </section>
 
           <section>
-            <h3>4. 약관 동의</h3>
-            <label>
-              <input type="checkbox" name="agree1" onChange={handleChange} /> 구매 동의 (필수)
-            </label>
-            <label>
-              <input type="checkbox" name="agree2" onChange={handleChange} /> 개인정보 수집 동의 (필수)
-            </label>
+            <h3>4. 쿠폰 / 포인트</h3>
+            <div className="coupon-row">
+              <input name="coupon" placeholder="쿠폰 발행 전입니다! " value={form.coupon} onChange={handleChange} />
+              <button type="button" onClick={applyCoupon} className="coupon-btn">X</button>
+            </div>
+            <div className="checkbox-inline">
+              <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
+              <label htmlFor="usePoints">이벤트 포인트 사용하기(이벤트 기간X) </label>
+            </div>
           </section>
 
           <h2>총 결제 금액: {totalPrice.toLocaleString()}원</h2>
@@ -153,7 +197,9 @@ export default function OrderFormPage() {
               <div>
                 <p>{item.product.name}</p>
                 {item.product.nickname && (
-                  <p style={{ fontSize: '13px', color: '#666' }}>by {item.product.nickname}</p>
+                  <p style={{ fontSize: '13px', color: '#666' }}>
+                    by {user.email}
+                  </p>
                 )}
                 <p>수량: {item.quantity}개</p>
                 <p>금액: {(item.product.price * item.quantity).toLocaleString()}원</p>

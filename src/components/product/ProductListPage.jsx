@@ -1,3 +1,4 @@
+// src/pages/ProductListPage.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
@@ -21,7 +22,7 @@ export default function ProductListPage() {
         const shared = JSON.parse(localStorage.getItem("sharedWappens") || "[]");
         const all = [...local, ...shared];
         const filtered = keyword
-          ? all.filter((p) => p.name.includes(keyword))
+          ? all.filter((p) => (p.name || "").includes(keyword))
           : all;
         setProducts(filtered);
       }
@@ -45,8 +46,14 @@ export default function ProductListPage() {
               alt={product.name}
               onError={(e) => (e.target.src = "/assets/default.png")}
             />
-            <h4>{product.name}</h4>
-            <p>{(product.price ?? 0).toLocaleString()}원</p>
+            <h4>{product.name || '유저 디자인'}</h4>
+
+            {/* 유저디자인일 때만 이메일 표시 */}
+            {(product.category === '유저디자인') && (
+              <p style={{ fontSize: '13px', color: '#666' }}>
+                유저디자인: {product.createdBy || product.owner || 'unknown'}
+              </p>
+            )}
           </div>
         ))}
       </div>
