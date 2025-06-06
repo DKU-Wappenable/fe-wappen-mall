@@ -46,59 +46,111 @@ export default function ProductUploadForm() {
       formData.append('name', values.name);
       formData.append('price', values.price);
       formData.append('stock', values.stock);
-      imageFiles.forEach((file) => formData.append('images', file));
+      formData.append('description', values.description);
+      formData.append('category', values.category);
+      imageFiles.forEach(file => formData.append('images', file)); // ✅ 파일 추가
 
       try {
-        await axiosInstance.post('/api/products', formData);
-        alert('상품이 서버에 등록되었습니다!');
-        navigate('/');
+        const res = await axiosInstance.post('/products', formData);
+        console.log("✅ 서버 응답:", res);
+        alert('상품이 서버에 등록되었습니다!'); 
+        resetForm();
+        setImagePreviews([]);
+        setImageFiles([]);
+        navigate('/admin/products');
       } catch (err) {
         console.warn('서버 실패, 로컬 저장 처리:', err);
-        const fallbackProduct = {
+
+        const localProduct = {
           id: Date.now(),
           ...values,
           images: imagePreviews,
         };
         const prev = JSON.parse(localStorage.getItem('products') || '[]');
-        localStorage.setItem('products', JSON.stringify([fallbackProduct, ...prev]));
-        alert('서버 오류로 로컬에 임시 저장되었습니다.');
-        navigate('/');
+        localStorage.setItem('products', JSON.stringify([localProduct, ...prev]));
+        alert('상품이 로컬에 등록되었습니다!');
+        resetForm();
+        setImagePreviews([]);
+        setImageFiles([]);
+        navigate('/admin/products');
       }
-
-      resetForm();
-      setImagePreviews([]);
-      setImageFiles([]);
     },
   });
 
-  const handleImageChange = (e) => {
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles(files);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previews);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImageFiles(prev => [...prev, ...files].slice(0, 5));
+    setImagePreviews(prev => [...prev, ...previews].slice(0, 5));
+  };
+
+  const removeImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
-    <form onSubmit={formik.handleSubmit} className="upload-form">
-      <h2>상품 등록</h2>
+    <form className="upload-container" onSubmit={formik.handleSubmit}>
+      <div className="dropzone" onClick={() => document.getElementById('imageInput').click()}>
+        이미지를 드래그하거나 클릭하여 업로드 (최대 5장)
+        <input
+          id="imageInput"
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={handleImageUpload}
+        />
+      </div>
 
-      <input name="name" placeholder="상품명" {...formik.getFieldProps('name')} />
-      <input name="price" placeholder="가격" type="number" {...formik.getFieldProps('price')} />
-      <input name="stock" placeholder="재고 수량" type="number" {...formik.getFieldProps('stock')} />
-      <textarea name="description" placeholder="설명" {...formik.getFieldProps('description')} />
+      <div className="preview-container">
+        {imagePreviews.map((img, index) => (
+          <div key={index} className="image-preview">
+            <img src={img} alt={`preview-${index}`} />
+            <button type="button" onClick={() => removeImage(index)}>삭제</button>
+          </div>
+        ))}
+      </div>
+
+      <input
+        type="text"
+        name="name"
+        placeholder="상품명"
+        {...formik.getFieldProps('name')}
+      />
+      {formik.touched.name && formik.errors.name && <div>{formik.errors.name}</div>}
+
+      <input
+        type="number"
+        name="price"
+        placeholder="가격"
+        {...formik.getFieldProps('price')}
+      />
+      {formik.touched.price && formik.errors.price && <div>{formik.errors.price}</div>}
+
+      <input
+        type="number"
+        name="stock"
+        placeholder="재고 수량"
+        {...formik.getFieldProps('stock')}
+      />
+      {formik.touched.stock && formik.errors.stock && <div>{formik.errors.stock}</div>}
+
       <select name="category" {...formik.getFieldProps('category')}>
         <option value="">카테고리 선택</option>
         {categoryOptions.map((cat) => (
           <option key={cat} value={cat}>{cat}</option>
         ))}
       </select>
+      {formik.touched.category && formik.errors.category && <div>{formik.errors.category}</div>}
 
-      <input type="file" accept="image/*" multiple onChange={handleImageChange} />
-      <div className="preview-area">
-        {imagePreviews.map((src, idx) => (
-          <img key={idx} src={src} alt={`preview-${idx}`} className="preview-image" />
-        ))}
-      </div>
+      <textarea
+        name="description"
+        placeholder="상품 설명"
+        rows="4"
+        {...formik.getFieldProps('description')}
+      />
+      {formik.touched.description && formik.errors.description && <div>{formik.errors.description}</div>}
 
       <button type="submit">상품 등록</button>
     </form>

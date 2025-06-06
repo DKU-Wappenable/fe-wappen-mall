@@ -27,7 +27,7 @@ export default function LoginForm() {
     }
   }, [location.state]);
 
-  // ✅ 컴포넌트 마운트 시에만 기존 로그인 상태 확인
+  // 컴포넌트 마운트 시에만 기존 로그인 상태 확인
   useEffect(() => {
     // 이미 로그인된 상태로 /login 페이지에 접근한 경우에만 리다이렉션
     if (user) {
@@ -88,7 +88,7 @@ export default function LoginForm() {
       });
 
       const { accessToken, refreshToken } = loginResponse.data;
-      console.log("✅ 로그인 성공, 토큰 받음");
+      console.log(" 로그인 성공, 토큰 받음");
 
       // 2. 토큰 저장 및 axios 헤더 설정
       localStorage.setItem("access_token", accessToken);
@@ -101,7 +101,7 @@ export default function LoginForm() {
         const userResponse = await axiosInstance.get("/users/me");
         const userData = userResponse.data;
         
-        console.log("✅ 사용자 정보 조회 성공:", userData);
+        console.log(" 사용자 정보 조회 성공:", userData);
 
         // 4. 사용자 정보 저장 및 상태 업데이트 - 성공 시에만!
         localStorage.setItem("user", JSON.stringify(userData));
@@ -115,7 +115,7 @@ export default function LoginForm() {
           // 약관 모달이 자동으로 표시됨 (UserContext의 useEffect에 의해)
           // 약관 동의 완료 후 수동으로 리다이렉션 필요
         } else {
-          console.log("✅ 약관 동의 완료된 사용자 - 즉시 리다이렉션");
+          console.log(" 약관 동의 완료된 사용자 - 즉시 리다이렉션");
           // 약관 동의가 이미 완료된 사용자는 즉시 리다이렉션
           redirectUser(userData);
         }
