@@ -109,8 +109,12 @@ export default function LoginForm() {
         
         toast.success(`환영합니다, ${userData.nickname}님!`);
 
+        if (userData.role === "ADMIN") navigate("/admin");
+        else if (!userData.termsAccepted) return;
+        else if (userData.role === "SHOP_OWNER") navigate("/admin/upload");
+        else navigate("/");
         // 5. 약관 동의 여부에 따른 처리
-        if (userData.role !== "admin" && !userData.termsAccepted) {
+        if (userData.role !== "ADMIN" && !userData.termsAccepted) {
           console.log("📋 약관 동의가 필요한 사용자 - 약관 모달 표시");
           // 약관 모달이 자동으로 표시됨 (UserContext의 useEffect에 의해)
           // 약관 동의 완료 후 수동으로 리다이렉션 필요

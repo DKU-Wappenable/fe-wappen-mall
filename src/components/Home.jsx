@@ -4,6 +4,8 @@ import { useUser } from '../components/UserContext';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/Home.css';
 
+const IMAGE_BASE_URL = 'http://localhost:8080'; // 프론트 기준이 아닌 백엔드 기준 URL
+
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [popular, setPopular] = useState([]);
@@ -31,7 +33,7 @@ export default function Home() {
 
         return {
           ...p,
-          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
           category: p.category || (p.title ? '유저디자인' : ''),
           name: p.name || p.title || '유저 디자인',
           createdAt: p.createdAt || new Date().toISOString(),
@@ -61,7 +63,7 @@ export default function Home() {
 
         return {
           ...p,
-          images: p.images?.length ? p.images : [p.image || '/assets/default.png'],
+          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
           category: p.category || (p.title ? '유저디자인' : ''),
           name: p.name || p.title || '유저 디자인',
           createdAt: p.createdAt || new Date().toISOString(),
@@ -123,14 +125,13 @@ export default function Home() {
     }
   };
 
-  const renderProductCard = (p, showLike = true) => (
-  <div key={p.uniqueKey} className="product-card" onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}>
-    <img src={p.images[0]} alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
-    {showLike && (
+  const renderProductCard = (p) => (
+    <div key={p.uniqueKey} className="product-card" onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}>
+      <img  src={p.imageUrls?.[0] ? IMAGE_BASE_URL + p.imageUrls[0] : '/assets/default.png'} 
+      alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
       <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(p); }}>
         {isLiked(p.uniqueKey) ? '💖' : '🤍'}
       </button>
-    )}
     <div className="product-info">
       <h3>{p.name}</h3>
       {p.category === '유저디자인' && p.nickname && (

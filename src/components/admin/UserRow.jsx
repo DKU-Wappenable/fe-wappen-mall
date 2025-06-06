@@ -16,9 +16,9 @@ export default function UserRow({ user, onRoleChange, onDelete, onDetailClick })
       <td>{user.nickname || user.name || '-'}</td>
       <td>
         <select value={user.role} onChange={handleChange}>
-          <option value="user">user</option>
-          <option value="owner">owner</option>
-          <option value="admin">admin</option>
+          <option value="USER">user</option>
+          <option value="SHOP_OWNER">owner</option>
+          <option value="ADMIN">admin</option>
         </select>
       </td>
       <td>

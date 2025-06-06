@@ -1,35 +1,60 @@
-// src/pages/OrderDetailPage.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import { useUser } from '../../components/UserContext';
-export default function OrderDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
+
+export default function OrderHistory() {
+  const [orders, setOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'canceled'
   const { user } = useUser();
+
+  // ✅ 상태값 매핑
+  const statusMap = {
+    PAID: '결제 완료',
+    WAITING_FOR_DEPOSIT: '입금 대기',
+    ORDERED: '주문 완료',
+    CANCELED: '취소됨',
+    COMPLETED: '배송 완료'
+  };
+
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchOrders = async () => {
       try {
-        const res = await axiosInstance.get(`/orders/${id}`);
-        setOrder(res.data);
+        const res = await axiosInstance.get('/orders/user');
+        const sorted = [...res.data].sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+        setOrders(sorted);
       } catch (err) {
-        console.warn('서버 오류, 로컬로 대체');
-        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const found = orders.find(o => o.id.toString() === id.toString());
-        setOrder(found);
+        console.warn('서버 실패 → localStorage 대체');
+        const saved = JSON.parse(localStorage.getItem('orders') || '[]');
+        const sorted = [...saved].sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+        setOrders(sorted);
       }
     };
 
-    fetchOrder();
-  }, [id]);
+    fetchOrders();
+  }, []);
 
-  if (!order) return <div style={{ padding: '2rem' }}>주문 정보를 찾을 수 없습니다.</div>;
+  const cancelOrder = async (id) => {
+    try {
+      await axiosInstance.patch(`/orders/${id}/cancel`);
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: 'CANCELED' } : order
+      );
+      setOrders(updated);
+    } catch (err) {
+      console.warn('서버 실패 → localStorage 대체');
+      const updated = orders.map(order =>
+        order.id === id ? { ...order, status: 'CANCELED' } : order
+      );
+      setOrders(updated);
+      localStorage.setItem('orders', JSON.stringify(updated));
+    }
+  };
 
-  const {
-    product, quantity, totalPrice, paymentMethod,
-    receiver, receiverPhone1, address1, address2, memo
-  } = order;
+  const filteredOrders =
+    activeTab === 'active'
+      ? orders.filter(order => order.status !== 'CANCELED')
+      : orders.filter(order => order.status === 'CANCELED');
 
   return (
     <div style={{ padding: '2rem' }}>
