@@ -68,11 +68,7 @@ export default function Navigation() {
 
   </form>
 </div>
-
-
         <div className="nav-right">
-          
-
           <Link to="/like" className="nav-icon heart-icon">
             <img src="/assets/icons/heart.png" alt="좋아요" className="nav-img-icon" />
           </Link>
@@ -103,7 +99,6 @@ export default function Navigation() {
               {user && (user.role === 'SHOP_OWNER' || user.role === 'ADMIN') && (
                 <button onClick={() => navigate('/admin/upload')}>상품 등록</button>
               )}
-
               <button onClick={handleLogout}>로그아웃</button>
             </>
           ) : (
@@ -112,7 +107,6 @@ export default function Navigation() {
               <Link to="/signup" onClick={() => setShowDropdown(false)}>회원가입</Link>
             </>
           )}
-
               </div>
             )}
           </div>

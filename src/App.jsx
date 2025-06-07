@@ -1,9 +1,9 @@
-//  App.jsx
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import './styles/App.css';
+  //  App.jsx
+  import React, { useEffect } from 'react';
+  import { Routes, Route, Navigate } from 'react-router-dom';
+  import { ToastContainer } from 'react-toastify';
+  import 'react-toastify/dist/ReactToastify.css';
+  import './styles/App.css';
 
 import { useUser } from './components/UserContext';
 import Navigation from './components/Navigation';
@@ -115,11 +115,11 @@ function ProtectedRoute({ children }) {
             <Route path="/collect" element={<ProtectedRoute><MyWappens /></ProtectedRoute>} />
             <Route path="/Like" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
 
-          <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
-          <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />
-          <Route path="/admin/reviews" element={<AdminRoute><AdminReviewDashboard /></AdminRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
-          <Route path="/admin/upload" element={<AdminOrOwnerRoute><ProductUploadPage /></AdminOrOwnerRoute>} />
+            <Route path="/admin/products" element={<AdminRoute><AdminProductList /></AdminRoute>} />
+            <Route path="/admin/edit/:id" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />
+            <Route path="/admin/reviews" element={<AdminRoute><AdminReviewDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><UserManagement /></AdminRoute>} />
+            <Route path="/admin/upload" element={<AdminOrOwnerRoute><ProductUploadPage /></AdminOrOwnerRoute>} />
 
 
           <Route path="/product/:id" element={<ProductDetailPage />} />

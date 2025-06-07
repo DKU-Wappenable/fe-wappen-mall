@@ -31,7 +31,6 @@ export default function AdminDashboard() {
         }
       }
     };
-
     checkAuth();
   }, [user, navigate]);
 
@@ -41,7 +40,6 @@ export default function AdminDashboard() {
     <div className="admin-dashboard-container">
       <h2>관리자 대시보드</h2>
       <p className="admin-welcome">안녕하세요, {user?.name || '관리자'}님</p>
-
       <div className="admin-button-group">
         <button onClick={() => navigate('/admin/upload')}>상품 등록</button>
         <button onClick={() => navigate('/admin/products')}>상품 목록 / 삭제</button>

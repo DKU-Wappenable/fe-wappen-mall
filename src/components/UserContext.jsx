@@ -12,7 +12,7 @@ export const UserProvider = ({ children }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ 로컬 데이터 완전 정리 함수
+  //  로컬 데이터 완전 정리 함수
   const clearAllLocalData = () => {
     // 인증 관련 데이터 제거
     localStorage.removeItem("user");
@@ -39,7 +39,7 @@ export const UserProvider = ({ children }) => {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
 
-      // ✅ 실제 토큰만 설정
+      //  실제 토큰만 설정
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
@@ -72,7 +72,7 @@ export const UserProvider = ({ children }) => {
         console.warn("서버 약관 동의 실패, localStorage로만 처리됨");
       }
 
-      // ✅ 약관 동의 완료 후 현재 위치 확인하여 리다이렉션
+      //  약관 동의 완료 후 현재 위치 확인하여 리다이렉션
       const currentPath = window.location.pathname;
       if (currentPath === "/login" || currentPath === "/signup") {
         console.log("✅ 로그인/회원가입 페이지에서 약관 동의 완료 - 리다이렉션");
@@ -80,7 +80,7 @@ export const UserProvider = ({ children }) => {
         else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
         else navigate("/");
       } else {
-        console.log("✅ 약관 동의 완료 - 현재 페이지 유지");
+        console.log(" 약관 동의 완료 - 현재 페이지 유지");
       }
       
     } catch (err) {

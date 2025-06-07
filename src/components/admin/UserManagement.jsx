@@ -1,4 +1,4 @@
-//  UserManagement.jsx - 서버 연동 + 실패 시 localStorage fallback 처리 (개선됨)
+// src/pages/UserManagement.jsx
 import React, { useEffect, useState } from 'react';
 import '../../styles/AdminUserManagement.css';
 import axiosInstance from '../../api/axiosInstance';
@@ -10,12 +10,12 @@ export default function UserManagement() {
     const fetchUsers = async () => {
       try {
         const res = await axiosInstance.get('/admin/users');
-        setUsers(res.data);
+        setUsers(res.data.content);
       } catch (err) {
         console.warn('서버 실패 → localStorage 대체');
         const fallbackUsers = JSON.parse(localStorage.getItem('users') || '[]');
         const deduplicated = Array.from(
-          new Map(fallbackUsers.map(u => [u.email, u])).values()
+          new Map(fallbackUsers.map(u => [u.id, u])).values()
         );
         setUsers(deduplicated);
       }
@@ -24,40 +24,36 @@ export default function UserManagement() {
     fetchUsers();
   }, []);
 
-  const changeRole = async (email, newRole) => {
+  const changeRole = async (id, newRole) => {
     try {
-      await axiosInstance.put(`/admin/users/${email}/role`, { role: newRole });
-      setUsers(users.map(u => u.email === email ? { ...u, role: newRole } : u));
+      await axiosInstance.put(`/admin/users/${id}/role`, { role: newRole });
+      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
     } catch (err) {
       console.warn('서버 실패 → localStorage 업데이트 시도');
-      const updated = users.map(u => u.email === email ? { ...u, role: newRole } : u);
+      const updated = users.map(u => u.id === id ? { ...u, role: newRole } : u);
       setUsers(updated);
       localStorage.setItem('users', JSON.stringify(updated));
-      const key = email.split('@')[0];
-      localStorage.setItem(key, JSON.stringify(updated.find(u => u.email === email)));
     }
   };
 
-  const deleteUser = async (email) => {
+  const deleteUser = async (id, email) => {
     const confirmed = window.confirm(`${email} 계정을 삭제할까요?`);
     if (!confirmed) return;
 
     try {
-      await axiosInstance.delete(`/admin/users/${email}`);
-      setUsers(users.filter(u => u.email !== email));
+      await axiosInstance.delete(`/admin/users/${id}`);
+      setUsers(users.filter(u => u.id !== id));
     } catch (err) {
       console.warn('서버 실패 → localStorage 삭제 시도');
-      const updated = users.filter(u => u.email !== email);
+      const updated = users.filter(u => u.id !== id);
       setUsers(updated);
       localStorage.setItem('users', JSON.stringify(updated));
-      const key = email.split('@')[0];
-      localStorage.removeItem(key);
     }
   };
 
   return (
     <div className="admin-user-management">
-      <h2> 회원 관리</h2>
+      <h2>회원 관리</h2>
       <table>
         <thead>
           <tr>
@@ -69,13 +65,13 @@ export default function UserManagement() {
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.email}>
+            <tr key={user.id}>
               <td>{user.email}</td>
               <td>{user.nickname || user.name || '-'}</td>
               <td>
                 <select
                   value={user.role}
-                  onChange={(e) => changeRole(user.email, e.target.value)}
+                  onChange={(e) => changeRole(user.id, e.target.value)}
                 >
                   <option value="USER">user</option>
                   <option value="SHOP_OWNER">owner</option>
@@ -83,7 +79,7 @@ export default function UserManagement() {
                 </select>
               </td>
               <td>
-                <button onClick={() => deleteUser(user.email)}>삭제</button>
+                <button onClick={() => deleteUser(user.id, user.email)}>삭제</button>
               </td>
             </tr>
           ))}
