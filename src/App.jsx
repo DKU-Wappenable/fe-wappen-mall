@@ -60,7 +60,7 @@ function ProtectedRoute({ children }) {
   function AdminOrOwnerRoute({ children }) {
     const { user } = useUser();
     if (!user) return <Navigate to="/login" />;
-    if (user.role !== 'admin' && user.role !== 'owner') return <Navigate to="/" />;
+    if (user.role !== 'ADMIN' && user.role !== 'OWNER') return <Navigate to="/" />;
     return children;
   }
 

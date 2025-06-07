@@ -181,7 +181,7 @@ export default function OrderFormPage() {
           </section>
 
           <h2>총 결제 금액: {totalPrice.toLocaleString()}원</h2>
-          <button className="submit-btn" onClick={handleSubmit}>결제하기</button>
+          <button className="submit-btn" onClick={handlePayment}>결제하기</button>
         </div>
 
         <div className="order-summary">
