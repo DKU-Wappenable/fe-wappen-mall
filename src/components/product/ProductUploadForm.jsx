@@ -14,12 +14,16 @@ export default function ProductUploadForm() {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user || (user.role !== 'SHOP_OWNER' && user.role !== 'ADMIN')) {
-      alert('상품 등록 권한이 없습니다.');
-      navigate('/');
-    }
-  }, [user]);
+  if (user === undefined || user === null) {
+    return <div>⏳ 사용자 정보 확인 중...</div>; // 여기선 navigate 안 함
+  }
+  
+  if (user.role !== 'SHOP_OWNER' && user.role !== 'ADMIN') {
+    alert('상품 등록 권한이 없습니다.');
+    navigate('/');
+    return null;
+  }
+  
 
   const categoryOptions = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스',

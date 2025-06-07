@@ -47,7 +47,7 @@ const userId = user?.id || localUser?.id;
     if (!confirm) return;
 
     try {
-      await axiosInstance.delete(`/wappens/${id}`);
+      await axiosInstance.delete(`/custom-images/${id}`);
       setDesigns(prev => prev.filter(d => d.id !== id));
     } catch (err) {
       console.warn('서버 실패, 로컬 삭제 진행');

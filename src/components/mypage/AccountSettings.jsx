@@ -1,29 +1,28 @@
-// src/components/mypage/AccountSettings.jsx
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useUser } from '../UserContext';
 import axiosInstance from '../../api/axiosInstance';
 import '../../styles/AccountSettings.css';
-
+import { useNavigate } from 'react-router-dom';
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 export default function AccountSettings() {
   const { user, setUser, logout } = useUser();
   const [form, setForm] = useState({
-    name: '',
-    phone: '',
+    nickname: '',
     password: '',
   });
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
-
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
   useEffect(() => {
-    if (user) {
+    if (user && user.email && typeof user.nickname === 'string') {
       setForm({
-        name: user.name || '',
-        phone: user.phone || '',
+        nickname: user.nickname,
         password: '',
       });
     }
   }, [user]);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,15 +31,10 @@ export default function AccountSettings() {
   };
 
   const handleSave = async () => {
-    setError("");
+    setError('');
 
-    if (!form.name || !form.phone) {
-      alert('이름과 전화번호를 입력해주세요.');
-      return;
-    }
-
-    if (!/^010\d{7,8}$/.test(form.phone)) {
-      alert('전화번호는 010으로 시작하고 10~11자리여야 합니다.');
+    if (!form.nickname.trim()) {
+      alert('닉네임을 입력해주세요.');
       return;
     }
 
@@ -51,68 +45,48 @@ export default function AccountSettings() {
 
     const updatedUser = {
       ...user,
-      name: form.name,
-      phone: form.phone,
-      ...(form.password ? { password: form.password } : {}),
+      nickname: form.nickname,
     };
 
-    try {
-      //  서버 연동 우선
-      const res = await axiosInstance.put("/users/me", updatedUser);
-      setUser(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
-      setSaved(true);
-    } catch (err) {
-      console.warn("서버 실패, 로컬 fallback 시도:", err);
+    //  비밀번호 변경 요청 (선택적)
+    if (form.password) {
       try {
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        setSaved(true);
-      } catch (fallbackErr) {
-        console.error("정보 저장 실패:", fallbackErr);
-        setError("정보 저장 중 오류가 발생했습니다.");
+        await axiosInstance.post('/users/reset-password', {
+          email: user.email,
+          newPassword: form.password,
+        });
+      } catch (err) {
+        alert('비밀번호 변경 실패: 유효성 또는 서버 문제');
+        return;
       }
     }
-  };
 
-  const socialNames = {
-    kakao: '카카오',
-    naver: '네이버',
-    google: '구글',
-  };
-
-  const handleUnlink = async (provider) => {
-    const confirmed = window.confirm(`${socialNames[provider]} 연동을 해제하시겠습니까?`);
-    if (!confirmed) return;
-
-    const updatedUser = {
-      ...user,
-      linkedSocials: user.linkedSocials?.filter(p => p !== provider),
-    };
-
+    //  닉네임 변경 요청
     try {
-      await axiosInstance.delete(`/users/link/${provider}`);
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      const res = await axiosInstance.put('/users/me', updatedUser);
+
+      //  백엔드 응답이 불완전하면 기존 유저 정보 유지
+      const finalUser = {
+        ...user,
+        ...res?.data, // 덮어쓰기 되되, 없는 건 유지
+        nickname: form.nickname, // 수정된 닉네임 반영
+      };
+
+      setUser(finalUser);
+      localStorage.setItem('user', JSON.stringify(finalUser));
+      toast.success("정보가 성공적으로 저장되었습니다!");
+      setSaved(true);
+      setTimeout(() => {
+        navigate('/');
+      }, 700);
     } catch (err) {
-      console.warn("서버 실패, 로컬 fallback:", err);
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      // ❗ 서버 실패 시 조용히 로컬 fallback
+      const fallbackUser = updatedUser;
+      setUser(fallbackUser);
+      localStorage.setItem('user', JSON.stringify(fallbackUser));
+      setSaved(true);
+      navigate('/');
     }
-  };
-
-  const handleWithdraw = async () => {
-    const confirmed = window.confirm("정말로 탈퇴하시겠습니까?");
-    if (!confirmed) return;
-
-    try {
-      await axiosInstance.delete("/users/withdraw");
-      alert("회원 탈퇴가 완료되었습니다.");
-    } catch (err) {
-      console.warn("서버 탈퇴 실패, 로컬 fallback");
-    }
-
-    logout();
   };
 
   return (
@@ -125,46 +99,24 @@ export default function AccountSettings() {
       </div>
 
       <div className="form-group">
-        <label>이름</label>
-        <input name="name" value={form.name} onChange={handleChange} />
+        <label>닉네임</label>
+        <input name="nickname" value={form.nickname} onChange={handleChange} />
       </div>
 
       <div className="form-group">
         <label>비밀번호 (변경 시에만 입력)</label>
-        <input name="password" type="password" value={form.password} onChange={handleChange} />
+        <input
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          value={form.password}
+          onChange={handleChange}
+        />
       </div>
 
       <button onClick={handleSave}>정보 저장</button>
       {saved && <p className="success-msg">정보가 저장되었습니다!</p>}
       {error && <p className="error-message">{error}</p>}
-
-      {/*  연결된 소셜 계정 표시 */}
-      {user.linkedSocials && user.linkedSocials.length > 0 && (
-        <div className="social-unlink-section">
-          <h4>연결된 소셜 계정</h4>
-          <ul className="social-unlink-list">
-            {user.linkedSocials.map((provider) => (
-              <li key={provider} className="social-item">
-                <div className="social-info">
-                  <img
-                    src={`/assets/${provider}_icon.png`}
-                    alt={`${provider} 아이콘`}
-                    className="social-icon"
-                  />
-                  <span>{socialNames[provider]} 계정 연동됨</span>
-                </div>
-                <button className="unlink-btn" onClick={() => handleUnlink(provider)}>
-                  연동 해제
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <button className="withdraw-btn" onClick={handleWithdraw}>
-        회원 탈퇴
-      </button>
     </div>
   );
 }

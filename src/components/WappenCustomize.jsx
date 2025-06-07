@@ -18,18 +18,19 @@ export default function WappenCustomize() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [activeTab, setActiveTab] = useState('strap');
 
-  const strapTypes = ['strap_green', 'strap_black', 'strap_blue', 'strap_yellow', 'strap_red', 'strap_orange', 'strap_purple'];
+  const strapTypes = ['strap_green', 'strap_black', 'strap_blue', 'strap_yellow', 'strap_red', 'strap_orange', 'strap_purple'
+    ,'red','orange','yellow','green','blue','deepBlue','purple'];
  const wappenTypes = [
   '강아지', '강아지2', '강아지3', '고슴도치', '고양이', '곰', '곰2', '곰3', '늑대', '다람쥐',
   '달', '도넛', '로고', '로고2', '로고3', '마리오', '무지개', '문어', '번개', '별고양이',
   '사자', '수달', '여우', '외계인', '외계인2', '용', '차', '축구공', '카피바라', '커비',
   '코끼리', '토끼', '톱니', '판다', '펭귄', '펭귄2', '해골', '햄버거', '호랑이', '호랑이2',
-  '교수팬더', '총카피바라', '강아지5', '카피바라3', '북극곰', '여우보드', '햄스터', '스키 여우',
-  '기타', '여우3', '카피바라2', '고양이4', '버섯', '꿀벌', '샌드위치', '기린', '케이크', '여우2',
-  '코끼리2', '부엉이2', '고양이3', '용2', '나무늘보', '개구리', '부엉이', '고양이2', '강아지4'
+  '교수팬더', '총햄스터', '강아지5', '카피바라3', '북극곰', '여우보드', '햄스터', '스키 여우',
+  '기타', '여우3', '헤드셋카피바라', '고양이4', '버섯', '꿀벌', '샌드위치', '기린', '케이크', '여우2',
+  '코끼리2', '부엉이2', '고양이3', '용2', '나무늘보', '개구리', '부엉이', '고양이2', '강아지4','호랑이3'
 ];
 
-  // 실제 존재하는 텍스트 이미지 파일 이름 기반 배열
+  // 실제 존재하는 텍스트   이미지 파일 이름 기반 배열
   const textImageTypes = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'row a', 'row b', 'row d', 'row e', 'row f','row g', 'row h', 'row i', 'row j', 'row k', 'row l', 'row m', 'row n', 'row o', 'row p'
@@ -115,7 +116,8 @@ export default function WappenCustomize() {
         customizedImageUrl: imageData,
         price: totalPrice,
         createdAt: new Date().toISOString(),
-        owner: user?.id || 'unknown'
+        owner: user?.id || 'unknown',
+        title: '커스터마이징 디자인'
       };
 
       await axiosInstance.post('/custom-images/save', savedDesign);
@@ -154,7 +156,7 @@ export default function WappenCustomize() {
                 draggable={activeTab === 'wappen'}
                 onDragStart={activeTab === 'wappen' ? (e) => handleDragStart(e, type) : undefined}
               >
-                <img src={`/assets/${type}.png`} alt={type} />
+                <img src={`/assets/${type}.png`} alt={type} crossOrigin="anonymous" />
                 <span>{type}</span>
               </div>
             ))}

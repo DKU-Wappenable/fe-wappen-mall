@@ -136,6 +136,21 @@ export default function ProductDetailPage() {
           결제하기
         </button>
       </div>
+      <button
+  onClick={() => window.history.back()}
+  style={{
+    marginBottom: '1rem',
+    padding: '0.4rem 1rem',
+    fontSize: '14px',
+    backgroundColor: '#f5f5f5',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    color: '#000' 
+  }}
+>
+  ← 뒤로가기
+</button>
 
       {reviews.length > 0 && (
         <div style={{ marginTop: '2rem' }}>
