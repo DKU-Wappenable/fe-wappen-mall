@@ -29,7 +29,7 @@ export default function WappenCustomize() {
   '코끼리2', '부엉이2', '고양이3', '용2', '나무늘보', '개구리', '부엉이', '고양이2', '강아지4'
 ];
 
-  // 실제 존재하는 텍스트 이미지 파일 이름 기반 배열
+  // 실제 존재하는 텍스트   이미지 파일 이름 기반 배열
   const textImageTypes = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'row a', 'row b', 'row d', 'row e', 'row f','row g', 'row h', 'row i', 'row j', 'row k', 'row l', 'row m', 'row n', 'row o', 'row p'
@@ -115,7 +115,8 @@ export default function WappenCustomize() {
         customizedImageUrl: imageData,
         price: totalPrice,
         createdAt: new Date().toISOString(),
-        owner: user?.id || 'unknown'
+        owner: user?.id || 'unknown',
+        title: '커스터마이징 디자인'
       };
 
       await axiosInstance.post('/custom-images/save', savedDesign);
@@ -154,7 +155,7 @@ export default function WappenCustomize() {
                 draggable={activeTab === 'wappen'}
                 onDragStart={activeTab === 'wappen' ? (e) => handleDragStart(e, type) : undefined}
               >
-                <img src={`/assets/${type}.png`} alt={type} />
+                <img src={`/assets/${type}.png`} alt={type} crossOrigin="anonymous" />
                 <span>{type}</span>
               </div>
             ))}
