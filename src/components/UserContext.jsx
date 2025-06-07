@@ -1,4 +1,5 @@
 // src/components/UserContext.jsx
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
@@ -12,22 +13,15 @@ export const UserProvider = ({ children }) => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const navigate = useNavigate();
 
-  //  로컬 데이터 완전 정리 함수
   const clearAllLocalData = () => {
-    // 인증 관련 데이터 제거
     localStorage.removeItem("user");
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    
-    // ❌ 기존 로컬 사용자 데이터 제거 (개발용)
     localStorage.removeItem("users");
     localStorage.removeItem("admin");
     localStorage.removeItem("owner");
     localStorage.removeItem("test");
-    
-    // axios 헤더 정리
     delete axiosInstance.defaults.headers.common["Authorization"];
-    
     console.log("🧹 모든 로컬 데이터 정리 완료");
   };
 
@@ -38,15 +32,10 @@ export const UserProvider = ({ children }) => {
     if (storedUser && token) {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
-
-      //  실제 토큰만 설정
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      if (parsed.role !== "ADMIN" && !parsed.termsAccepted) {
-        setShowTermsModal(true);
-      }
+      // ❌ 모달 조건 판단은 여기서 제거
     } else {
-      // ❌ 토큰이 없으면 모든 데이터 정리
       clearAllLocalData();
     }
 
@@ -54,41 +43,48 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && user.role !== "ADMIN" && !user.termsAccepted) {
-      setShowTermsModal(true);
+    if (!user) return;
+  
+    // 모달 상태와 조건이 다를 때만 업데이트
+    const shouldShow = user.role !== "ADMIN" && !user.termsAccepted;
+    if (showTermsModal !== shouldShow) {
+      setShowTermsModal(shouldShow);
     }
-  }, [user]);
+  }, [user, showTermsModal]);
+  
+  
 
   const acceptTerms = async () => {
     try {
-      const updatedUser = { ...user, termsAccepted: true };
+      await axiosInstance.put("/users/agree-terms", {
+        terms: true,
+        privacy: true,
+        financial: true,
+        marketing: false,
+      });
+
+      const res = await axiosInstance.get("/users/me");
+      const updatedUser = res.data;
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      setShowTermsModal(false);
 
-      try {
-        await axiosInstance.put("/users/agree-terms");
-      } catch (err) {
-        console.warn("서버 약관 동의 실패, localStorage로만 처리됨");
+      console.log("✅ 약관 동의 후 user:", updatedUser);
+
+      if (updatedUser.termsAccepted) {
+        setShowTermsModal(false);
       }
 
-      //  약관 동의 완료 후 현재 위치 확인하여 리다이렉션
       const currentPath = window.location.pathname;
       if (currentPath === "/login" || currentPath === "/signup") {
-        console.log("✅ 로그인/회원가입 페이지에서 약관 동의 완료 - 리다이렉션");
         if (updatedUser.role === "ADMIN") navigate("/admin");
         else if (updatedUser.role === "SHOP_OWNER") navigate("/admin/upload");
         else navigate("/");
-      } else {
-        console.log(" 약관 동의 완료 - 현재 페이지 유지");
       }
-      
     } catch (err) {
       console.error("약관 동의 실패:", err);
     }
   };
 
-  
   const login = async ({ id, password }) => {
     try {
       const res = await axiosInstance.post("/users/login", { id, password });
@@ -100,9 +96,6 @@ export const UserProvider = ({ children }) => {
       const userRes = await axiosInstance.get("/users/me");
       const userData = userRes.data;
 
-      console.log("🧾 로그인 후 유저 정보 확인:", userData); // 👈 id 포함되어 있는지 확인
-
-
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
@@ -112,14 +105,9 @@ export const UserProvider = ({ children }) => {
       else navigate("/");
     } catch (err) {
       console.error("로그인 실패:", err);
-      
-      // ❌ localStorage fallback 제거 - 실제 서버 응답에만 의존
-      // 토큰 정리
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       delete axiosInstance.defaults.headers.common["Authorization"];
-      
-      // 에러를 다시 throw하여 호출하는 곳에서 처리하도록 함
       throw new Error("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
     }
   };
@@ -153,7 +141,7 @@ export const UserProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    clearAllLocalData(); // 완전한 데이터 정리
+    clearAllLocalData();
   };
 
   return (
@@ -171,7 +159,7 @@ export const UserProvider = ({ children }) => {
     >
       {children}
       {showTermsModal && <TermsModal onAgree={acceptTerms} />}
-    </UserContext.Provider> 
+    </UserContext.Provider>
   );
 };
 

@@ -18,7 +18,8 @@ export default function WappenCustomize() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [activeTab, setActiveTab] = useState('strap');
 
-  const strapTypes = ['strap_green', 'strap_black', 'strap_blue', 'strap_yellow', 'strap_red', 'strap_orange', 'strap_purple'];
+  const strapTypes = ['strap_green', 'strap_black', 'strap_blue', 'strap_yellow', 'strap_red', 'strap_orange', 'strap_purple'
+    ,'red','orange','yellow','green','blue','deepBlue','purple'];
  const wappenTypes = [
   '강아지', '강아지2', '강아지3', '고슴도치', '고양이', '곰', '곰2', '곰3', '늑대', '다람쥐',
   '달', '도넛', '로고', '로고2', '로고3', '마리오', '무지개', '문어', '번개', '별고양이',

@@ -136,3 +136,17 @@ select {
 .product-header h2 {
   white-space: nowrap;
 }
+
+.category-page-wrapper {
+  display: flex;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 200px;
+  margin-right: 20px;
+}
+
+.category-main {
+  flex: 1;
+}

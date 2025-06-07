@@ -5,213 +5,196 @@ import { useUser } from './UserContext';
 import '../styles/CategoryProductPage.css';
 
 const IMAGE_BASE_URL = 'http://localhost:8080';
+
 export default function CategoryProductPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [category, setCategory] = useState('전체');
   const [products, setProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
+  const [liked, setLiked] = useState([]);
   const [sortBy, setSortBy] = useState('최신순');
   const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
   const { user } = useUser();
-  const currentUserEmail = user?.email || 'user';
-  const [liked, setLiked] = useState([]);
 
   const categoryList = [
-    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
-    '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
+    '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스',
+    '스트랩', '폰', '리빙', '스포츠', '키즈', '애견', '와펜세트', '유저디자인'
   ];
 
   useEffect(() => {
-    setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
-
-    const cat = searchParams.get('category') || '전체';
-    const keyword = searchParams.get('keyword') || '';
-    const sort = searchParams.get('sort') || '최신순';
-    setCategory(cat);
-    setSortBy(sort);
-
-    const fetchData = async () => {
-      try {
-        const res = await axiosInstance.get('/products');
-        const serverProducts = res.data.content || [];
-        
-        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
-          ...d,
-          name: d.title || '',
-          price: d.price || 1000,
-          imageUrls: [d.image || '/assets/default.png'],
-          category: '유저디자인',
-          description: d.description || '',
-          createdAt: d.createdAt || new Date().toISOString(),
-          createdBy: d.createdBy || d.owner || currentUserEmail,
-          uniqueKey: `${d.id}-${index}`
-        }));
-
-        const all = [...serverProducts, ...shared];
-        setAllProducts(all);
-
-        const filtered = all.filter(p => {
-          const matchCat = cat === '전체' || p.category === cat;
-          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
-          return matchCat && matchKeyword;
-        });
-
-        const sorted = [...filtered].sort((a, b) => {
-          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        });
-
-        setProducts(sorted);
-      } catch (err) {
-        console.warn('서버 실패, 로컬로 대체');
-
-        const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]').map((d, index) => ({
-          ...d,
-          name: d.title || '',
-          price: d.price || 1000,
-          imageUrls: [d.image || '/assets/default.png'],
-          category: '유저디자인',
-          description: d.description || '',
-          createdAt: d.createdAt || new Date().toISOString(),
-          createdBy: d.createdBy || d.owner || currentUserEmail,
-          uniqueKey: `${d.id}-${index}`
-        }));
-
-        const local = JSON.parse(localStorage.getItem('products') || '[]').map((p, index) => ({
-          ...p,
-          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
-          category: p.category || '',
-          uniqueKey: `${p.id}-${index}`
-        }));
-
-        const all = [...local, ...shared];
-        setAllProducts(all);
-
-        const filtered = all.filter(p => {
-          const matchCat = cat === '전체' || p.category === cat;
-          const matchKeyword = (p.name?.toLowerCase() || '').includes(keyword.toLowerCase());
-          return matchCat && matchKeyword;
-        });
-
-        const sorted = [...filtered].sort((a, b) => {
-          if (sort === '가격순') return (a.price ?? 0) - (b.price ?? 0);
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-        });
-
-        setProducts(sorted);
-      }
-    };
-
-    fetchData();
+    const catParam = searchParams.get('category');
+    if (catParam) {
+      setCategory(catParam);
+    }
   }, [searchParams]);
 
-  const handleCategoryClick = (cat) => {
-    setSearchParams({ ...Object.fromEntries(searchParams.entries()), category: cat });
+  useEffect(() => {
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    try {
+      const [productRes, likedRes] = await Promise.all([
+        axiosInstance.get('/products'),
+        user ? axiosInstance.get('/likes', { params: { userId: user.id } }) : Promise.resolve({ data: [] })
+      ]);
+
+      const productList = Array.isArray(productRes.data)
+        ? productRes.data
+        : productRes.data.content || [];
+
+        //종진 추가 좋아요
+        const likedList = Array.isArray(likedRes.data)
+        ? likedRes.data
+        : likedRes.data.results || [];
+        const likedIds = likedList.map(l => l.productId);
+
+      const productsWithLike = productList.map((p, index) => ({
+        ...p,
+        category: p.category || (p.title ? '유저디자인' : ''),
+        name: p.name || p.title || '유저 디자인',
+        imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
+        likes: p.likeCount || 0,
+        nickname: p.category === '유저디자인'
+          ? p.createdBy || p.owner || user?.email || 'unknown'
+          : '',
+        uniqueKey: `${p.id}-${p.createdBy || p.owner || index}`,
+        liked: likedIds.includes(p.id),
+      }));
+
+      setAllProducts(productsWithLike);
+      setLiked(likedIds);
+
+      filterAndSort(productsWithLike, category, sortBy);
+    } catch (err) {
+      console.error('❌ 상품 조회 실패', err);
+    }
   };
 
-  const handleSortChange = (e) => {
-    setSearchParams({ ...Object.fromEntries(searchParams.entries()), sort: e.target.value });
+  const filterAndSort = (productList, category, sortBy) => {
+    let filtered = category === '전체'
+      ? productList
+      : productList.filter(p => p.category === category);
+
+    if (sortBy === '최신순') {
+      filtered = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === '인기순') {
+      filtered = filtered.sort((a, b) => b.likes - a.likes);
+    }
+
+    setProducts(filtered);
   };
 
-  const handleResetSearch = () => {
-    setSearchParams({ category: '전체' });
-  };
+  useEffect(() => {
+    filterAndSort(allProducts, category, sortBy);
+  }, [category, sortBy]);
 
-  const handleLoadMore = () => {
+  const handleLike = async (product) => {
+    if (!user) {
+      alert('로그인 후 이용해주세요');
+      navigate('/login');
+      return;
+    }
+  
+    try {
+      let updatedLikeCount = product.likes;
+  
+      if (liked.includes(product.id)) {
+        await axiosInstance.delete(`/likes/${product.id}`, {
+          params: { userId: user.id }
+        });
+        setLiked(prev => prev.filter(id => id !== product.id));
+        updatedLikeCount -= 1;
+      } else {
+        await axiosInstance.post('/likes', {
+          userId: user.id,
+          productId: product.id
+        });
+        setLiked(prev => [...prev, product.id]);
+        updatedLikeCount += 1;
+      }
+  
+      //  product 상태 업데이트
+      setAllProducts(prev =>
+        prev.map(p =>
+          p.id === product.id ? { ...p, likes: updatedLikeCount, liked: !p.liked } : p
+        )
+      );
+  
+    } catch (err) {
+      console.error('❌ 좋아요 처리 실패', err);
+    }
+  };
+  
+
+  const isLiked = (id) => liked.includes(id); // 또는 p.liked를 직접 써도 됨
+
+  const loadMore = () => {
     setVisibleCount(prev => prev + 8);
   };
 
-  const toggleLike = (product) => {
-    const current = JSON.parse(localStorage.getItem('liked') || '[]');
-    const exists = current.some(p => p.id === product.id);
-    const updated = exists
-      ? current.filter(p => p.id !== product.id)
-      : [{ ...product }, ...current];
-    localStorage.setItem('liked', JSON.stringify(updated));
-    setLiked(updated);
+  const handleCategoryClick = (cat) => {
+    setCategory(cat);
+    navigate(`/products?category=${cat}`);
   };
 
-  const isLiked = (id) => liked.some(p => p.id === id);
-
   return (
-    <div className="category-page">
-      <aside className="category-sidebar">
-        {categoryList.map((cat) => (
+    <div className="category-page-wrapper">
+      <aside className="sidebar">
+        {categoryList.map(cat => (
           <button
             key={cat}
+            className={category === cat ? 'active' : ''}
             onClick={() => handleCategoryClick(cat)}
-            className={cat === category ? 'active' : ''}
           >
-            {cat}
+            • {cat}
           </button>
         ))}
       </aside>
 
-      <main className="product-area">
-        <div className="product-header">
-          <h2>{category} 상품</h2>
-          <div className="filter-row">
-            <button className="reset-btn" onClick={handleResetSearch}>
-              검색 초기화
-            </button>
-            <select value={sortBy} onChange={handleSortChange}>
-              <option value="최신순">최신순</option>
-              <option value="가격순">가격순</option>
-            </select>
-          </div>
+      <main className="category-main">
+        <div className="category-sort-bar">
+          <span>{category} ({products.length})</span>
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            <option value="최신순">최신순</option>
+            <option value="인기순">인기순</option>
+          </select>
         </div>
 
-        {products.length === 0 ? (
-          <p>상품이 없습니다.</p>
-        ) : (
-          <>
-            <div className="product-grid">
-              {products.slice(0, visibleCount).map((p) => (
-                <div
-                  key={p.uniqueKey}
-                  className="product-card"
-                  style={{ position: 'relative' }}
-                  onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
-                >
-                  <img
-                    src={IMAGE_BASE_URL + p.imageUrls?.[0] || '/assets/default.png'}
-                    alt={p.name}
-                    onError={(e) => (e.target.src = '/assets/default.png')}
-                  />
-                  {/* 좋아요 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike(p);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '1.5rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isLiked(p.id) ? '💖' : '🤍'}
-                  </button>
-
-                  <h3>{p.name}</h3>
-                  {p.createdBy && (
-                    <p style={{ fontSize: '13px', color: '#666' }}>by {p.createdBy}</p>
-                  )}
-                  <p>₩{(p.price ?? 0).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-            {visibleCount < products.length && (
-              <button className="load-more-btn" onClick={handleLoadMore}>
-                더보기 +
+        <div className="product-grid">
+          {products.slice(0, visibleCount).map(p => (
+            <div
+              key={p.uniqueKey}
+              className="product-card"
+              onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}
+            >
+              <img
+                src={p.imageUrls?.[0] ? IMAGE_BASE_URL + p.imageUrls[0] : '/assets/default.png'}
+                alt={p.name}
+                onError={(e) => (e.target.src = '/assets/default.png')}
+              />
+              <button
+                className="like-button"
+                onClick={(e) => { e.stopPropagation(); handleLike(p); }}
+              >
+                {isLiked(p.id) ? '💖' : '🤍'}
               </button>
-            )}
-          </>
+              <div className="product-info">
+                <h3>{p.name}</h3>
+                {p.category === '유저디자인' && p.nickname && (
+                  <p className="creator">by {p.nickname}</p>
+                )}
+                <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {visibleCount < products.length && (
+          <div className="load-more">
+            <button onClick={loadMore}>더 보기</button>
+          </div>
         )}
       </main>
     </div>

@@ -4,7 +4,7 @@ import { useUser } from '../components/UserContext';
 import axiosInstance from '../api/axiosInstance';
 import '../styles/Home.css';
 
-const IMAGE_BASE_URL = 'http://localhost:8080'; // 프론트 기준이 아닌 백엔드 기준 URL
+const IMAGE_BASE_URL = 'http://localhost:8080';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -12,7 +12,6 @@ export default function Home() {
   const [liked, setLiked] = useState([]);
   const navigate = useNavigate();
   const { user } = useUser();
-  const currentUserEmail = JSON.parse(localStorage.getItem("user"))?.email || "user";
 
   const categories = [
     '전체', '의류', '굿즈', '패션', '빈티지', '문구/오피스', '스트랩',
@@ -20,102 +19,71 @@ export default function Home() {
   ];
 
   const loadProducts = async () => {
-    const likedItems = JSON.parse(localStorage.getItem('liked') || '[]');
-
     try {
-      const res = await axiosInstance.get('/products');
-      const official = res.data;
-      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+      const [productRes, likedRes] = await Promise.all([
+        axiosInstance.get('/products/products-with-likes'),
+        user ? axiosInstance.get('/likes', { params: { userId: user.id } }) : Promise.resolve({ data: [] })
+      ]);
 
-      const merged = [...official, ...shared].map((p, i) => {
-        const uniqueKey = `${p.id}-${p.owner || p.author || i}`;
-        const likedMatch = likedItems.find(lp => `${lp.id}-${lp.owner || lp.author || i}` === uniqueKey);
+      const productList = productRes.data || [];
+      const likedList = Array.isArray(likedRes.data) ? likedRes.data : [];
 
-        return {
-          ...p,
-          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
-          category: p.category || (p.title ? '유저디자인' : ''),
-          name: p.name || p.title || '유저 디자인',
-          createdAt: p.createdAt || new Date().toISOString(),
-          nickname: p.category === '유저디자인'
-            ? p.createdBy || p.owner || currentUserEmail
-            : '',
-          uniqueKey,
-          likes: likedMatch ? 1 : 0
-        };
-      });
+      const likedIds = likedList.map(l => l.productId);
 
-      setProducts(merged);
-      setPopular(
-        [...merged]
-          .filter(p => (p.likes || 0) > 0)
-          .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-          .slice(0, 10)
-      );
-    } catch {
-      console.warn('서버 실패, 로컬에서 대체');
-      const local = JSON.parse(localStorage.getItem('products') || '[]');
-      const shared = JSON.parse(localStorage.getItem('sharedWappens') || '[]');
+      const processed = productList.map(p => ({
+        ...p,
+        imageUrls: p.imageUrls?.length ? p.imageUrls : ['/assets/default.png'],
+        category: p.category || '기타',
+        name: p.name || '이름 없음',
+        createdAt: p.createdAt || new Date().toISOString(),
+        nickname: p.category === '유저디자인' ? (p.createdBy || p.owner || user?.email || '') : '',
+        uniqueKey: `${p.id}-${p.nickname || ''}`,
+        likes: p.likeCount || 0,
+        liked: likedIds.includes(p.id),
+      }));
 
-      const merged = [...local, ...shared].map((p, i) => {
-        const uniqueKey = `${p.id}-${p.owner || p.author || i}`;
-        const likedMatch = likedItems.find(lp => `${lp.id}-${lp.owner || lp.author || i}` === uniqueKey);
+      setProducts(processed);
+      setLiked(likedIds);
 
-        return {
-          ...p,
-          imageUrls: p.imageUrls?.length ? p.imageUrls : [p.image || '/assets/default.png'],
-          category: p.category || (p.title ? '유저디자인' : ''),
-          name: p.name || p.title || '유저 디자인',
-          createdAt: p.createdAt || new Date().toISOString(),
-          nickname: p.category === '유저디자인'
-            ? p.createdBy || p.owner || currentUserEmail
-            : '',
-          uniqueKey,
-          likes: likedMatch ? 1 : 0
-        };
-      });
+      const sortedPopular = [...processed]
+        .filter(p => p.likes > 0)
+        .sort((a, b) => b.likes - a.likes)
+        .slice(0, 10);
 
-      setProducts(merged);
-      setPopular(
-        [...merged]
-          .filter(p => (p.likes || 0) > 0)
-          .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-          .slice(0, 10)
-      );
+      setPopular(sortedPopular);
+    } catch (err) {
+      console.error('❌ 상품 로딩 실패', err);
     }
   };
 
   useEffect(() => {
+    if (user) {
     loadProducts();
-    setLiked(JSON.parse(localStorage.getItem('liked') || '[]'));
-  }, []);
+  }
+  }, [user]);
 
-  const toggleLike = (product) => {
-    const current = JSON.parse(localStorage.getItem('liked') || '[]');
-    const exists = current.some(p => p.uniqueKey === product.uniqueKey);
-
-    if (!product.likes) product.likes = 0;
-    product.likes += exists ? -1 : 1;
-
-    const updated = exists
-      ? current.filter(p => p.uniqueKey !== product.uniqueKey)
-      : [{ ...product }, ...current];
-
-    localStorage.setItem('liked', JSON.stringify(updated));
-    setLiked(updated);
-
-    setProducts(prev =>
-      prev.map(p =>
-        p.uniqueKey === product.uniqueKey
-          ? { ...p, likes: product.likes }
-          : p
-      )
-    );
+  const handleLikeToggle = async (productId) => {
+    try {
+      if (!user) {
+        alert('로그인 후 이용해주세요.');
+        return;
+      }
+  
+      const isLiked = liked.includes(productId);
+  
+      if (isLiked) {
+        await axiosInstance.delete(`/likes/${productId}`, { params: { userId: user.id } });
+      } else {
+        await axiosInstance.post('/likes', { userId: user.id, productId });
+      }
+  
+      // 좋아요 상태 반영 위해 다시 전체 로드
+      await loadProducts();
+    } catch (error) {
+      console.error('❌ 좋아요 처리 실패', error);
+    }
   };
-
-  const isLiked = (key) => liked.some(p => p.uniqueKey === key);
-
-  const handleCategoryClick = (cat) => navigate(`/products?category=${cat}`);
+  
   const handleStartClick = () => {
     if (!user) {
       alert('로그인 후 이용해주세요');
@@ -125,23 +93,22 @@ export default function Home() {
     }
   };
 
+  const handleCategoryClick = (cat) => navigate(`/products?category=${cat}`);
+
   const renderProductCard = (p) => (
     <div key={p.uniqueKey} className="product-card" onClick={() => navigate(`/product/${p.id}?category=${p.category}`)}>
-      <img  src={p.imageUrls?.[0] ? IMAGE_BASE_URL + p.imageUrls[0] : '/assets/default.png'} 
-      alt={p.name} onError={(e) => (e.target.src = '/assets/default.png')} />
-      <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(p); }}>
-        {isLiked(p.uniqueKey) ? '💖' : '🤍'}
-      </button>
-    <div className="product-info">
-      <h3>{p.name}</h3>
-      {p.category === '유저디자인' && p.nickname && (
-        <p className="creator">by {p.nickname}</p>
-      )}
-      <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
+      <img
+        src={p.imageUrls?.[0] ? IMAGE_BASE_URL + p.imageUrls[0] : '/assets/default.png'}
+        alt={p.name}
+        onError={(e) => (e.target.src = '/assets/default.png')}
+      />
+      <div className="product-info">
+        <h3>{p.name}</h3>
+        {p.category === '유저디자인' && p.nickname && <p className="creator">by {p.nickname}</p>}
+        <p className="price">₩{(p.price ?? 0).toLocaleString()}</p>
+      </div>
     </div>
-  </div>
-);
-
+  );
 
   return (
     <div className="home-wrapper">
@@ -160,10 +127,9 @@ export default function Home() {
           <section>
             <h2 className="section-title">인기 와펜 상품</h2>
             <div className="product-scroll with-scroll">
-              {popular.map(p => renderProductCard(p, false))}
+              {popular.map(p => renderProductCard(p))}
             </div>
           </section>
-
         </main>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import "../../styles/TermsModal.css";
+import axiosInstance from "../../api/axiosInstance";
 
 export default function TermsModal({ onAgree }) {
   const [checked, setChecked] = useState({
@@ -96,71 +97,80 @@ export default function TermsModal({ onAgree }) {
               </div>
             </label>
 
-             {/* (필수) 이용약관 동의 */}
-  <label className="terms-checkbox">
-    <div className="checkbox-left">
-      <input
-        type="checkbox"
-        checked={checked.terms}
-        onChange={() => handleCheck("terms")}
-      />
-      <span>(필수) 이용약관 동의</span>
-    </div>
-    <button className="more-btn" onClick={() => setActiveDetail("terms")}>
-      더보기
-    </button>
-  </label>
+            <label className="terms-checkbox">
+              <div className="checkbox-left">
+                <input
+                  type="checkbox"
+                  checked={checked.terms}
+                  onChange={() => handleCheck("terms")}
+                />
+                <span>(필수) 이용약관 동의</span>
+              </div>
+              <button className="more-btn" onClick={() => setActiveDetail("terms")}>
+                더보기
+              </button>
+            </label>
 
-  {/* (필수) 개인정보 수집 동의 */}
-  <label className="terms-checkbox">
-    <div className="checkbox-left">
-      <input
-        type="checkbox"
-        checked={checked.privacy}
-        onChange={() => handleCheck("privacy")}
-      />
-      <span>(필수) 개인정보 수집 동의</span>
-    </div>
-    <button className="more-btn" onClick={() => setActiveDetail("privacy")}>
-      더보기
-    </button>
-  </label>
+            <label className="terms-checkbox">
+              <div className="checkbox-left">
+                <input
+                  type="checkbox"
+                  checked={checked.privacy}
+                  onChange={() => handleCheck("privacy")}
+                />
+                <span>(필수) 개인정보 수집 동의</span>
+              </div>
+              <button className="more-btn" onClick={() => setActiveDetail("privacy")}>
+                더보기
+              </button>
+            </label>
 
-  {/* (필수) 전자 금융 거래 이용 약관 동의 */}
-  <label className="terms-checkbox">
-    <div className="checkbox-left">
-      <input
-        type="checkbox"
-        checked={checked.financial}
-        onChange={() => handleCheck("financial")}
-      />
-      <span>(필수) 전자 금융 거래 이용 약관 동의</span>
-    </div>
-    <button className="more-btn" onClick={() => setActiveDetail("financial")}>
-      더보기
-    </button>
-  </label>
+            <label className="terms-checkbox">
+              <div className="checkbox-left">
+                <input
+                  type="checkbox"
+                  checked={checked.financial}
+                  onChange={() => handleCheck("financial")}
+                />
+                <span>(필수) 전자 금융 거래 이용 약관 동의</span>
+              </div>
+              <button className="more-btn" onClick={() => setActiveDetail("financial")}>
+                더보기
+              </button>
+            </label>
 
-  {/* (선택) 마케팅 이용 약관 동의 */}
-  <label className="terms-checkbox">
-    <div className="checkbox-left">
-      <input
-        type="checkbox"
-        checked={checked.marketing}
-        onChange={() => handleCheck("marketing")}
-      />
-      <span>(선택) 이벤트/마케팅 이용 약관 동의</span>
-    </div>
-    <button className="more-btn" onClick={() => setActiveDetail("marketing")}>
-      더보기
-    </button>
-  </label>
-</div>
+            <label className="terms-checkbox">
+              <div className="checkbox-left">
+                <input
+                  type="checkbox"
+                  checked={checked.marketing}
+                  onChange={() => handleCheck("marketing")}
+                />
+                <span>(선택) 이벤트/마케팅 이용 약관 동의</span>
+              </div>
+              <button className="more-btn" onClick={() => setActiveDetail("marketing")}>
+                더보기
+              </button>
+            </label>
+          </div>
 
           <button
             className="next-button"
             disabled={!isRequiredAllChecked}
-            onClick={onAgree}
+            onClick={async () => {
+              try {
+                await axiosInstance.put("/users/agree-terms", {
+                  terms: checked.terms,
+                  privacy: checked.privacy,
+                  financial: checked.financial,
+                  marketing: checked.marketing,
+                });
+                onAgree(); // 서버 저장 성공 시 다음 진행
+              } catch (err) {
+                console.error("약관 동의 저장 실패:", err);
+                alert("약관 동의 저장에 실패했습니다.");
+              }
+            }}
           >
             다음
           </button>
