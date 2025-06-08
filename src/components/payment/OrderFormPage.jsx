@@ -22,8 +22,13 @@ export default function OrderFormPage() {
     address2: '',
     memo: '',
     paymentMethod: 'CARD',
-    agree1: false,
-    agree2: false,
+    coupon: '',
+    usePoints: false,
+    agreeTerms: false,
+    agreePrivacy: false,
+    agreeFinancial: false,
+    agreeMarketing: false,
+    agreeAll: false,
   });
   const [discount, setDiscount] = useState(0);
 
@@ -41,7 +46,7 @@ export default function OrderFormPage() {
       setItems(state.items);
     } else if (state?.product) {
       setItems([{ product: state.product, quantity: 1 }]);
-    } else {
+    } else {  
       alert('잘못된 접근입니다.');
       navigate('/');
     }
@@ -55,17 +60,46 @@ export default function OrderFormPage() {
     }));
   };
 
+  const handleAgreeAll = (e) => {
+    const { checked } = e.target;
+    setForm(prev => ({
+      ...prev,
+      agreeAll: checked,
+      agreeTerms: checked,
+      agreePrivacy: checked,
+      agreeFinancial: checked,
+      agreeMarketing: checked,
+    }));
+  };
+
+  const handleIndividualAgree = (e) => {
+    const { name, checked } = e.target;
+    const updatedForm = {
+      ...form,
+      [name]: checked
+    };
+    
+    const allRequired = updatedForm.agreeTerms && updatedForm.agreePrivacy && updatedForm.agreeFinancial;
+    const allChecked = allRequired && updatedForm.agreeMarketing;
+    
+    setForm({
+      ...updatedForm,
+      agreeAll: allChecked
+    });
+  };
+
   const applyCoupon = () => {
     if (form.coupon.trim().toUpperCase() === 'WAPPEN3000') setDiscount(3000);
     else setDiscount(0);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
-    if (!form.agreeTerms || !form.agreePrivacy) {
-      alert('약관에 동의해 주세요.');
+    // 필수 약관 동의 확인
+    if (!form.agreeTerms || !form.agreePrivacy || !form.agreeFinancial) {
+      alert('필수 약관에 모두 동의해 주세요.');
       setIsProcessing(false);
       return;
     }
@@ -74,37 +108,82 @@ export default function OrderFormPage() {
       sum + item.product.price * item.quantity, 0);
     const totalPrice = productTotal - discount;
 
-    const buyer = {
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      address: `${form.address1} ${form.address2}`,
-    };
+    // ✅ 무통장입금이 아닌 경우 실제 주문 생성 API 호출
+    if (form.paymentMethod !== 'BANK') {
+      try {
+        // ✅ 1단계: 약관 동의 저장
+        await axiosInstance.put('/users/agree-terms', {
+          terms: form.agreeTerms,
+          privacy: form.agreePrivacy,
+          financial: form.agreeFinancial,
+          marketing: form.agreeMarketing,
+        });
 
-    if (form.paymentMethod === '무통장입금') {
+        // ✅ 2단계: 실제 주문 생성 API 호출
+        const orderRequest = {
+          items: items.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity
+          })),
+          paymentMethod: form.paymentMethod,
+          deliveryAddress: `${form.address1} ${form.address2}`,
+          deliveryRequest: form.memo || ''
+        };
+
+        const orderResponse = await axiosInstance.post('/orders', orderRequest);
+        console.log('✅ 주문 생성 성공:', orderResponse.data);
+
+        // 주문 생성 성공 시 결제 페이지로 이동
+        const buyer = {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          address: `${form.address1} ${form.address2}`,
+        };
+
+        setIsProcessing(false);
+        navigate('/payment/mock', {
+          state: {
+            items,
+            amount: totalPrice,
+            buyer,
+            formData: form,
+            discount,
+            orderId: orderResponse.data.orderId // 생성된 주문 ID 전달
+          }
+        });
+        return;
+
+      } catch (err) {
+        console.warn('주문 생성 실패, 로컬 처리로 fallback:', err);
+        // 실패 시 기존 로컬 처리 로직 실행
+      }
+    }
+
+    // ✅ 무통장입금이거나 API 실패 시 기존 로컬 처리
+    if (form.paymentMethod === 'BANK') {
       const now = new Date().toISOString();
       const newOrders = items.map(item => ({
-  id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
-  product: {
-    ...item.product,
-    createdBy: item.product.createdBy || user?.email || 'unknown',
-  },
-  quantity: item.quantity,
-  totalPrice: item.product.price * item.quantity,
-  reviewed: false,
-  createdAt: now,
-  name: form.name,
-  phone: form.phone,
-  email: form.email,
-  receiver: form.receiver,
-  receiverPhone1: form.receiverPhone1,
-  receiverPhone2: form.receiverPhone2,
-  address1: form.address1,
-  address2: form.address2,
-  memo: form.memo,
-  paymentMethod: form.paymentMethod,
-}));
-
+        id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
+        product: {
+          ...item.product,
+          createdBy: item.product.createdBy || user?.email || 'unknown',
+        },
+        quantity: item.quantity,
+        totalPrice: item.product.price * item.quantity,
+        reviewed: false,
+        createdAt: now,
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        receiver: form.receiver,
+        receiverPhone1: form.receiverPhone1,
+        receiverPhone2: form.receiverPhone2,
+        address1: form.address1,
+        address2: form.address2,
+        memo: form.memo,
+        paymentMethod: form.paymentMethod,
+      }));
 
       const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const filteredNewOrders = newOrders.filter(newOrder =>
@@ -117,8 +196,16 @@ export default function OrderFormPage() {
 
       setIsProcessing(false);
       navigate('/order/complete');
-      return; //  반드시 여기서 종료
+      return;
     }
+
+    // 기타 결제 수단 처리
+    const buyer = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      address: `${form.address1} ${form.address2}`,
+    };
 
     setIsProcessing(false);
     navigate('/payment/mock', {
@@ -172,11 +259,70 @@ export default function OrderFormPage() {
             <h3>4. 쿠폰 / 포인트</h3>
             <div className="coupon-row">
               <input name="coupon" placeholder="쿠폰 발행 전입니다! " value={form.coupon} onChange={handleChange} />
-              <button type="button" onClick={applyCoupon} className="coupon-btn">X</button>
+              <button type="button" onClick={applyCoupon} className="coupon-btn">적용</button>
             </div>
-            <div className="checkbox-inline">
+            <div className="checkbox-row">
+              <label htmlFor="usePoints">이벤트 포인트 사용하기(이벤트 기간X)</label>
               <input type="checkbox" id="usePoints" name="usePoints" checked={form.usePoints} onChange={handleChange} />
-              <label htmlFor="usePoints">이벤트 포인트 사용하기(이벤트 기간X) </label>
+            </div>
+          </section>
+
+          <section>
+            <h3>5. 약관 동의</h3>
+            <div className="terms-agreement">
+              <div className="checkbox-row all-agree">
+                <label htmlFor="agreeAll">전체 동의</label>
+                <input 
+                  type="checkbox" 
+                  id="agreeAll" 
+                  name="agreeAll" 
+                  checked={form.agreeAll} 
+                  onChange={handleAgreeAll} 
+                />
+              </div>
+              
+              <div className="terms-divider"></div>
+              
+              <div className="checkbox-row">
+                <label htmlFor="agreeTerms">(필수) 이용약관 동의</label>
+                <input 
+                  type="checkbox" 
+                  id="agreeTerms" 
+                  name="agreeTerms" 
+                  checked={form.agreeTerms} 
+                  onChange={handleIndividualAgree} 
+                />
+              </div>
+              <div className="checkbox-row">
+                <label htmlFor="agreePrivacy">(필수) 개인정보 수집 및 이용 동의</label>
+                <input 
+                  type="checkbox" 
+                  id="agreePrivacy" 
+                  name="agreePrivacy" 
+                  checked={form.agreePrivacy} 
+                  onChange={handleIndividualAgree} 
+                />
+              </div>
+              <div className="checkbox-row">
+                <label htmlFor="agreeFinancial">(필수) 전자금융거래 이용약관 동의</label>
+                <input 
+                  type="checkbox" 
+                  id="agreeFinancial" 
+                  name="agreeFinancial" 
+                  checked={form.agreeFinancial} 
+                  onChange={handleIndividualAgree} 
+                />
+              </div>
+              <div className="checkbox-row">
+                <label htmlFor="agreeMarketing">(선택) 마케팅 정보 수신 동의</label>
+                <input 
+                  type="checkbox" 
+                  id="agreeMarketing" 
+                  name="agreeMarketing" 
+                  checked={form.agreeMarketing} 
+                  onChange={handleIndividualAgree} 
+                />
+              </div>
             </div>
           </section>
 
