@@ -64,7 +64,7 @@ export default function OrderFormPage() {
     if (isProcessing) return;
     setIsProcessing(true);
 
-    if (!form.agreeTerms || !form.agreePrivacy) {
+    if (!form.agree1 || !form.agree2) {
       alert('약관에 동의해 주세요.');
       setIsProcessing(false);
       return;
@@ -81,7 +81,7 @@ export default function OrderFormPage() {
       address: `${form.address1} ${form.address2}`,
     };
 
-    if (form.paymentMethod === '무통장입금') {
+    if (form.paymentMethod === 'BANK') {
       const now = new Date().toISOString();
       const newOrders = items.map(item => ({
   id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
@@ -168,8 +168,20 @@ export default function OrderFormPage() {
             </select>
           </section>
 
+
+
           <section>
-            <h3>4. 쿠폰 / 포인트</h3>
+            <h3>4. 약관 동의</h3>
+            <label>
+              <input type="checkbox" name="agree1" onChange={handleChange} /> 구매 동의 (필수)
+            </label>
+            <label>
+              <input type="checkbox" name="agree2" onChange={handleChange} /> 개인정보 수집 동의 (필수)
+            </label>
+          </section>
+
+          <section>
+            <h4>5. 쿠폰 / 포인트</h4>
             <div className="coupon-row">
               <input name="coupon" placeholder="쿠폰 발행 전입니다! " value={form.coupon} onChange={handleChange} />
               <button type="button" onClick={applyCoupon} className="coupon-btn">X</button>
