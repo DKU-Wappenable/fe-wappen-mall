@@ -93,27 +93,30 @@ export default function CartPage() {
     }
 
     try {
-      await axiosInstance.post('/orders/bulk', cartItems);
-      await axiosInstance.delete('/cart/clear');
-      navigate('/order/complete');
-    } catch (err) {
-      console.warn('서버 실패, 로컬 주문으로 대체');
-
-      const now = new Date().toISOString();
-      const orders = cartItems.map(item => ({
-        id: Date.now() + Math.random(),
-        product: item.product,
-        quantity: item.quantity,
-        totalPrice: item.price * item.quantity,
-        reviewed: false,
-        createdAt: now,
+      await axiosInstance.post('/cart/checkout');
+      
+      const formattedItems = cartItems.map(item => ({
+        product: {
+          id: item.productId || item.product?.id,
+          name: item.productName || item.product?.name || '이름없음',
+          price: item.price || item.product?.price || 0,
+          imageUrls: item.product?.imageUrls || [item.customizationImageUrl || '/assets/default.png'],
+          nickname: item.nickname || '',
+        },
+        quantity: item.quantity || 1,
       }));
 
-      const prevOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...orders, ...prevOrders]));
-      localStorage.removeItem('cart');
+      navigate('/order/form', { 
+        state: { 
+          fromCart: true, 
+          items: formattedItems,
+          isServerCheckout: true
+        } 
+      });
 
-      // ✅ 핵심 수정: OrderFormPage 연동을 위해 product 구조로 가공
+    } catch (err) {
+      console.warn('서버 체크아웃 실패, 주문서 작성으로 이동:', err);
+      
       const formattedItems = cartItems.map(item => ({
         product: {
           id: item.product?.id ?? item.productId ?? item.id,
@@ -125,7 +128,13 @@ export default function CartPage() {
         quantity: item.quantity ?? 1,
       }));
 
-      navigate('/order/form', { state: { fromCart: true, items: formattedItems } });
+      navigate('/order/form', { 
+        state: { 
+          fromCart: true, 
+          items: formattedItems,
+          isServerCheckout: false
+        } 
+      });
     }
   };
 
